@@ -1,3 +1,4 @@
+#include "SFML/Window/Keyboard.hpp"
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <iostream>
@@ -16,7 +17,7 @@ class Player
 
 	float m_rotation;
 	float m_rotationSpeed;
-	
+
 	sf::Texture m_texture;
 	sf::IntRect m_spriteRect;
 	sf::Sprite m_sprite;
@@ -36,11 +37,11 @@ public:
 			  , m_spriteRect(sf::Vector2i{31, 31},size)
 			  , m_sprite(m_texture, m_spriteRect)
 
-	{
-		//pSprite.setTextureRect(pSpriteRect);
-		m_sprite.setOrigin({15.f, 15.f});
-		std::cout << "Player Constructed" << std::endl;
-	}
+			  {
+				  //pSprite.setTextureRect(pSpriteRect);
+				  m_sprite.setOrigin({15.f, 15.f});
+				  std::cout << "Player Constructed" << std::endl;
+			  }
 
 	sf::Sprite getSprite()
 	{
@@ -70,8 +71,51 @@ public:
 	}
 };
 
+void updateButtonPresses(bool* (&buttons)[5])
+{
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape))
+		{
+			std::cout << "Key Pressed: Escape" << std::endl;
+			*buttons[0] = true;
+		}else
+		{
+			*buttons[0] = false;
+		}
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
+		{
+			std::cout << "Key Pressed: W/Up" << std::endl;
+			*buttons[1] = true;
+		}else
+		{
+			*buttons[1] = false;
+		}
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
+		{
+			std::cout << "Key Pressed: S/Down" << std::endl;
+			*buttons[2] = true;
+		}else 
+		{
+			*buttons[2] = false;
+		}
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
+		{
+			std::cout << "Key Pressed: A/Left" << std::endl;
+			*buttons[3] = true;
+		}else
+		{
+			*buttons[3] = false;
+		}
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
+		{
+			std::cout << "Key Pressed: D/Right" << std::endl;
+			*buttons[4] = true;
+		}else
+		{
+			*buttons[4] = false;
+		}
+}
 
-void updateGame(sf::Time elapsed, Player& p, Arena& a, sf::RenderWindow& window)
+void updateGame(sf::Time& elapsed, Player& p, Arena& a, sf::RenderWindow& window)
 {
 	std::cout << "In the new update function" << std::endl;
 
@@ -85,6 +129,12 @@ int main()
 	bool downPressed = false;
 	bool leftPressed = false;
 	bool rightPressed = false;
+	bool* buttons[5];
+	buttons[0] = &escPressed;
+	buttons[1] = &upPressed;
+	buttons[2] = &downPressed;
+	buttons[3] = &leftPressed;
+	buttons[4] = &rightPressed;
 
 	sf::Vector2i aSize(15000, 7500);
 	sf::Vector2<uint> wSize(1500, 750);
@@ -114,45 +164,75 @@ int main()
 	window.setFramerateLimit(60);
 	while(window.isOpen())
 	{
+		updateButtonPresses(buttons);
 		while(const std::optional event = window.pollEvent())
 		{
 			if(event->is<sf::Event::Closed>() || escPressed)
 			{
 				window.close();
 			}
-			else if(const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
-			{
-				if(keyPressed->scancode == sf::Keyboard::Scancode::Escape)
-					window.close();
-				switch(keyPressed->scancode)
-				{
-					case sf::Keyboard::Scancode::Escape:
-						escPressed = true;
-						break;
-					case sf::Keyboard::Scancode::Left:
-					case sf::Keyboard::Scancode::A:
-						std::cout<< "Action rotate left, kepressed: " << static_cast<int>(keyPressed->scancode) << std::endl;
-						leftPressed = true;
-						p.rotate(false);
-						break;
-					case sf::Keyboard::Scancode::Right:
-					case sf::Keyboard::Scancode::D:
-						std::cout<< "Action rotate right, kepressed: " << static_cast<int>(keyPressed->scancode) << std::endl;
-						rightPressed = true;
-						p.rotate(true);
-						break;
-					case sf::Keyboard::Scancode::Up:
-					case sf::Keyboard::Scancode::W:
-						std::cout<< "Action Accelerate, kepressed: " << static_cast<int>(keyPressed->scancode) << std::endl;
-						upPressed = true;
-						break;
-					case sf::Keyboard::Scancode::Down:
-					case sf::Keyboard::Scancode::S:
-						std::cout<< "Action Decelerate, kepressed: " << static_cast<int>(keyPressed->scancode) << std::endl;
-						downPressed = true;
-						break;
-				}
-			}
+//			else if(const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
+//			{
+//				if(keyPressed->scancode == sf::Keyboard::Scancode::Escape)
+//					window.close();
+//				switch(keyPressed->scancode)
+//				{
+//					case sf::Keyboard::Scancode::Escape:
+//						escPressed = true;
+//						break;
+//					case sf::Keyboard::Scancode::Left:
+//					case sf::Keyboard::Scancode::A:
+//						std::cout<< "Action rotate left, kepressed: " << static_cast<int>(keyPressed->scancode) << std::endl;
+//						leftPressed = true;
+//						p.rotate(false);
+//						break;
+//					case sf::Keyboard::Scancode::Right:
+//					case sf::Keyboard::Scancode::D:
+//						std::cout<< "Action rotate right, kepressed: " << static_cast<int>(keyPressed->scancode) << std::endl;
+//						rightPressed = true;
+//						p.rotate(true);
+//						break;
+//					case sf::Keyboard::Scancode::Up:
+//					case sf::Keyboard::Scancode::W:
+//						std::cout<< "Action Accelerate, kepressed: " << static_cast<int>(keyPressed->scancode) << std::endl;
+//						upPressed = true;
+//						break;
+//					case sf::Keyboard::Scancode::Down:
+//					case sf::Keyboard::Scancode::S:
+//						std::cout<< "Action Decelerate, kepressed: " << static_cast<int>(keyPressed->scancode) << std::endl;
+//						downPressed = true;
+//						break;
+//				}
+//			}
+//			else if(const auto* keyReleased = event->getIf<sf::Event::KeyReleased>())
+//			{
+//				switch(keyReleased->scancode)
+//				{
+//					case sf::Keyboard::Scancode::Escape:
+//						escPressed = false;
+//						break;
+//					case sf::Keyboard::Scancode::Left:
+//					case sf::Keyboard::Scancode::A:
+//						std::cout<< "Action stop rotate left, kepressed: " << static_cast<int>(keyPressed->scancode) << std::endl;
+//						leftPressed = false;
+//						break;
+//					case sf::Keyboard::Scancode::Right:
+//					case sf::Keyboard::Scancode::D:
+//						std::cout<< "Action stop rotate right, kepressed: " << static_cast<int>(keyPressed->scancode) << std::endl;
+//						rightPressed = false;
+//						break;
+//					case sf::Keyboard::Scancode::Up:
+//					case sf::Keyboard::Scancode::W:
+//						std::cout<< "Action stop accelerate, kepressed: " << static_cast<int>(keyPressed->scancode) << std::endl;
+//						upPressed = false;
+//						break;
+//					case sf::Keyboard::Scancode::Down:
+//					case sf::Keyboard::Scancode::S:
+//						std::cout<< "Action stop decelerate, kepressed: " << static_cast<int>(keyPressed->scancode) << std::endl;
+//						downPressed = false;
+//						break;
+//				}
+//			}
 		}
 		sf::Time elapsed = clock.restart();
 		updateGame(elapsed, p, a, window);
