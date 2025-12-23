@@ -1,25 +1,122 @@
 #include "SFML/Graphics/RenderWindow.hpp"
+#include "SFML/System/Vector2.hpp"
 #include "SFML/Window/Keyboard.hpp"
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <iostream>
 #include <cmath>
-#include <algorithm>
 
 const int numButtons = 5;
+
+float degreesToRadians(float degrees)
+{
+	return (degrees * (M_PI / 180));
+}
+
+float radiansToDegrees(float radians)
+{
+	return (radians * (180 / M_PI));
+}
+
+void calcDragForce(sf::Vector2f& currentVelocity, float dragCoef)
+{
+	currentVelocity += {-dragCoef * currentVelocity.x, -dragCoef * currentVelocity.y};
+	return;
+}
+
+void calcAccelerationForce(sf::Vector2f& currentVelocity, float accelerationMagnitude, float direction, float maximumVelocity, int accelerate)
+{
+		// force of acceleration
+		sf::Vector2f fAccel = {0, 0};
+		if(accelerate == 1)
+		{
+			fAccel = {accelerationMagnitude * std::cos(direction), -accelerationMagnitude * std::sin(direction)};
+		}
+		else if(accelerate == -1)
+		{
+			// reverse should be slower by factor 0.75
+			fAccel = {0.75f * -accelerationMagnitude * std::cos(direction), 0.75f * accelerationMagnitude * std::sin(direction)};
+		}
+
+		// range of possible velocitys to stay inbetween
+		float maxXVelocity = maximumVelocity * std::cos(direction);
+		float maxYVelocity = maximumVelocity * std::sin(direction);
+		float minXVelocity = -maximumVelocity * std::cos(direction);
+		float minYVelocity = -maximumVelocity * std::sin(direction);
+
+		// make sure we're not going too fast
+		// max/mins are based on quadrant
+		float currentDirection = std::atan(currentVelocity.y / currentVelocity.x);
+		if(direction <= M_PI/2) // Q1
+		{
+			if(currentVelocity.x < maxXVelocity && currentVelocity.x > minXVelocity)
+			{
+				currentVelocity.x += fAccel.x;
+			}
+			if(currentVelocity.y < maxYVelocity && currentVelocity.y > minYVelocity)
+			{
+				currentVelocity.y += fAccel.y;
+			}
+		}
+		else if(direction <= M_PI) // Q2
+		{
+			if(currentVelocity.x > maxXVelocity && currentVelocity.x < minXVelocity)
+			{
+				currentVelocity.x += fAccel.x;
+			}
+			if(currentVelocity.y < maxYVelocity && currentVelocity.y > minYVelocity)
+			{
+				currentVelocity.y += fAccel.y;
+			}
+		}
+		else if(direction <= 3 * M_PI / 2) // Q3
+		{
+			if(currentVelocity.x > maxXVelocity && currentVelocity.x < minXVelocity)
+			{
+				currentVelocity.x += fAccel.x;
+			}
+			if(currentVelocity.y > maxYVelocity && currentVelocity.y < minYVelocity)
+			{
+				currentVelocity.y += fAccel.y;
+			}
+		}
+		else // Q4
+		{
+			if(currentVelocity.x < maxXVelocity && currentVelocity.x > minXVelocity)
+			{
+				currentVelocity.x += fAccel.x;
+			}
+			if(currentVelocity.y > maxYVelocity && currentVelocity.y < minYVelocity)
+			{
+				currentVelocity.y += fAccel.y;
+			}
+		}
+}
+
+class Arena
+{
+	sf::Vector2i m_size;
+
+public:
+
+	Arena(sf::Vector2i size)
+			: m_size(size)
+	{
+	}
+};
 
 class Player
 {
 	sf::Vector2i m_size;
 	sf::Vector2f m_position;
-	sf::Vector2f m_speed;
+	sf::Vector2f m_velocity;
 	float m_rotation;
 
-	float m_mSpeed;
+	float m_mVelocity;
 
 	float m_acceleration;
 	float m_drag;
-	float m_rotSpeed;
+	float m_rotVelocity;
 
 	sf::Texture m_texture;
 	sf::IntRect m_spriteRect;
@@ -27,15 +124,15 @@ class Player
 
 public:
 
-	Player(sf::Vector2i size, sf::Vector2f position, sf::Vector2f speed, float rotation, float maxSpeed, float acceleration, float drag, float rotationSpeed, const sf::Texture& texture)
+	Player(sf::Vector2i size, sf::Vector2f position, sf::Vector2f velocity, float rotation, float maxVelocity, float acceleration, float drag, float rotationVelocity, const sf::Texture& texture)
 			: m_size(size)
 			  , m_position(position)
-			  , m_speed(speed)
+			  , m_velocity(velocity)
 			  , m_rotation(rotation)
-			  , m_mSpeed(maxSpeed)
+			  , m_mVelocity(maxVelocity)
 			  , m_acceleration(acceleration)
 			  , m_drag(drag)
-			  , m_rotSpeed(rotationSpeed)
+			  , m_rotVelocity(rotationVelocity)
 			  , m_texture(texture)
 			  , m_spriteRect(sf::Vector2i{0, 0},size)
 			  , m_sprite(m_texture, m_spriteRect)
@@ -48,18 +145,18 @@ public:
 	{
 		return m_position;
 	}
-	sf::Vector2f getSpeed() const
+	sf::Vector2f getVelocity() const
 	{
-		return m_speed;
+		return m_velocity;
 	}
 	float getRotation() const
 	{
 		return m_rotation;
 	}
 
-	float getMaxSpeed() const
+	float getMaxVelocity() const
 	{
-		return m_mSpeed;
+		return m_mVelocity;
 	}
 
 	float getAcceleration() const
@@ -70,9 +167,9 @@ public:
 	{
 		return m_drag;
 	}
-	float getRotSpeed() const
+	float getRotVelocity() const
 	{
-		return m_rotSpeed;
+		return m_rotVelocity;
 	}
 
 	sf::Sprite getSprite()
@@ -80,100 +177,35 @@ public:
 		return m_sprite;
 	}
 
-	void updatePosition(int accelerate)
+	void updateVelocity(int accelerate)
 	{
-		// zero out the speed if its small enough
-		if(m_speed.x < 0.005 && m_speed.x > -0.005) m_speed.x = 0;
-		if(m_speed.y < 0.005 && m_speed.y > -0.005) m_speed.y = 0;
-
-		// force of drag
-		sf::Vector2f fDrag = {-m_drag * m_speed.x, -m_drag * m_speed.y};
-		if(m_speed.x == 0) fDrag.x = 0;
-		if(m_speed.y == 0) fDrag.y = 0;
+		// zero out the velocity if its small enough
+		if(m_velocity.x < 0.005 && m_velocity.x > -0.005) m_velocity.x = 0;
+		if(m_velocity.y < 0.005 && m_velocity.y > -0.005) m_velocity.y = 0;
 
 		// get the angle the player is facing
 		float forward = m_rotation;
-		forward = forward * (M_PI / 180); // convert to radians
+		forward = degreesToRadians(forward);
 
-		// force of acceleration
-		sf::Vector2f fAccel = {0, 0};
-		if(accelerate == 1)
-		{
-			fAccel = {m_acceleration * std::cos(forward), -m_acceleration * std::sin(forward)};
-		}
-		else if(accelerate == -1)
-		{
-			fAccel = {-m_acceleration * std::cos(forward), m_acceleration * std::sin(forward)};
-		}
+		// add drag and acceleration forces
+		calcDragForce(m_velocity, m_drag);
+		calcAccelerationForce(m_velocity, m_acceleration, forward, getMaxVelocity(), accelerate);
 
-		// range of possible speeds to stay inbetween
-		float maxXSpeed = m_mSpeed * std::cos(forward);
-		float maxYSpeed = m_mSpeed * std::sin(forward);
-		float minXSpeed = -m_mSpeed * std::cos(forward);
-		float minYSpeed = -m_mSpeed * std::sin(forward);
+		std::cout << std::endl;
+		std::cout << "Velocity: " << m_velocity.x << ", " << m_velocity.y << std::endl;
+		std::cout << "Position: " << m_position.x << ", " << m_position.y << std::endl;
+		return;
+	}
 
-		std::cout << "fDrag: " << fDrag.x << ", " << fDrag.y << std::endl;
-		std::cout << "fAccel: " << fAccel.x << ", " << fAccel.y << std::endl;
-		std::cout << "Current Speed: " << m_speed.x << ", " << m_speed.y << std::endl;
-		std::cout << "Current Position: " << m_position.x << ", " << m_position.y << std::endl;
-
-		// add the forces
-		m_speed += fDrag + fAccel;
-		
-		// make sure we're not going too fast
-		// max/mins are based on quadrant
-		float currentDirection = std::atan(m_speed.y / m_speed.x);
-		if(forward <= M_PI/2) // Q1
-		{
-			if(m_speed.x > maxXSpeed || m_speed.x < minXSpeed)
-			{
-				m_speed.x -= fAccel.x;
-			}
-			if(m_speed.y > maxYSpeed || m_speed.y < minYSpeed)
-			{
-				m_speed.y -= fAccel.y;
-			}
-		}
-		else if(forward <= M_PI) // Q2
-		{
-			if(m_speed.x < maxXSpeed || m_speed.x > minXSpeed)
-			{
-				m_speed.x -= fAccel.x;
-			}
-			if(m_speed.y > maxYSpeed || m_speed.y < minYSpeed)
-			{
-				m_speed.y -= fAccel.y;
-			}
-		}
-		else if(forward <= 3 * M_PI / 2) // Q3
-		{
-			if(m_speed.x < maxXSpeed || m_speed.x > minXSpeed)
-			{
-				m_speed.x -= fAccel.x;
-			}
-			if(m_speed.y < maxYSpeed || m_speed.y > minYSpeed)
-			{
-				m_speed.y -= fAccel.y;
-			}
-		}
-		else // Q4
-		{
-			if(m_speed.x > maxXSpeed || m_speed.x < minXSpeed)
-			{
-				m_speed.x -= fAccel.x;
-			}
-			if(m_speed.y < maxYSpeed || m_speed.y > minYSpeed)
-			{
-				m_speed.y -= fAccel.y;
-			}
-		}
-
+	void updatePosition(const float deltaTime)
+	{
 		// update the position
-		m_position += m_speed;
+		m_position += m_velocity * deltaTime;
 		m_sprite.setPosition({m_position.x, m_position.y});
 		return;
 	}
-	void rotate(float rotVal)
+
+	void rotate(const float rotVal)
 	{
 		// std::cout << "Rotating player by rotVal: " << rotVal << std::endl;
 		m_sprite.rotate(sf::degrees(rotVal));
@@ -182,17 +214,38 @@ public:
 		if(m_rotation < 0) m_rotation += 360;
 		return;
 	}
-};
 
-class Arena
-{
-	sf::Vector2i m_size;
-
-public:
-
-	Arena(sf::Vector2i size)
-			: m_size(size)
+	void update(float deltaTime, sf::RenderWindow& window, bool* (&buttons)[numButtons], Player& p, Arena& a)
 	{
+		// handle rotation
+		float potentialRotation = 0;
+		if(*buttons[3]) 
+		{
+			potentialRotation -= p.getRotVelocity();
+		}
+		if(*buttons[4]) 
+		{
+			potentialRotation += p.getRotVelocity();
+		}
+		if(potentialRotation != 0) 
+			p.rotate(potentialRotation);
+
+		// handle acceleration
+		sf::Vector2f curVelocity = p.getVelocity();
+		int accel = 0;
+		if(*buttons[1] && !*buttons[2])
+		{
+			// std::cout << "Accelerating" << std::endl;
+			accel = 1;
+		}
+		else if(*buttons[2] && !*buttons[1])
+		{
+			// std::cout << "decelerating" << std::endl;
+			accel = -1;
+		}
+		p.updateVelocity(accel);
+		p.updatePosition(deltaTime);
+
 	}
 };
 
@@ -240,36 +293,9 @@ void updateButtonPresses(bool* (&buttons)[numButtons])
 		}
 }
 
-void updateGame(sf::Time& elapsed, sf::RenderWindow& window, bool* (&buttons)[numButtons], Player& p, Arena& a)
+void updateGame(float deltaTime, sf::RenderWindow& window, bool* (&buttons)[numButtons], Player& p, Arena& a)
 {
-	// handle acceleration
-	sf::Vector2f curSpeed = p.getSpeed();
-	int accel = 0;
-	if(*buttons[1] && !*buttons[2])
-	{
-		// std::cout << "Accelerating" << std::endl;
-		accel = 1;
-	}
-	else if(*buttons[2] && !*buttons[1])
-	{
-		// std::cout << "decelerating" << std::endl;
-		accel = -1;
-	}
-	p.updatePosition(accel);
-	
-
-
-	// handle rotation
-	float potentialRotation = 0;
-	if(*buttons[3]) 
-	{
-		potentialRotation -= p.getRotSpeed();
-	}
-	if(*buttons[4]) 
-	{
-		potentialRotation += p.getRotSpeed();
-	}
-	if(potentialRotation != 0) p.rotate(potentialRotation);
+	p.update(deltaTime, window, buttons, p, a);
 }
 
 void drawGame(sf::RenderWindow& window, Player& p, Arena& a)
@@ -311,27 +337,36 @@ int main()
 	// player definition
 	sf::Vector2i pSize(41, 41);
 	sf::Vector2f pPosition(900, 500);
-	sf::Vector2f pSpeed = {0, 0};
+	sf::Vector2f pVelocity = {0, 0};
 	float pRotation = 90;
 
-	float pMaxSpeed = 8;
+	float pMaxVelocity = 400;
 
-	float pAcceleration = 0.13;
-	float pdrag = 0.008;
-	float pRotationSpeed = 4;
+	float pAcceleration = 8;
+	float pdrag = 0.005;
+	float pRotationVelocity = 4;
 
 	sf::Texture playerTexture;
 	if(!playerTexture.loadFromFile("art/basicSpriteL.png"))
 		std::cout << "Sprite not loaded :(" << std::endl;
 
 	// create player
-	Player p(pSize, pPosition, pSpeed, pRotation, pMaxSpeed, pAcceleration, pdrag, pRotationSpeed, playerTexture);
+	Player p(pSize, pPosition, pVelocity, pRotation, pMaxVelocity, pAcceleration, pdrag, pRotationVelocity, playerTexture);
 
 	// setup timing
 	sf::Clock clock;
+	const float fixedDt = 1.0f / 60.0f;
+	float timeAccumulator = 0.0f;
 
 	while(window.isOpen())
 	{
+		float frameTime = clock.restart().asSeconds();
+		if(frameTime > 0.25f)
+		{
+			frameTime = 0.25f;
+		}
+		timeAccumulator += frameTime;
+
 		updateButtonPresses(buttons);
 		while(const std::optional event = window.pollEvent())
 		{
@@ -340,8 +375,12 @@ int main()
 				window.close();
 			}
 		}
-		sf::Time elapsed = clock.restart();
-		updateGame(elapsed, window, buttons, p, a);
+
+		while(timeAccumulator >= fixedDt)
+		{
+			updateGame(fixedDt, window, buttons, p, a);
+			timeAccumulator -= fixedDt;
+		}
 		drawGame(window, p, a);
 	}
 	window.close();
