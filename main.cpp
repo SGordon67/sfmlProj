@@ -11,6 +11,8 @@ const int numButtons = 5;
 const int windowWidth = 1500;
 const int windowHeight = 750;
 
+class Player;
+
 float degreesToRadians(float degrees)
 {
 	return (degrees * (M_PI / 180));
@@ -100,25 +102,49 @@ class Arena
 {
 	sf::Vector2i m_size;
 	sf::Vector2f m_position;
-	sf::Texture m_texture;
-	sf::IntRect m_spriteRect;
-	sf::Sprite m_sprite;
+
+	sf::Texture m_bgTexture;
+	sf::IntRect m_bgSpriteRect;
+	sf::Sprite m_bgSprite;
+
+	sf::Texture m_stTexture;
+	sf::IntRect m_stSpriteRect;
+	sf::Sprite m_stSprite;
 
 public:
 
-	Arena(sf::Vector2i size, sf::Vector2f position, const sf::Texture& texture)
+	Arena(sf::Vector2i size, sf::Vector2f position, const sf::Texture& bgTexture, const sf::Texture& stTexture)
 			: m_size(size)
 			  , m_position(position)
-			  , m_texture(texture)
-			  , m_spriteRect(sf::Vector2i{-size.x/2, size.y/2}, size)
-			  , m_sprite(m_texture, m_spriteRect)
+			  , m_bgTexture(bgTexture)
+			  , m_bgSpriteRect(sf::Vector2i{-size.x/2, size.y/2}, size)
+			  , m_bgSprite(m_bgTexture, m_bgSpriteRect)
+			  , m_stTexture(stTexture)
+			  , m_stSpriteRect(sf::Vector2i{-size.x/2, size.y/2}, size)
+			  , m_stSprite(m_stTexture, m_stSpriteRect)
 	{
-		m_sprite.setPosition({m_position.x, m_position.y});
+		m_bgSprite.setPosition({m_position.x, m_position.y});
+		m_stSprite.setPosition({m_position.x, m_position.y});
 	}
 
-	sf::Sprite getSprite()
+	sf::Sprite getbgSprite()
 	{
-		return m_sprite;
+		return m_bgSprite;
+	}
+
+	sf::Sprite getstSprite()
+	{
+		return m_stSprite;
+	}
+
+	void update(float deltaTime, sf::Vector2f playerVelocity)
+	{
+		// move the background at different rates in relation to the player for a feeling of depth
+		m_bgSprite.move(0.5f * playerVelocity * deltaTime);
+
+		// starts keeping static for movement reference (feels good though)
+		// m_stSprite.move(0.8f * playerVelocity * deltaTime);
+		return;
 	}
 };
 
@@ -197,8 +223,8 @@ public:
 	void updateVelocity(int accelerate)
 	{
 		// zero out the velocity if its small enough
-		if(m_velocity.x < 0.005 && m_velocity.x > -0.005) m_velocity.x = 0;
-		if(m_velocity.y < 0.005 && m_velocity.y > -0.005) m_velocity.y = 0;
+		if(m_velocity.x < 0.1 && m_velocity.x > -0.1) m_velocity.x = 0;
+		if(m_velocity.y < 0.1 && m_velocity.y > -0.1) m_velocity.y = 0;
 
 		// get the angle the player is facing
 		float forward = m_rotation;
@@ -313,12 +339,14 @@ void updateButtonPresses(bool* (&buttons)[numButtons])
 void updateGame(float deltaTime, sf::RenderWindow& window, bool* (&buttons)[numButtons], Player& p, Arena& a)
 {
 	p.update(deltaTime, window, buttons, p, a);
+	a.update(deltaTime, p.getVelocity());
 }
 
 void drawGame(sf::RenderWindow& window, Player& p, Arena& a)
 {
 		window.clear();
-		window.draw(a.getSprite());
+		window.draw(a.getbgSprite());
+		window.draw(a.getstSprite());
 		window.draw(p.getSprite());
 		window.display();
 }
@@ -347,13 +375,17 @@ int main()
 	
 
 	// arena
-	sf::Vector2i aSize(10 * windowWidth, 10 * windowHeight);
+	sf::Vector2i aSize(100 * windowWidth, 100 * windowHeight);
 	sf::Vector2f aPosition(-aSize.x/2.f, -aSize.y/2.f);
-	sf::Texture arenaTexture;
-	if(!arenaTexture.loadFromFile("art/basicBackground.png"))
+	sf::Texture arenaBGTexture;
+	if(!arenaBGTexture.loadFromFile("art/basicBackground.png"))
 		std::cout << "Sprite not loaded :(" << std::endl;
-	arenaTexture.setRepeated(true);
-	Arena a(aSize, aPosition, arenaTexture);
+	arenaBGTexture.setRepeated(true);
+	sf::Texture arenaSTTexture;
+	if(!arenaSTTexture.loadFromFile("art/basicStars.png"))
+		std::cout << "Sprite not loaded :(" << std::endl;
+	arenaSTTexture.setRepeated(true);
+	Arena a(aSize, aPosition, arenaBGTexture, arenaSTTexture);
 
 	// player
 	sf::Vector2i pSize(41, 41);
