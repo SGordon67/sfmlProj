@@ -1,4 +1,5 @@
 #include "SFML/Graphics/RenderWindow.hpp"
+#include "SFML/Graphics/Texture.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "SFML/Window/Keyboard.hpp"
 #include <SFML/Graphics.hpp>
@@ -7,6 +8,8 @@
 #include <cmath>
 
 const int numButtons = 5;
+const int windowWidth = 1500;
+const int windowHeight = 750;
 
 float degreesToRadians(float degrees)
 {
@@ -18,13 +21,13 @@ float radiansToDegrees(float radians)
 	return (radians * (180 / M_PI));
 }
 
-void calcDragForce(sf::Vector2f& currentVelocity, float dragCoef)
+void addDragForce(sf::Vector2f& currentVelocity, float dragCoef)
 {
 	currentVelocity += {-dragCoef * currentVelocity.x, -dragCoef * currentVelocity.y};
 	return;
 }
 
-void calcAccelerationForce(sf::Vector2f& currentVelocity, float accelerationMagnitude, float direction, float maximumVelocity, int accelerate)
+void addAccelerationForce(sf::Vector2f& currentVelocity, float accelerationMagnitude, float direction, float maximumVelocity, int accelerate)
 {
 		// force of acceleration
 		sf::Vector2f fAccel = {0, 0};
@@ -96,12 +99,26 @@ void calcAccelerationForce(sf::Vector2f& currentVelocity, float accelerationMagn
 class Arena
 {
 	sf::Vector2i m_size;
+	sf::Vector2f m_position;
+	sf::Texture m_texture;
+	sf::IntRect m_spriteRect;
+	sf::Sprite m_sprite;
 
 public:
 
-	Arena(sf::Vector2i size)
+	Arena(sf::Vector2i size, sf::Vector2f position, const sf::Texture& texture)
 			: m_size(size)
+			  , m_position(position)
+			  , m_texture(texture)
+			  , m_spriteRect(sf::Vector2i{-size.x/2, size.y/2}, size)
+			  , m_sprite(m_texture, m_spriteRect)
 	{
+		m_sprite.setPosition({m_position.x, m_position.y});
+	}
+
+	sf::Sprite getSprite()
+	{
+		return m_sprite;
 	}
 };
 
@@ -188,8 +205,8 @@ public:
 		forward = degreesToRadians(forward);
 
 		// add drag and acceleration forces
-		calcDragForce(m_velocity, m_drag);
-		calcAccelerationForce(m_velocity, m_acceleration, forward, getMaxVelocity(), accelerate);
+		addDragForce(m_velocity, m_drag);
+		addAccelerationForce(m_velocity, m_acceleration, forward, getMaxVelocity(), accelerate);
 
 		std::cout << std::endl;
 		std::cout << "Velocity: " << m_velocity.x << ", " << m_velocity.y << std::endl;
@@ -301,6 +318,7 @@ void updateGame(float deltaTime, sf::RenderWindow& window, bool* (&buttons)[numB
 void drawGame(sf::RenderWindow& window, Player& p, Arena& a)
 {
 		window.clear();
+		window.draw(a.getSprite());
 		window.draw(p.getSprite());
 		window.display();
 }
@@ -320,51 +338,52 @@ int main()
 	buttons[3] = &leftPressed;
 	buttons[4] = &rightPressed;
 
-	// window definition
-	sf::Vector2<uint> wSize(1500, 750);
-
-	// create window
+	// window 
+	sf::Vector2<uint> wSize(windowWidth, windowHeight);
 	sf::RenderWindow window(sf::VideoMode(wSize), "Very cool and also fun game");
 	window.setFramerateLimit(60);
-	window.setPosition({1930, 10});
+	window.setPosition({1930, 10}); // pretty arbitrary, top right of my second monitor
 
-	// arena definition
-	sf::Vector2i aSize(15000, 7500);
+	
 
-	// create arena
-	Arena a(aSize);
+	// arena
+	sf::Vector2i aSize(10 * windowWidth, 10 * windowHeight);
+	sf::Vector2f aPosition(-aSize.x/2.f, -aSize.y/2.f);
+	sf::Texture arenaTexture;
+	if(!arenaTexture.loadFromFile("art/basicBackground.png"))
+		std::cout << "Sprite not loaded :(" << std::endl;
+	arenaTexture.setRepeated(true);
+	Arena a(aSize, aPosition, arenaTexture);
 
-	// player definition
+	// player
 	sf::Vector2i pSize(41, 41);
 	sf::Vector2f pPosition(900, 500);
 	sf::Vector2f pVelocity = {0, 0};
 	float pRotation = 90;
-
-	float pMaxVelocity = 400;
-
-	float pAcceleration = 8;
+	float pMaxVelocity = 500;
+	float pAcceleration = 6;
 	float pdrag = 0.005;
 	float pRotationVelocity = 4;
-
 	sf::Texture playerTexture;
 	if(!playerTexture.loadFromFile("art/basicSpriteL.png"))
 		std::cout << "Sprite not loaded :(" << std::endl;
-
-	// create player
 	Player p(pSize, pPosition, pVelocity, pRotation, pMaxVelocity, pAcceleration, pdrag, pRotationVelocity, playerTexture);
 
-	// setup timing
+	// time
 	sf::Clock clock;
-	const float fixedDt = 1.0f / 60.0f;
+	const float fixedDt = 1.0f / 60.0f; // fixed delta time
 	float timeAccumulator = 0.0f;
+
+	// view
+	sf::View playerView(p.getPosition()+p.getSprite().getOrigin(), {1500, 750});
+	window.setView(playerView);
 
 	while(window.isOpen())
 	{
+		// time since last frame, maximum of 0.25 enforced to prevent edge cases
 		float frameTime = clock.restart().asSeconds();
 		if(frameTime > 0.25f)
-		{
 			frameTime = 0.25f;
-		}
 		timeAccumulator += frameTime;
 
 		updateButtonPresses(buttons);
@@ -376,11 +395,14 @@ int main()
 			}
 		}
 
+		// if more time has passed than Dt, we can progress the game
 		while(timeAccumulator >= fixedDt)
 		{
 			updateGame(fixedDt, window, buttons, p, a);
 			timeAccumulator -= fixedDt;
 		}
+		playerView.setCenter(p.getPosition());
+		window.setView(playerView);
 		drawGame(window, p, a);
 	}
 	window.close();
