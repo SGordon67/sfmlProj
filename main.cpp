@@ -10,8 +10,7 @@
 const int numButtons = 5;
 const int windowWidth = 1500;
 const int windowHeight = 750;
-
-class Player;
+int numObjects = 0;
 
 float degreesToRadians(float degrees)
 {
@@ -23,82 +22,153 @@ float radiansToDegrees(float radians)
 	return (radians * (180 / M_PI));
 }
 
+void enforceMaximumVelocity(sf::Vector2f& currentVelocity, sf::Vector2f fAccel, float direction, float maximumVelocity)
+{
+	// range of possible velocitys to stay inbetween
+	float maxXVelocity = maximumVelocity * std::cos(direction);
+	float maxYVelocity = maximumVelocity * std::sin(direction);
+	float minXVelocity = -maximumVelocity * std::cos(direction);
+	float minYVelocity = -maximumVelocity * std::sin(direction);
+
+	std::cout << "Maximum velocity allowed: " << maximumVelocity << ", (" << maxXVelocity << ", " << maxYVelocity << ") and (" << minXVelocity << ", " << minYVelocity << ")" << std::endl;
+	std::cout << "Current velocity " << currentVelocity.x << ", " << currentVelocity.y << std::endl;
+
+	// make sure we're not going too fast
+	// max/mins are based on quadrant
+	// quadrant facing
+	int quad = 0;
+	if(direction <= M_PI/2)
+		quad = 1;
+	else if(direction <= M_PI)
+		quad = 2;
+	else if(direction <= 3 * M_PI / 2)
+		quad = 3;
+	else
+		quad = 4;
+	switch(quad)
+	{
+		case 1:
+			if(currentVelocity.x > maxXVelocity)
+			{
+				// std::cout << "Maximum X Speed Reached" << std::endl;
+				currentVelocity.x -= fAccel.x;
+			}
+			else if(currentVelocity.x < minXVelocity)
+			{
+				// std::cout << "Minimum X Speed Reached" << std::endl;
+				currentVelocity.x -= fAccel.x;
+			}
+			if(currentVelocity.y > maxYVelocity)
+			{
+				// std::cout << "Maximum Y Speed Reached" << std::endl;
+				currentVelocity.y -= fAccel.y;
+			}
+			else if(currentVelocity.y < minYVelocity)
+			{
+				// std::cout << "Minimum Y Speed Reached" << std::endl;
+				currentVelocity.y -= fAccel.y;
+			}
+			break;
+		case 2:
+			if(currentVelocity.x < maxXVelocity)
+			{
+				// std::cout << "Maximum X Speed Reached" << std::endl;
+				currentVelocity.x -= fAccel.x;
+			}
+			else if(currentVelocity.x > minXVelocity)
+			{
+				// std::cout << "Minimum X Speed Reached" << std::endl;
+				currentVelocity.x -= fAccel.x;
+			}
+			if(currentVelocity.y > maxYVelocity)
+			{
+				// std::cout << "Maximum Y Speed Reached" << std::endl;
+				currentVelocity.y -= fAccel.y;
+			}
+			else if(currentVelocity.y < minYVelocity)
+			{
+				// std::cout << "Minimum Y Speed Reached" << std::endl;
+				currentVelocity.y -= fAccel.y;
+			}
+			break;
+		case 3:
+			if(currentVelocity.x < maxXVelocity)
+			{
+				// std::cout << "Maximum X Speed Reached" << std::endl;
+				currentVelocity.x -= fAccel.x;
+			}
+			else if(currentVelocity.x > minXVelocity)
+			{
+				// std::cout << "Minimum X Speed Reached" << std::endl;
+				currentVelocity.x -= fAccel.x;
+			}
+			if(currentVelocity.y < maxYVelocity)
+			{
+				// std::cout << "Maximum Y Speed Reached" << std::endl;
+				currentVelocity.y -= fAccel.y;
+			}
+			else if(currentVelocity.y > minYVelocity)
+			{
+				// std::cout << "Minimum Y Speed Reached" << std::endl;
+				currentVelocity.y -= fAccel.y;
+			}
+			break;
+		case 4:
+			if(currentVelocity.x > maxXVelocity)
+			{
+				// std::cout << "Maximum X Speed Reached" << std::endl;
+				currentVelocity.x -= fAccel.x;
+			}
+			else if(currentVelocity.x < minXVelocity)
+			{
+				// std::cout << "Minimum X Speed Reached" << std::endl;
+				currentVelocity.x -= fAccel.x;
+			}
+			if(currentVelocity.y < maxYVelocity)
+			{
+				// std::cout << "Maximum Y Speed Reached" << std::endl;
+				currentVelocity.y -= fAccel.y;
+			}
+			else if(currentVelocity.y > minYVelocity)
+			{
+				// std::cout << "Minimum Y Speed Reached" << std::endl;
+				currentVelocity.y -= fAccel.y;
+			}
+			break;
+	}
+}
+
 void addDragForce(sf::Vector2f& currentVelocity, float dragCoef)
 {
+	std::cout << "Drag Force: " << -dragCoef * currentVelocity.x << ", " << -dragCoef * currentVelocity.y << std::endl;
 	currentVelocity += {-dragCoef * currentVelocity.x, -dragCoef * currentVelocity.y};
 	return;
 }
 
-void addAccelerationForce(sf::Vector2f& currentVelocity, float accelerationMagnitude, float direction, float maximumVelocity, int accelerate)
+void addAccelerationForce(sf::Vector2f& currentVelocity, float accelerationMagnitude, float direction, float maximumVelocity)
 {
 		// force of acceleration
 		sf::Vector2f fAccel = {0, 0};
-		if(accelerate == 1)
+		if(accelerationMagnitude != 0)
 		{
-			fAccel = {accelerationMagnitude * std::cos(direction), -accelerationMagnitude * std::sin(direction)};
-		}
-		else if(accelerate == -1)
-		{
-			// reverse should be slower by factor 0.75
-			fAccel = {0.75f * -accelerationMagnitude * std::cos(direction), 0.75f * accelerationMagnitude * std::sin(direction)};
+			if(accelerationMagnitude > 0){
+				fAccel = {accelerationMagnitude * std::cos(direction), -accelerationMagnitude * std::sin(direction)};
+			}
+			if(accelerationMagnitude < 0){
+				// reverse is slower to reach max velocity
+				fAccel = {0.5f*accelerationMagnitude * std::cos(direction), -0.5f*accelerationMagnitude * std::sin(direction)};
+			}
 		}
 
-		// range of possible velocitys to stay inbetween
-		float maxXVelocity = maximumVelocity * std::cos(direction);
-		float maxYVelocity = maximumVelocity * std::sin(direction);
-		float minXVelocity = -maximumVelocity * std::cos(direction);
-		float minYVelocity = -maximumVelocity * std::sin(direction);
+		currentVelocity.x += fAccel.x;
+		currentVelocity.y += fAccel.y;
 
-		// make sure we're not going too fast
-		// max/mins are based on quadrant
-		float currentDirection = std::atan(currentVelocity.y / currentVelocity.x);
-		if(direction <= M_PI/2) // Q1
-		{
-			if(currentVelocity.x < maxXVelocity && currentVelocity.x > minXVelocity)
-			{
-				currentVelocity.x += fAccel.x;
-			}
-			if(currentVelocity.y < maxYVelocity && currentVelocity.y > minYVelocity)
-			{
-				currentVelocity.y += fAccel.y;
-			}
-		}
-		else if(direction <= M_PI) // Q2
-		{
-			if(currentVelocity.x > maxXVelocity && currentVelocity.x < minXVelocity)
-			{
-				currentVelocity.x += fAccel.x;
-			}
-			if(currentVelocity.y < maxYVelocity && currentVelocity.y > minYVelocity)
-			{
-				currentVelocity.y += fAccel.y;
-			}
-		}
-		else if(direction <= 3 * M_PI / 2) // Q3
-		{
-			if(currentVelocity.x > maxXVelocity && currentVelocity.x < minXVelocity)
-			{
-				currentVelocity.x += fAccel.x;
-			}
-			if(currentVelocity.y > maxYVelocity && currentVelocity.y < minYVelocity)
-			{
-				currentVelocity.y += fAccel.y;
-			}
-		}
-		else // Q4
-		{
-			if(currentVelocity.x < maxXVelocity && currentVelocity.x > minXVelocity)
-			{
-				currentVelocity.x += fAccel.x;
-			}
-			if(currentVelocity.y > maxYVelocity && currentVelocity.y < minYVelocity)
-			{
-				currentVelocity.y += fAccel.y;
-			}
-		}
+		std::cout << "Acceleration Force: " << fAccel.x << ", " << fAccel.y << std::endl;
+	
+		enforceMaximumVelocity(currentVelocity, fAccel, direction, maximumVelocity);
 }
 
-class Arena
+class Background
 {
 	sf::Vector2i m_size;
 	sf::Vector2f m_position;
@@ -113,7 +183,7 @@ class Arena
 
 public:
 
-	Arena(sf::Vector2i size, sf::Vector2f position, const sf::Texture& bgTexture, const sf::Texture& stTexture)
+	Background(sf::Vector2i size, sf::Vector2f position, const sf::Texture& bgTexture, const sf::Texture& stTexture)
 			: m_size(size)
 			  , m_position(position)
 			  , m_bgTexture(bgTexture)
@@ -148,8 +218,11 @@ public:
 	}
 };
 
-class Player
+class PhysicsObject
 {
+protected:
+	int m_objectID;
+
 	sf::Vector2i m_size;
 	sf::Vector2f m_position;
 	sf::Vector2f m_velocity;
@@ -167,8 +240,9 @@ class Player
 
 public:
 
-	Player(sf::Vector2i size, sf::Vector2f position, sf::Vector2f velocity, float rotation, float maxVelocity, float acceleration, float drag, float rotationVelocity, const sf::Texture& texture)
-			: m_size(size)
+	PhysicsObject(sf::Vector2i size, sf::Vector2f position, sf::Vector2f velocity, float rotation, float maxVelocity, float acceleration, float drag, float rotationVelocity, const sf::Texture& texture)
+			: m_objectID(++numObjects)
+			  , m_size(size)
 			  , m_position(position)
 			  , m_velocity(velocity)
 			  , m_rotation(rotation)
@@ -180,8 +254,8 @@ public:
 			  , m_spriteRect(sf::Vector2i{0, 0},size)
 			  , m_sprite(m_texture, m_spriteRect)
 			  {
-				  m_sprite.setOrigin({21, 25});
-				  std::cout << "Player Constructed" << std::endl;
+				  m_sprite.setOrigin({size.x / 2.f, size.y / 2.f});
+				  std::cout << "PhysicsObject Constructed" << std::endl;
 			  }
 
 	sf::Vector2f getPosition() const
@@ -215,12 +289,26 @@ public:
 		return m_rotVelocity;
 	}
 
-	sf::Sprite getSprite()
+	sf::Sprite getSprite() const
 	{
 		return m_sprite;
 	}
+};
 
-	void updateVelocity(int accelerate)
+class Player : public PhysicsObject
+{
+
+public:
+
+	Player(sf::Vector2i size, sf::Vector2f position, sf::Vector2f velocity, float rotation, float maxVelocity, float acceleration, float drag, float rotationVelocity, const sf::Texture& texture)
+			: PhysicsObject(size, position, velocity, rotation, maxVelocity, acceleration, drag, rotationVelocity, texture)
+			  {
+				  m_sprite.setOrigin({21, 27});
+				  std::cout << "Player Constructed" << std::endl;
+			  }
+
+
+	void updateVelocity(float accelerate)
 	{
 		// zero out the velocity if its small enough
 		if(m_velocity.x < 0.1 && m_velocity.x > -0.1) m_velocity.x = 0;
@@ -232,11 +320,11 @@ public:
 
 		// add drag and acceleration forces
 		addDragForce(m_velocity, m_drag);
-		addAccelerationForce(m_velocity, m_acceleration, forward, getMaxVelocity(), accelerate);
+		addAccelerationForce(m_velocity, accelerate, forward, getMaxVelocity());
 
-		std::cout << std::endl;
 		std::cout << "Velocity: " << m_velocity.x << ", " << m_velocity.y << std::endl;
 		std::cout << "Position: " << m_position.x << ", " << m_position.y << std::endl;
+		std::cout << std::endl;
 		return;
 	}
 
@@ -258,33 +346,32 @@ public:
 		return;
 	}
 
-	void update(float deltaTime, sf::RenderWindow& window, bool* (&buttons)[numButtons], Player& p, Arena& a)
+	void update(float deltaTime, bool* (&buttons)[numButtons], Player& p)
 	{
 		// handle rotation
 		float potentialRotation = 0;
 		if(*buttons[3]) 
 		{
-			potentialRotation -= p.getRotVelocity();
+			potentialRotation -= m_rotVelocity;
 		}
 		if(*buttons[4]) 
 		{
-			potentialRotation += p.getRotVelocity();
+			potentialRotation += m_rotVelocity;
 		}
 		if(potentialRotation != 0) 
 			p.rotate(potentialRotation);
 
 		// handle acceleration
-		sf::Vector2f curVelocity = p.getVelocity();
+		sf::Vector2f curVelocity = m_velocity;
 		int accel = 0;
 		if(*buttons[1] && !*buttons[2])
 		{
-			// std::cout << "Accelerating" << std::endl;
-			accel = 1;
+			accel = m_acceleration;
 		}
-		else if(*buttons[2] && !*buttons[1])
+		if(*buttons[2] && !*buttons[1])
 		{
 			// std::cout << "decelerating" << std::endl;
-			accel = -1;
+			accel = -m_acceleration;
 		}
 		p.updateVelocity(accel);
 		p.updatePosition(deltaTime);
@@ -336,18 +423,18 @@ void updateButtonPresses(bool* (&buttons)[numButtons])
 		}
 }
 
-void updateGame(float deltaTime, sf::RenderWindow& window, bool* (&buttons)[numButtons], Player& p, Arena& a)
+void updateGame(float deltaTime, sf::RenderWindow& window, bool* (&buttons)[numButtons], Player& player, Background& background)
 {
-	p.update(deltaTime, window, buttons, p, a);
-	a.update(deltaTime, p.getVelocity());
+	player.update(deltaTime, buttons, player);
+	background.update(deltaTime, player.getVelocity());
 }
 
-void drawGame(sf::RenderWindow& window, Player& p, Arena& a)
+void drawGame(sf::RenderWindow& window, Player& player, Background& background)
 {
 		window.clear();
-		window.draw(a.getbgSprite());
-		window.draw(a.getstSprite());
-		window.draw(p.getSprite());
+		window.draw(background.getbgSprite());
+		window.draw(background.getstSprite());
+		window.draw(player.getSprite());
 		window.display();
 }
 
@@ -366,33 +453,35 @@ int main()
 	buttons[3] = &leftPressed;
 	buttons[4] = &rightPressed;
 
-	// window 
+	// window
 	sf::Vector2<uint> wSize(windowWidth, windowHeight);
 	sf::RenderWindow window(sf::VideoMode(wSize), "Very cool and also fun game");
 	window.setFramerateLimit(60);
-	window.setPosition({1930, 10}); // pretty arbitrary, top right of my second monitor
+	window.setPosition({1930, 10}); // pretty arbitrary for now, top right of my second monitor
 
-	
+	// background
+	sf::Vector2i bSize(1000 * windowWidth, 1000 * windowHeight);
+	sf::Vector2f bPosition(-bSize.x/2.f, -bSize.y/2.f);
+	sf::Texture backgroundBGTexture;
+	if(!backgroundBGTexture.loadFromFile("art/basicBackground.png"))
+		std::cout << "Sprite not loaded :(" << std::endl;
+	backgroundBGTexture.setRepeated(true);
+	sf::Texture backgroundSTTexture;
+	if(!backgroundSTTexture.loadFromFile("art/basicStars.png"))
+		std::cout << "Sprite not loaded :(" << std::endl;
+	backgroundSTTexture.setRepeated(true);
+	Background a(bSize, bPosition, backgroundBGTexture, backgroundSTTexture);
 
 	// arena
-	sf::Vector2i aSize(100 * windowWidth, 100 * windowHeight);
-	sf::Vector2f aPosition(-aSize.x/2.f, -aSize.y/2.f);
-	sf::Texture arenaBGTexture;
-	if(!arenaBGTexture.loadFromFile("art/basicBackground.png"))
-		std::cout << "Sprite not loaded :(" << std::endl;
-	arenaBGTexture.setRepeated(true);
-	sf::Texture arenaSTTexture;
-	if(!arenaSTTexture.loadFromFile("art/basicStars.png"))
-		std::cout << "Sprite not loaded :(" << std::endl;
-	arenaSTTexture.setRepeated(true);
-	Arena a(aSize, aPosition, arenaBGTexture, arenaSTTexture);
+	
 
 	// player
 	sf::Vector2i pSize(41, 41);
 	sf::Vector2f pPosition(900, 500);
 	sf::Vector2f pVelocity = {0, 0};
 	float pRotation = 90;
-	float pMaxVelocity = 500;
+	// float pMaxVelocity = 1000;
+	float pMaxVelocity = 1000; // for testing limits
 	float pAcceleration = 6;
 	float pdrag = 0.005;
 	float pRotationVelocity = 4;
