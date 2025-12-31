@@ -230,7 +230,6 @@ protected:
 
 	float m_mVelocity;
 
-	float m_acceleration;
 	float m_drag;
 	float m_rotVelocity;
 
@@ -240,14 +239,13 @@ protected:
 
 public:
 
-	PhysicsObject(sf::Vector2i size, sf::Vector2f position, sf::Vector2f velocity, float rotation, float maxVelocity, float acceleration, float drag, float rotationVelocity, const sf::Texture& texture)
+	PhysicsObject(sf::Vector2i size, sf::Vector2f position, sf::Vector2f velocity, float rotation, float maxVelocity, float drag, float rotationVelocity, const sf::Texture& texture)
 			: m_objectID(++numObjects)
 			  , m_size(size)
 			  , m_position(position)
 			  , m_velocity(velocity)
 			  , m_rotation(rotation)
 			  , m_mVelocity(maxVelocity)
-			  , m_acceleration(acceleration)
 			  , m_drag(drag)
 			  , m_rotVelocity(rotationVelocity)
 			  , m_texture(texture)
@@ -257,6 +255,65 @@ public:
 				  m_sprite.setOrigin({size.x / 2.f, size.y / 2.f});
 				  std::cout << "PhysicsObject Constructed" << std::endl;
 			  }
+
+	void updateVelocity()
+	{
+		// zero out the velocity if its small enough
+		if(m_velocity.x < 0.5 && m_velocity.x > -0.5) m_velocity.x = 0;
+		if(m_velocity.y < 0.5 && m_velocity.y > -0.5) m_velocity.y = 0;
+
+		// get the angle the player is facing
+		float forward = m_rotation;
+		forward = degreesToRadians(forward);
+
+		// add drag and acceleration forces
+		addDragForce(m_velocity, m_drag);
+
+		std::cout << "Velocity: " << m_velocity.x << ", " << m_velocity.y << std::endl;
+		std::cout << "Position: " << m_position.x << ", " << m_position.y << std::endl;
+		std::cout << std::endl;
+		return;
+	}
+
+	void updatePosition(const float deltaTime)
+	{
+		// update the position
+		m_position += m_velocity * deltaTime;
+		m_sprite.setPosition({m_position.x, m_position.y});
+		return;
+	}
+
+	void rotate(const float rotVal)
+	{
+		// std::cout << "Rotating player by rotVal: " << rotVal << std::endl;
+		m_sprite.rotate(sf::degrees(rotVal));
+		m_rotation -= rotVal;
+		if(m_rotation >= 360) m_rotation -= 360;
+		if(m_rotation < 0) m_rotation += 360;
+		return;
+	}
+
+	void update(float deltaTime, bool* (&buttons)[numButtons])
+	{
+		// handle rotation
+		float potentialRotation = 0;
+		if(*buttons[3]) 
+		{
+			potentialRotation -= m_rotVelocity;
+		}
+		if(*buttons[4]) 
+		{
+			potentialRotation += m_rotVelocity;
+		}
+		if(potentialRotation != 0) 
+			this->rotate(potentialRotation);
+
+		// handle acceleration
+		sf::Vector2f curVelocity = m_velocity;
+		this->updateVelocity();
+		this->updatePosition(deltaTime);
+
+	}
 
 	sf::Vector2f getPosition() const
 	{
@@ -276,14 +333,11 @@ public:
 		return m_mVelocity;
 	}
 
-	float getAcceleration() const
-	{
-		return m_acceleration;
-	}
 	float getdrag() const
 	{
 		return m_drag;
 	}
+
 	float getRotVelocity() const
 	{
 		return m_rotVelocity;
@@ -297,11 +351,12 @@ public:
 
 class Player : public PhysicsObject
 {
-
+	float m_acceleration;
 public:
 
 	Player(sf::Vector2i size, sf::Vector2f position, sf::Vector2f velocity, float rotation, float maxVelocity, float acceleration, float drag, float rotationVelocity, const sf::Texture& texture)
-			: PhysicsObject(size, position, velocity, rotation, maxVelocity, acceleration, drag, rotationVelocity, texture)
+			: PhysicsObject(size, position, velocity, rotation, maxVelocity, drag, rotationVelocity, texture)
+			  , m_acceleration(acceleration)
 			  {
 				  m_sprite.setOrigin({21, 27});
 				  std::cout << "Player Constructed" << std::endl;
@@ -328,25 +383,7 @@ public:
 		return;
 	}
 
-	void updatePosition(const float deltaTime)
-	{
-		// update the position
-		m_position += m_velocity * deltaTime;
-		m_sprite.setPosition({m_position.x, m_position.y});
-		return;
-	}
-
-	void rotate(const float rotVal)
-	{
-		// std::cout << "Rotating player by rotVal: " << rotVal << std::endl;
-		m_sprite.rotate(sf::degrees(rotVal));
-		m_rotation -= rotVal;
-		if(m_rotation >= 360) m_rotation -= 360;
-		if(m_rotation < 0) m_rotation += 360;
-		return;
-	}
-
-	void update(float deltaTime, bool* (&buttons)[numButtons], Player& p)
+	void update(float deltaTime, bool* (&buttons)[numButtons])
 	{
 		// handle rotation
 		float potentialRotation = 0;
@@ -359,7 +396,7 @@ public:
 			potentialRotation += m_rotVelocity;
 		}
 		if(potentialRotation != 0) 
-			p.rotate(potentialRotation);
+			this->rotate(potentialRotation);
 
 		// handle acceleration
 		sf::Vector2f curVelocity = m_velocity;
@@ -373,8 +410,8 @@ public:
 			// std::cout << "decelerating" << std::endl;
 			accel = -m_acceleration;
 		}
-		p.updateVelocity(accel);
-		p.updatePosition(deltaTime);
+		this->updateVelocity(accel);
+		this->updatePosition(deltaTime);
 
 	}
 };
@@ -425,7 +462,7 @@ void updateButtonPresses(bool* (&buttons)[numButtons])
 
 void updateGame(float deltaTime, sf::RenderWindow& window, bool* (&buttons)[numButtons], Player& player, Background& background)
 {
-	player.update(deltaTime, buttons, player);
+	player.update(deltaTime, buttons);
 	background.update(deltaTime, player.getVelocity());
 }
 
@@ -455,7 +492,7 @@ int main()
 
 	// window
 	sf::Vector2<uint> wSize(windowWidth, windowHeight);
-	sf::RenderWindow window(sf::VideoMode(wSize), "Very cool and also fun game");
+	sf::RenderWindow window(sf::VideoMode(wSize), "game?");
 	window.setFramerateLimit(60);
 	window.setPosition({1930, 10}); // pretty arbitrary for now, top right of my second monitor
 
@@ -470,7 +507,7 @@ int main()
 	if(!backgroundSTTexture.loadFromFile("art/basicStars.png"))
 		std::cout << "Sprite not loaded :(" << std::endl;
 	backgroundSTTexture.setRepeated(true);
-	Background a(bSize, bPosition, backgroundBGTexture, backgroundSTTexture);
+	Background bg(bSize, bPosition, backgroundBGTexture, backgroundSTTexture);
 
 	// arena
 	
@@ -489,6 +526,25 @@ int main()
 	if(!playerTexture.loadFromFile("art/basicSpriteL.png"))
 		std::cout << "Sprite not loaded :(" << std::endl;
 	Player p(pSize, pPosition, pVelocity, pRotation, pMaxVelocity, pAcceleration, pdrag, pRotationVelocity, playerTexture);
+
+
+	// testing object
+	sf::Vector2i o1Size(40, 40);
+	sf::Vector2f o1Position(900, 400);
+	sf::Vector2f o1Velocity = {0, 0};
+	float o1Rotation = 90;
+	float o1MaxVelocity = 1000;
+	float o1Drag = 0.01;
+	float o1RotationVelocity = 4;
+	sf::Texture o1Texture;
+	if(!o1Texture.loadFromFile("art/basicMeteor.png"))
+		std::cout << "Sprite not loaded :(" << std::endl;
+	PhysicsObject o1(o1Size, o1Position, o1Velocity, o1Rotation, o1MaxVelocity, o1Drag, o1RotationVelocity, o1Texture);
+
+	// list of all objects to be drawn
+	std::vector<PhysicsObject> gameObjects;
+	gameObjects.push_back(p);
+	gameObjects.push_back(o1);
 
 	// time
 	sf::Clock clock;
@@ -519,12 +575,12 @@ int main()
 		// if more time has passed than Dt, we can progress the game
 		while(timeAccumulator >= fixedDt)
 		{
-			updateGame(fixedDt, window, buttons, p, a);
+			updateGame(fixedDt, window, buttons, p, bg);
 			timeAccumulator -= fixedDt;
 		}
 		playerView.setCenter(p.getPosition());
 		window.setView(playerView);
-		drawGame(window, p, a);
+		drawGame(window, p, bg);
 	}
 	window.close();
 	return 0;
