@@ -1,16 +1,21 @@
+#include "SFML/Graphics/Rect.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Graphics/Texture.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "SFML/Window/Keyboard.hpp"
-#include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
+#include "SFML/Graphics.hpp"
+#include "SFML/Window.hpp"
 #include <iostream>
 #include <cmath>
+#include <random>
 
-const int numButtons = 5;
-const int windowWidth = 1500;
-const int windowHeight = 750;
-int numObjects = 0;
+#include "globals.h"
+#include "enums.h"
+#include "BasicObject.h"
+#include "VisualObject.h"
+#include "StaticPhysicalObject.h"
+#include "PhysicalObject.h"
+#include "Player.h"
 
 float degreesToRadians(float degrees)
 {
@@ -22,399 +27,55 @@ float radiansToDegrees(float radians)
 	return (radians * (180 / M_PI));
 }
 
-void enforceMaximumVelocity(sf::Vector2f& currentVelocity, sf::Vector2f fAccel, float direction, float maximumVelocity)
+void addDragForce(sf::Vector2f& currentVelocity, float dragCoef, float mass, float deltaTime)
 {
-	// range of possible velocitys to stay inbetween
-	float maxXVelocity = maximumVelocity * std::cos(direction);
-	float maxYVelocity = maximumVelocity * std::sin(direction);
-	float minXVelocity = -maximumVelocity * std::cos(direction);
-	float minYVelocity = -maximumVelocity * std::sin(direction);
-
-	std::cout << "Maximum velocity allowed: " << maximumVelocity << ", (" << maxXVelocity << ", " << maxYVelocity << ") and (" << minXVelocity << ", " << minYVelocity << ")" << std::endl;
-	std::cout << "Current velocity " << currentVelocity.x << ", " << currentVelocity.y << std::endl;
-
-	// make sure we're not going too fast
-	// max/mins are based on quadrant
-	// quadrant facing
-	int quad = 0;
-	if(direction <= M_PI/2)
-		quad = 1;
-	else if(direction <= M_PI)
-		quad = 2;
-	else if(direction <= 3 * M_PI / 2)
-		quad = 3;
-	else
-		quad = 4;
-	switch(quad)
-	{
-		case 1:
-			if(currentVelocity.x > maxXVelocity)
-			{
-				// std::cout << "Maximum X Speed Reached" << std::endl;
-				currentVelocity.x -= fAccel.x;
-			}
-			else if(currentVelocity.x < minXVelocity)
-			{
-				// std::cout << "Minimum X Speed Reached" << std::endl;
-				currentVelocity.x -= fAccel.x;
-			}
-			if(currentVelocity.y > maxYVelocity)
-			{
-				// std::cout << "Maximum Y Speed Reached" << std::endl;
-				currentVelocity.y -= fAccel.y;
-			}
-			else if(currentVelocity.y < minYVelocity)
-			{
-				// std::cout << "Minimum Y Speed Reached" << std::endl;
-				currentVelocity.y -= fAccel.y;
-			}
-			break;
-		case 2:
-			if(currentVelocity.x < maxXVelocity)
-			{
-				// std::cout << "Maximum X Speed Reached" << std::endl;
-				currentVelocity.x -= fAccel.x;
-			}
-			else if(currentVelocity.x > minXVelocity)
-			{
-				// std::cout << "Minimum X Speed Reached" << std::endl;
-				currentVelocity.x -= fAccel.x;
-			}
-			if(currentVelocity.y > maxYVelocity)
-			{
-				// std::cout << "Maximum Y Speed Reached" << std::endl;
-				currentVelocity.y -= fAccel.y;
-			}
-			else if(currentVelocity.y < minYVelocity)
-			{
-				// std::cout << "Minimum Y Speed Reached" << std::endl;
-				currentVelocity.y -= fAccel.y;
-			}
-			break;
-		case 3:
-			if(currentVelocity.x < maxXVelocity)
-			{
-				// std::cout << "Maximum X Speed Reached" << std::endl;
-				currentVelocity.x -= fAccel.x;
-			}
-			else if(currentVelocity.x > minXVelocity)
-			{
-				// std::cout << "Minimum X Speed Reached" << std::endl;
-				currentVelocity.x -= fAccel.x;
-			}
-			if(currentVelocity.y < maxYVelocity)
-			{
-				// std::cout << "Maximum Y Speed Reached" << std::endl;
-				currentVelocity.y -= fAccel.y;
-			}
-			else if(currentVelocity.y > minYVelocity)
-			{
-				// std::cout << "Minimum Y Speed Reached" << std::endl;
-				currentVelocity.y -= fAccel.y;
-			}
-			break;
-		case 4:
-			if(currentVelocity.x > maxXVelocity)
-			{
-				// std::cout << "Maximum X Speed Reached" << std::endl;
-				currentVelocity.x -= fAccel.x;
-			}
-			else if(currentVelocity.x < minXVelocity)
-			{
-				// std::cout << "Minimum X Speed Reached" << std::endl;
-				currentVelocity.x -= fAccel.x;
-			}
-			if(currentVelocity.y < maxYVelocity)
-			{
-				// std::cout << "Maximum Y Speed Reached" << std::endl;
-				currentVelocity.y -= fAccel.y;
-			}
-			else if(currentVelocity.y > minYVelocity)
-			{
-				// std::cout << "Minimum Y Speed Reached" << std::endl;
-				currentVelocity.y -= fAccel.y;
-			}
-			break;
-	}
-}
-
-void addDragForce(sf::Vector2f& currentVelocity, float dragCoef)
-{
-	std::cout << "Drag Force: " << -dragCoef * currentVelocity.x << ", " << -dragCoef * currentVelocity.y << std::endl;
-	currentVelocity += {-dragCoef * currentVelocity.x, -dragCoef * currentVelocity.y};
+	sf::Vector2f dragForce = {0, 0};
+	dragForce.x = (1.0f - dragCoef * deltaTime / mass);
+	currentVelocity.x = currentVelocity.x * (1.f - dragCoef * deltaTime / mass);
+	currentVelocity.y = currentVelocity.y * (1.f - dragCoef * deltaTime / mass);
 	return;
 }
 
-void addAccelerationForce(sf::Vector2f& currentVelocity, float accelerationMagnitude, float direction, float maximumVelocity)
+void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, float direction, bool backward, float maximumVelocity, float mass, float deltaTime)
 {
-		// force of acceleration
-		sf::Vector2f fAccel = {0, 0};
-		if(accelerationMagnitude != 0)
-		{
-			if(accelerationMagnitude > 0){
-				fAccel = {accelerationMagnitude * std::cos(direction), -accelerationMagnitude * std::sin(direction)};
-			}
-			if(accelerationMagnitude < 0){
-				// reverse is slower to reach max velocity
-				fAccel = {0.5f*accelerationMagnitude * std::cos(direction), -0.5f*accelerationMagnitude * std::sin(direction)};
-			}
-		}
-
-		currentVelocity.x += fAccel.x;
-		currentVelocity.y += fAccel.y;
-
-		std::cout << "Acceleration Force: " << fAccel.x << ", " << fAccel.y << std::endl;
+	// get the maximum components
+	float maxXVelocity = maximumVelocity * std::abs(std::cos(direction));
+	float maxYVelocity = maximumVelocity * std::abs(std::sin(direction));
 	
-		enforceMaximumVelocity(currentVelocity, fAccel, direction, maximumVelocity);
+	std::cout << "Maximum velocity allowed: " << maximumVelocity << ", (" << maxXVelocity << ", " << maxYVelocity << ")" << std::endl;
+	std::cout << "Current velocity " << currentVelocity.x << ", " << currentVelocity.y << std::endl;
+
+	sf::Vector2f fAccel = {0, 0};
+	if(acceleration != 0)
+	{
+		if(acceleration > 0)
+		{
+			fAccel.x = (acceleration / mass) * std::cos(direction) * deltaTime;
+			fAccel.y = (-acceleration / mass) * std::sin(direction) * deltaTime;
+		} else if(backward) // reverse direction
+		{
+			fAccel.x = (-0.5f * acceleration / mass) * std::cos(direction) * deltaTime;
+			fAccel.y = (0.5f * acceleration / mass) * std::sin(direction) * deltaTime;
+		}
+	}
+	sf::Vector2f newVelocity = {currentVelocity.x + fAccel.x, currentVelocity.y + fAccel.y};
+
+	// only add acceleration if we wouldn't go over the max
+	if(std::abs(newVelocity.x) <= maxXVelocity)
+	{
+		// std::cout << "Max not reached in x direction, accelerate" << std::endl;
+		currentVelocity.x = newVelocity.x;
+	} else std::cout << "Max x velocity reached, acceleration ignored" << std::endl;
+	if(std::abs(newVelocity.y) <= maxYVelocity)
+	{
+		// std::cout << "Max not reached in y direction, accelerate" << std::endl;
+		currentVelocity.y = newVelocity.y;
+	} else std::cout << "Max y velocity reached, acceleration ignored" << std::endl;
+
+	std::cout << "Acceleration Force: " << fAccel.x << ", " << fAccel.y << std::endl;
+
+	return;
 }
-
-class Background
-{
-	sf::Vector2i m_size;
-	sf::Vector2f m_position;
-
-	sf::Texture m_bgTexture;
-	sf::IntRect m_bgSpriteRect;
-	sf::Sprite m_bgSprite;
-
-	sf::Texture m_stTexture;
-	sf::IntRect m_stSpriteRect;
-	sf::Sprite m_stSprite;
-
-public:
-
-	Background(sf::Vector2i size, sf::Vector2f position, const sf::Texture& bgTexture, const sf::Texture& stTexture)
-			: m_size(size)
-			  , m_position(position)
-			  , m_bgTexture(bgTexture)
-			  , m_bgSpriteRect(sf::Vector2i{-size.x/2, size.y/2}, size)
-			  , m_bgSprite(m_bgTexture, m_bgSpriteRect)
-			  , m_stTexture(stTexture)
-			  , m_stSpriteRect(sf::Vector2i{-size.x/2, size.y/2}, size)
-			  , m_stSprite(m_stTexture, m_stSpriteRect)
-	{
-		m_bgSprite.setPosition({m_position.x, m_position.y});
-		m_stSprite.setPosition({m_position.x, m_position.y});
-	}
-
-	sf::Sprite getbgSprite()
-	{
-		return m_bgSprite;
-	}
-
-	sf::Sprite getstSprite()
-	{
-		return m_stSprite;
-	}
-
-	void update(float deltaTime, sf::Vector2f playerVelocity)
-	{
-		// move the background at different rates in relation to the player for a feeling of depth
-		m_bgSprite.move(0.5f * playerVelocity * deltaTime);
-
-		// starts keeping static for movement reference (feels good though)
-		// m_stSprite.move(0.8f * playerVelocity * deltaTime);
-		return;
-	}
-};
-
-class PhysicsObject
-{
-protected:
-	int m_objectID;
-
-	sf::Vector2i m_size;
-	sf::Vector2f m_position;
-	sf::Vector2f m_velocity;
-	float m_rotation;
-
-	float m_mVelocity;
-
-	float m_drag;
-	float m_rotVelocity;
-
-	sf::Texture m_texture;
-	sf::IntRect m_spriteRect;
-	sf::Sprite m_sprite;
-
-public:
-
-	PhysicsObject(sf::Vector2i size, sf::Vector2f position, sf::Vector2f velocity, float rotation, float maxVelocity, float drag, float rotationVelocity, const sf::Texture& texture)
-			: m_objectID(++numObjects)
-			  , m_size(size)
-			  , m_position(position)
-			  , m_velocity(velocity)
-			  , m_rotation(rotation)
-			  , m_mVelocity(maxVelocity)
-			  , m_drag(drag)
-			  , m_rotVelocity(rotationVelocity)
-			  , m_texture(texture)
-			  , m_spriteRect(sf::Vector2i{0, 0},size)
-			  , m_sprite(m_texture, m_spriteRect)
-			  {
-				  m_sprite.setOrigin({size.x / 2.f, size.y / 2.f});
-				  std::cout << "PhysicsObject Constructed" << std::endl;
-			  }
-
-	void updateVelocity()
-	{
-		// zero out the velocity if its small enough
-		if(m_velocity.x < 0.5 && m_velocity.x > -0.5) m_velocity.x = 0;
-		if(m_velocity.y < 0.5 && m_velocity.y > -0.5) m_velocity.y = 0;
-
-		// get the angle the player is facing
-		float forward = m_rotation;
-		forward = degreesToRadians(forward);
-
-		// add drag and acceleration forces
-		addDragForce(m_velocity, m_drag);
-
-		std::cout << "Velocity: " << m_velocity.x << ", " << m_velocity.y << std::endl;
-		std::cout << "Position: " << m_position.x << ", " << m_position.y << std::endl;
-		std::cout << std::endl;
-		return;
-	}
-
-	void updatePosition(const float deltaTime)
-	{
-		// update the position
-		m_position += m_velocity * deltaTime;
-		m_sprite.setPosition({m_position.x, m_position.y});
-		return;
-	}
-
-	void rotate(const float rotVal)
-	{
-		// std::cout << "Rotating player by rotVal: " << rotVal << std::endl;
-		m_sprite.rotate(sf::degrees(rotVal));
-		m_rotation -= rotVal;
-		if(m_rotation >= 360) m_rotation -= 360;
-		if(m_rotation < 0) m_rotation += 360;
-		return;
-	}
-
-	void update(float deltaTime, bool* (&buttons)[numButtons])
-	{
-		// handle rotation
-		float potentialRotation = 0;
-		if(*buttons[3]) 
-		{
-			potentialRotation -= m_rotVelocity;
-		}
-		if(*buttons[4]) 
-		{
-			potentialRotation += m_rotVelocity;
-		}
-		if(potentialRotation != 0) 
-			this->rotate(potentialRotation);
-
-		// handle acceleration
-		sf::Vector2f curVelocity = m_velocity;
-		this->updateVelocity();
-		this->updatePosition(deltaTime);
-
-	}
-
-	sf::Vector2f getPosition() const
-	{
-		return m_position;
-	}
-	sf::Vector2f getVelocity() const
-	{
-		return m_velocity;
-	}
-	float getRotation() const
-	{
-		return m_rotation;
-	}
-
-	float getMaxVelocity() const
-	{
-		return m_mVelocity;
-	}
-
-	float getdrag() const
-	{
-		return m_drag;
-	}
-
-	float getRotVelocity() const
-	{
-		return m_rotVelocity;
-	}
-
-	sf::Sprite getSprite() const
-	{
-		return m_sprite;
-	}
-};
-
-class Player : public PhysicsObject
-{
-	float m_acceleration;
-public:
-
-	Player(sf::Vector2i size, sf::Vector2f position, sf::Vector2f velocity, float rotation, float maxVelocity, float acceleration, float drag, float rotationVelocity, const sf::Texture& texture)
-			: PhysicsObject(size, position, velocity, rotation, maxVelocity, drag, rotationVelocity, texture)
-			  , m_acceleration(acceleration)
-			  {
-				  m_sprite.setOrigin({21, 27});
-				  std::cout << "Player Constructed" << std::endl;
-			  }
-
-
-	void updateVelocity(float accelerate)
-	{
-		// zero out the velocity if its small enough
-		if(m_velocity.x < 0.1 && m_velocity.x > -0.1) m_velocity.x = 0;
-		if(m_velocity.y < 0.1 && m_velocity.y > -0.1) m_velocity.y = 0;
-
-		// get the angle the player is facing
-		float forward = m_rotation;
-		forward = degreesToRadians(forward);
-
-		// add drag and acceleration forces
-		addDragForce(m_velocity, m_drag);
-		addAccelerationForce(m_velocity, accelerate, forward, getMaxVelocity());
-
-		std::cout << "Velocity: " << m_velocity.x << ", " << m_velocity.y << std::endl;
-		std::cout << "Position: " << m_position.x << ", " << m_position.y << std::endl;
-		std::cout << std::endl;
-		return;
-	}
-
-	void update(float deltaTime, bool* (&buttons)[numButtons])
-	{
-		// handle rotation
-		float potentialRotation = 0;
-		if(*buttons[3]) 
-		{
-			potentialRotation -= m_rotVelocity;
-		}
-		if(*buttons[4]) 
-		{
-			potentialRotation += m_rotVelocity;
-		}
-		if(potentialRotation != 0) 
-			this->rotate(potentialRotation);
-
-		// handle acceleration
-		sf::Vector2f curVelocity = m_velocity;
-		int accel = 0;
-		if(*buttons[1] && !*buttons[2])
-		{
-			accel = m_acceleration;
-		}
-		if(*buttons[2] && !*buttons[1])
-		{
-			// std::cout << "decelerating" << std::endl;
-			accel = -m_acceleration;
-		}
-		this->updateVelocity(accel);
-		this->updatePosition(deltaTime);
-
-	}
-};
 
 void updateButtonPresses(bool* (&buttons)[numButtons])
 {
@@ -460,19 +121,94 @@ void updateButtonPresses(bool* (&buttons)[numButtons])
 		}
 }
 
-void updateGame(float deltaTime, sf::RenderWindow& window, bool* (&buttons)[numButtons], Player& player, Background& background)
+void updateGame(sf::RenderWindow& window, Player& player, bool* (&buttons)[numButtons], std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
 {
-	player.update(deltaTime, buttons);
-	background.update(deltaTime, player.getVelocity());
+	// draw visual objects
+	for(auto& obj : visualObjects)
+	{
+		obj.update(FixedDeltaTime, player.getVelocity());
+	}
+	
+	// draw physical objects
+	for(auto& obj : physicalObjects)
+	{
+		obj.update();
+	}
+
+	player.update(buttons);
 }
 
-void drawGame(sf::RenderWindow& window, Player& player, Background& background)
+void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
 {
-		window.clear();
-		window.draw(background.getbgSprite());
-		window.draw(background.getstSprite());
-		window.draw(player.getSprite());
-		window.display();
+	// clear the window, then draw, then display
+	window.clear();
+
+	// Get view in correct spot
+	view.setCenter(player.getPosition());
+	window.setView(view);
+
+	// draw visual objects
+	for(auto& obj : visualObjects)
+	{
+		window.draw(obj.getSprite());
+	}
+	
+	// draw physical objects
+	for(auto& obj : physicalObjects)
+	{
+		window.draw(obj.getSprite());
+	}
+
+	// draw the player
+	window.draw(player.getSprite());
+	window.display();
+}
+
+void setupVisualObjects(std::vector<VisualObject>& objects)
+{
+	// far background
+	sf::Vector2i bSize(1000 * windowWidth, 1000 * windowHeight);
+	sf::Vector2f bPosition(-bSize.x/2.f, -bSize.y/2.f);
+	float bRotation = 90;
+	RenderLayer bRenderLayer = RenderLayer::FarBackground;
+	RenderLayer bRenderLayer2 = RenderLayer::CloseBackground;
+	std::string bgtFilename = "art/basicBackground.png";
+	std::string bstFilename = "art/basicStars.png";
+	VisualObject bg(bPosition, bSize, bRotation, bRenderLayer, bgtFilename);
+	VisualObject fg(bPosition, bSize, bRotation, bRenderLayer2, bstFilename);
+
+	objects.push_back(bg);
+	objects.push_back(fg);
+	
+	return;
+}
+
+void setupPhysicalObjects(std::vector<PhysicalObject>& objects)
+{
+	// testing meteor
+	sf::Vector2i objectSize(40, 40);
+	float objectRotation = 90;
+	RenderLayer objectRenderLayer = RenderLayer::Main;
+	float objectMass = 50;
+	float objectRadius = 40;
+	sf::Vector2f objectVelocity = {0, 0};
+	float objectAcceleration = 0;
+	float objectDragCoef = 50;
+	float objectRotationVelocity = 4;
+	std::string objectFilename = "art/basicMeteor.png";
+
+	// create 10 objects randomely on the first screen
+	std::random_device rd;
+	std::mt19937 rng(rd());
+	std::uniform_real_distribution<float> distX(0.f, (float)windowWidth);
+	std::uniform_real_distribution<float> distY(0.f, (float)windowHeight);
+
+	for(int i = 0; i < 10; i++)
+	{
+		objects.push_back(PhysicalObject(sf::Vector2f(distX(rng), distY(rng)), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity));
+	}
+
+
 }
 
 int main()
@@ -490,77 +226,50 @@ int main()
 	buttons[3] = &leftPressed;
 	buttons[4] = &rightPressed;
 
-	// window
-	sf::Vector2<uint> wSize(windowWidth, windowHeight);
-	sf::RenderWindow window(sf::VideoMode(wSize), "game?");
-	window.setFramerateLimit(60);
-	window.setPosition({1930, 10}); // pretty arbitrary for now, top right of my second monitor
-
-	// background
-	sf::Vector2i bSize(1000 * windowWidth, 1000 * windowHeight);
-	sf::Vector2f bPosition(-bSize.x/2.f, -bSize.y/2.f);
-	sf::Texture backgroundBGTexture;
-	if(!backgroundBGTexture.loadFromFile("art/basicBackground.png"))
-		std::cout << "Sprite not loaded :(" << std::endl;
-	backgroundBGTexture.setRepeated(true);
-	sf::Texture backgroundSTTexture;
-	if(!backgroundSTTexture.loadFromFile("art/basicStars.png"))
-		std::cout << "Sprite not loaded :(" << std::endl;
-	backgroundSTTexture.setRepeated(true);
-	Background bg(bSize, bPosition, backgroundBGTexture, backgroundSTTexture);
-
-	// arena
+	// setup game objects
 	
-
 	// player
-	sf::Vector2i pSize(41, 41);
 	sf::Vector2f pPosition(900, 500);
-	sf::Vector2f pVelocity = {0, 0};
+	sf::Vector2i pSize(41, 41);
 	float pRotation = 90;
-	// float pMaxVelocity = 1000;
-	float pMaxVelocity = 1000; // for testing limits
-	float pAcceleration = 6;
-	float pdrag = 0.005;
+	RenderLayer pRenderLayer = RenderLayer::Main;
+	std::string pFilename = "art/basicSpriteL.png";
+	float pMass = 10;
+	float pRadius = 40;
+	sf::Vector2f pVelocity = {0, 0};
+	float pAcceleration = 5000;
 	float pRotationVelocity = 4;
-	sf::Texture playerTexture;
-	if(!playerTexture.loadFromFile("art/basicSpriteL.png"))
-		std::cout << "Sprite not loaded :(" << std::endl;
-	Player p(pSize, pPosition, pVelocity, pRotation, pMaxVelocity, pAcceleration, pdrag, pRotationVelocity, playerTexture);
+	float pDrag = 4;
+	float pMaxVelocity = 500;
+	Player player = Player(pPosition, pSize, pRotation, pRenderLayer, pFilename, pMass, pRadius, pVelocity, pAcceleration, pDrag, pRotationVelocity, pMaxVelocity);
 
+	// visual
+	std::vector<VisualObject> visualObjects;
+	setupVisualObjects(visualObjects);
 
-	// testing object
-	sf::Vector2i o1Size(40, 40);
-	sf::Vector2f o1Position(900, 400);
-	sf::Vector2f o1Velocity = {0, 0};
-	float o1Rotation = 90;
-	float o1MaxVelocity = 1000;
-	float o1Drag = 0.01;
-	float o1RotationVelocity = 4;
-	sf::Texture o1Texture;
-	if(!o1Texture.loadFromFile("art/basicMeteor.png"))
-		std::cout << "Sprite not loaded :(" << std::endl;
-	PhysicsObject o1(o1Size, o1Position, o1Velocity, o1Rotation, o1MaxVelocity, o1Drag, o1RotationVelocity, o1Texture);
+	// physical
+	std::vector<PhysicalObject> physicalObjects;
+	setupPhysicalObjects(physicalObjects);
 
-	// list of all objects to be drawn
-	std::vector<PhysicsObject> gameObjects;
-	gameObjects.push_back(p);
-	gameObjects.push_back(o1);
+	// window
+	sf::Vector2<uint> winSize(windowWidth, windowHeight);
+	sf::RenderWindow window(sf::VideoMode(winSize), "game");
+	window.setFramerateLimit(frameRateLimit);
+	window.setPosition(windowPos);
+
+	//view
+	sf::View playerView(player.getPosition() + player.getSprite().getOrigin(), {(float)viewWidth, (float)viewHeight});
+	window.setView(playerView);
 
 	// time
 	sf::Clock clock;
-	const float fixedDt = 1.0f / 60.0f; // fixed delta time
 	float timeAccumulator = 0.0f;
-
-	// view
-	sf::View playerView(p.getPosition()+p.getSprite().getOrigin(), {1500, 750});
-	window.setView(playerView);
 
 	while(window.isOpen())
 	{
-		// time since last frame, maximum of 0.25 enforced to prevent edge cases
 		float frameTime = clock.restart().asSeconds();
-		if(frameTime > 0.25f)
-			frameTime = 0.25f;
+		if(frameTime > 0.25)
+			frameTime = 0.25;
 		timeAccumulator += frameTime;
 
 		updateButtonPresses(buttons);
@@ -572,16 +281,12 @@ int main()
 			}
 		}
 
-		// if more time has passed than Dt, we can progress the game
-		while(timeAccumulator >= fixedDt)
+		while(timeAccumulator >= FixedDeltaTime)
 		{
-			updateGame(fixedDt, window, buttons, p, bg);
-			timeAccumulator -= fixedDt;
+			updateGame(window, player, buttons, visualObjects, physicalObjects);
+			timeAccumulator -= FixedDeltaTime;
 		}
-		playerView.setCenter(p.getPosition());
-		window.setView(playerView);
-		drawGame(window, p, bg);
+		drawGame(window, playerView, player, visualObjects, physicalObjects);
 	}
-	window.close();
 	return 0;
 }
