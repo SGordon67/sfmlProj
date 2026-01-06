@@ -13,10 +13,21 @@ BasicObject::BasicObject(sf::Vector2f position, sf::Vector2i size, float rotatio
 	// std::cout << "BasicObject constructed" << std::endl;
 }
 
+int BasicObject::getObjectID() const
+{
+	return m_objectID;
+}
+
 sf::Vector2f BasicObject::getPosition() const
 {
 	return m_position;
 }
+
+sf::Vector2i BasicObject::getSize() const
+{
+	return m_size;
+}
+
 float BasicObject::getRotation() const
 {
 	return m_rotation;

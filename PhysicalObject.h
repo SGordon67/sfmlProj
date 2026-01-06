@@ -15,15 +15,22 @@ protected:
 
 	float m_rotationVelocity;
 
+	float m_maxVelocity;
+
 public:
-	PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity);
+	PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity, float maxVelocity);
 
+	float getMass() const;
+	float getRadius() const;
 	sf::Vector2f getVelocity() const;
+	float getMaxVelocity() const;
 
-	void updatePosition(float deltaTime);
+	void rotate(const float rotation);
 
-	virtual void updateVelocity(float accelerate);
-	virtual void update();
+	void updateVelocity(float accelerate, bool backward);
+	void updatePosition(float deltaTime, std::vector<PhysicalObject>& physicalObjects);
+
+	virtual void update(std::vector<PhysicalObject>& physicalObjects);
 };
 
 #endif

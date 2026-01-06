@@ -7,46 +7,22 @@ extern void addDragForce(sf::Vector2f& currentVelocity, float dragCoef, float ma
 extern void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, float direction, bool backward, float maximumVelocity, float mass, float deltaTime);
 
 Player::Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity, float maxVelocity)
-	: PhysicalObject(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, dragCoef, rotationVelocity)
-		, m_maxVelocity(maxVelocity)
+	: PhysicalObject(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, dragCoef, rotationVelocity, maxVelocity)
 {
-	m_sprite.setOrigin({21, 25}); // roughtly the point of rotation I want
+	m_sprite.setOrigin({14.5, 18}); // roughtly the point of rotation I want
 	std::cout << "Player constructed" << std::endl;
 }
 
-float Player::getMaxVelocity()
+void Player::printInfo()
 {
-	return m_maxVelocity;
+	std::cout << std::endl << "Player Info: " << std::endl;
+	std::cout << "Position: (" << m_position.x << ", " << m_position.y << ")" << std::endl;
+	std::cout << "Velocity: (" << m_velocity.x << ", " << m_velocity.y << ")" << std::endl;
 }
 
-void Player::rotate(const float rotation)
-{
-	// std::cout << "Rotation player by: " << rotation << " degrees" << std::endl;
-	m_sprite.rotate(sf::degrees(rotation));
-	m_rotation -= rotation;
-	if(m_rotation >= 360) m_rotation -= 360;
-	if(m_rotation < 0) m_rotation += 360;
-}
 
-void Player::updateVelocity(float accelerate, bool backward) 
-{
-	// zero out the velocity if its small enough
-	if(m_velocity.x < 0.5 && m_velocity.x > -0.5) m_velocity.x = 0;
-	if(m_velocity.y < 0.5 && m_velocity.y > -0.5) m_velocity.y = 0;
 
-	float direction = m_rotation;
-	if(backward) direction += 180;
-	direction = degreesToRadians(direction);
-
-	addDragForce(m_velocity, m_dragCoef, m_mass, FixedDeltaTime);
-	addAccelerationForce(m_velocity, accelerate, direction, backward, getMaxVelocity(), m_mass, FixedDeltaTime);
-
-	std::cout << "Velocity: " << m_velocity.x << ", " << m_velocity.y << std::endl;
-	std::cout << "Position: " << m_position.x << ", " << m_position.y << std::endl;
-	std::cout << std::endl;
-}
-
-void Player::update(bool* (&buttons)[numButtons])
+void Player::update(bool* (&buttons)[numButtons], std::vector<PhysicalObject>& physicalObjects)
 {
 	// handle rotation
 	float potentialRotation = 0;
@@ -76,5 +52,7 @@ void Player::update(bool* (&buttons)[numButtons])
 		accel = -m_acceleration;
 	}
 	this->updateVelocity(accel, backward);
-	this->updatePosition(FixedDeltaTime);
+	this->updatePosition(FixedDeltaTime, physicalObjects);
+
+	// this->printInfo();
 }

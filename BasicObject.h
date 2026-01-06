@@ -13,7 +13,9 @@ protected:
 public:
 	BasicObject(sf::Vector2f position, sf::Vector2i size, float rotation);
 
+	int getObjectID() const;
 	sf::Vector2f getPosition() const;
+	sf::Vector2i getSize() const;
 	float getRotation() const;
 
 	virtual void setPosition(sf::Vector2f position);

@@ -11,13 +11,10 @@
 class Player : public PhysicalObject
 {
 private:
-	float m_maxVelocity;
 public:
 	Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity, float maxVelocity);
-	float getMaxVelocity();
-	void rotate(const float rotation) override;
-	void updateVelocity(float accelerate, bool backward);
-	void update(bool* (&buttons)[numButtons]);
+	void printInfo();
+	void update(bool* (&buttons)[numButtons], std::vector<PhysicalObject>& physicalObjects);
 };
 
 #endif

@@ -62,7 +62,6 @@ void VisualObject::setPosition(sf::Vector2f position)
 {
 	m_position = position;
 	m_sprite.setPosition(m_position);
-	return;
 }
 
 void VisualObject::loadTexture(const std::string& filename)
@@ -72,7 +71,6 @@ void VisualObject::loadTexture(const std::string& filename)
 	m_texture.setRepeated(true);
 	m_sprite.setTexture(m_texture);
 	std::cout << "Texture loaded from file :) " << std::endl;
-	return;
 }
 
 void VisualObject::rotate(const float rotation)
@@ -90,7 +88,7 @@ void VisualObject::update(float deltaTime, sf::Vector2f relationalVelocity)
 	switch(m_renderLayer)
 	{
 		case RenderLayer::FarBackground:
-			std::cout << "Moving the far background" << std::endl;
+			// std::cout << "Moving the far background" << std::endl;
 			m_sprite.move(0.5f * relationalVelocity * deltaTime);
 			break;
 		case RenderLayer::CloseBackground:
@@ -103,6 +101,4 @@ void VisualObject::update(float deltaTime, sf::Vector2f relationalVelocity)
 			// m_sprite.move(1.3f * relationalVelocity * deltaTime);
 			break;
 	}
-
-	return;
 }

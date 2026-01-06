@@ -1,3 +1,4 @@
+#include "SFML/Graphics/CircleShape.hpp"
 #include "SFML/Graphics/Rect.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Graphics/Texture.hpp"
@@ -27,13 +28,39 @@ float radiansToDegrees(float radians)
 	return (radians * (180 / M_PI));
 }
 
+void handleCollision(PhysicalObject& mainObject, sf::Vector2f newPosition, PhysicalObject& otherObject)
+{
+	std::cout << "COLLISION BETWEEN OBJECTS: (" << newPosition.x << ", " << newPosition.y << ") and (" << otherObject.getPosition().x << ", " << otherObject.getPosition().y << ")" << std::endl;
+}
+
+void detectCollision(PhysicalObject& mainObject, sf::Vector2f newPosition, std::vector<PhysicalObject>& physicalObjects)
+{
+	// offset to measure from center of object
+	sf::Vector2f mainPosition = newPosition;
+	float mainRadius = mainObject.getRadius();
+
+	for(auto& obj : physicalObjects)
+	{
+		if(mainObject.getObjectID() == obj.getObjectID()) continue;
+
+		sf::Vector2f objPosition = obj.getPosition();
+		float objRadius = obj.getRadius();
+
+		float distance = std::sqrt(std::pow((objPosition.y - mainPosition.y), 2) + std::pow((objPosition.x - mainPosition.x), 2));
+		if(distance <= (mainRadius + objRadius))
+		{
+			handleCollision(mainObject, mainPosition, obj);
+		}
+	}
+	std::cout << std::endl;
+}
+
 void addDragForce(sf::Vector2f& currentVelocity, float dragCoef, float mass, float deltaTime)
 {
 	sf::Vector2f dragForce = {0, 0};
 	dragForce.x = (1.0f - dragCoef * deltaTime / mass);
 	currentVelocity.x = currentVelocity.x * (1.f - dragCoef * deltaTime / mass);
 	currentVelocity.y = currentVelocity.y * (1.f - dragCoef * deltaTime / mass);
-	return;
 }
 
 void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, float direction, bool backward, float maximumVelocity, float mass, float deltaTime)
@@ -42,8 +69,8 @@ void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, flo
 	float maxXVelocity = maximumVelocity * std::abs(std::cos(direction));
 	float maxYVelocity = maximumVelocity * std::abs(std::sin(direction));
 	
-	std::cout << "Maximum velocity allowed: " << maximumVelocity << ", (" << maxXVelocity << ", " << maxYVelocity << ")" << std::endl;
-	std::cout << "Current velocity " << currentVelocity.x << ", " << currentVelocity.y << std::endl;
+	// std::cout << "Maximum velocity allowed: " << maximumVelocity << ", (" << maxXVelocity << ", " << maxYVelocity << ")" << std::endl;
+	// std::cout << "Current velocity " << currentVelocity.x << ", " << currentVelocity.y << std::endl;
 
 	sf::Vector2f fAccel = {0, 0};
 	if(acceleration != 0)
@@ -65,16 +92,16 @@ void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, flo
 	{
 		// std::cout << "Max not reached in x direction, accelerate" << std::endl;
 		currentVelocity.x = newVelocity.x;
-	} else std::cout << "Max x velocity reached, acceleration ignored" << std::endl;
+	}
+	// else std::cout << "Max x velocity reached, acceleration ignored" << std::endl;
 	if(std::abs(newVelocity.y) <= maxYVelocity)
 	{
 		// std::cout << "Max not reached in y direction, accelerate" << std::endl;
 		currentVelocity.y = newVelocity.y;
-	} else std::cout << "Max y velocity reached, acceleration ignored" << std::endl;
+	}
+	// else std::cout << "Max y velocity reached, acceleration ignored" << std::endl;
 
-	std::cout << "Acceleration Force: " << fAccel.x << ", " << fAccel.y << std::endl;
-
-	return;
+	// std::cout << "Acceleration Force: " << fAccel.x << ", " << fAccel.y << std::endl;
 }
 
 void updateButtonPresses(bool* (&buttons)[numButtons])
@@ -123,19 +150,19 @@ void updateButtonPresses(bool* (&buttons)[numButtons])
 
 void updateGame(sf::RenderWindow& window, Player& player, bool* (&buttons)[numButtons], std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
 {
-	// draw visual objects
+	// update visual objects
 	for(auto& obj : visualObjects)
 	{
 		obj.update(FixedDeltaTime, player.getVelocity());
 	}
 	
-	// draw physical objects
+	// update physical objects
 	for(auto& obj : physicalObjects)
 	{
-		obj.update();
+		obj.update(physicalObjects);
 	}
 
-	player.update(buttons);
+	player.update(buttons, physicalObjects);
 }
 
 void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
@@ -157,9 +184,37 @@ void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vec
 	for(auto& obj : physicalObjects)
 	{
 		window.draw(obj.getSprite());
+
+		// draw the shapes used for collision
+		if(showHitboxes)
+		{
+			// get the offset coords to be centered
+
+			sf::Vector2f objPosition = obj.getPosition();
+			objPosition.x -= (obj.getSize().x / 2.f);
+			objPosition.y -= (obj.getSize().y / 2.f);
+
+			sf::CircleShape circle(obj.getRadius());
+			circle.setFillColor(sf::Color::Red);
+			circle.setPosition(objPosition);
+			window.draw(circle);
+		}
 	}
 
+
 	// draw the player
+	if(showHitboxes)
+	{
+		sf::Vector2f playerPosition = player.getPosition();
+		// playerPosition.x -= (player.getSize().x / 2.f);
+		// playerPosition.y -= (player.getSize().y / 2.f);
+
+		sf::CircleShape circle(player.getRadius());
+		circle.setFillColor(sf::Color::Red);
+		circle.setOrigin({player.getRadius(), player.getRadius()});
+		circle.setPosition(playerPosition);
+		window.draw(circle);
+	}
 	window.draw(player.getSprite());
 	window.display();
 }
@@ -179,23 +234,22 @@ void setupVisualObjects(std::vector<VisualObject>& objects)
 
 	objects.push_back(bg);
 	objects.push_back(fg);
-	
-	return;
 }
 
 void setupPhysicalObjects(std::vector<PhysicalObject>& objects)
 {
 	// testing meteor
-	sf::Vector2i objectSize(40, 40);
+	sf::Vector2i objectSize(17, 17);
 	float objectRotation = 90;
 	RenderLayer objectRenderLayer = RenderLayer::Main;
 	float objectMass = 50;
-	float objectRadius = 40;
+	float objectRadius = 8;
 	sf::Vector2f objectVelocity = {0, 0};
 	float objectAcceleration = 0;
 	float objectDragCoef = 50;
 	float objectRotationVelocity = 4;
 	std::string objectFilename = "art/basicMeteor.png";
+	float objectMaximumVelocity = 500; // equal to players for now
 
 	// create 10 objects randomely on the first screen
 	std::random_device rd;
@@ -205,10 +259,8 @@ void setupPhysicalObjects(std::vector<PhysicalObject>& objects)
 
 	for(int i = 0; i < 10; i++)
 	{
-		objects.push_back(PhysicalObject(sf::Vector2f(distX(rng), distY(rng)), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity));
+		objects.push_back(PhysicalObject(sf::Vector2f(distX(rng), distY(rng)), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
 	}
-
-
 }
 
 int main()
@@ -230,12 +282,12 @@ int main()
 	
 	// player
 	sf::Vector2f pPosition(900, 500);
-	sf::Vector2i pSize(41, 41);
+	sf::Vector2i pSize(29, 30);
 	float pRotation = 90;
 	RenderLayer pRenderLayer = RenderLayer::Main;
 	std::string pFilename = "art/basicSpriteL.png";
 	float pMass = 10;
-	float pRadius = 40;
+	float pRadius = 14;
 	sf::Vector2f pVelocity = {0, 0};
 	float pAcceleration = 5000;
 	float pRotationVelocity = 4;

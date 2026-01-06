@@ -3,6 +3,7 @@
 
 #include "SFML/System/Vector2.hpp"
 
+constexpr bool showHitboxes = true;
 constexpr int numButtons = 5;
 
 
