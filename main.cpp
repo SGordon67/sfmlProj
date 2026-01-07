@@ -13,7 +13,7 @@
 #include "globals.h"
 #include "enums.h"
 #include "BasicObject.h"
-#include "VisualObject.h"
+#include "BackgroundObject.h"
 #include "StaticPhysicalObject.h"
 #include "PhysicalObject.h"
 #include "Player.h"
@@ -228,7 +228,7 @@ void updateButtonPresses(bool* (&buttons)[numButtons])
 		}
 }
 
-void updateGame(sf::RenderWindow& window, Player& player, bool* (&buttons)[numButtons], std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
+void updateGame(sf::RenderWindow& window, Player& player, bool* (&buttons)[numButtons], std::vector<BackgroundObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
 {
 	// update visual objects
 	for(auto& obj : visualObjects)
@@ -245,7 +245,7 @@ void updateGame(sf::RenderWindow& window, Player& player, bool* (&buttons)[numBu
 	player.update(buttons, physicalObjects);
 }
 
-void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
+void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vector<BackgroundObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
 {
 	// clear the window, then draw, then display
 	window.clear();
@@ -272,7 +272,7 @@ void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vec
 	window.display();
 }
 
-void setupVisualObjects(std::vector<VisualObject>& objects)
+void setupBackgroundObjects(std::vector<BackgroundObject>& objects)
 {
 	// far background
 	sf::Vector2i bSize(1000 * windowWidth, 1000 * windowHeight);
@@ -282,8 +282,8 @@ void setupVisualObjects(std::vector<VisualObject>& objects)
 	RenderLayer bRenderLayer2 = RenderLayer::CloseBackground;
 	std::string bgtFilename = "art/basicBackground.png";
 	std::string bstFilename = "art/basicStars.png";
-	VisualObject bg(bPosition, bSize, bRotation, bRenderLayer, bgtFilename);
-	VisualObject fg(bPosition, bSize, bRotation, bRenderLayer2, bstFilename);
+	BackgroundObject bg(bPosition, bSize, bRotation, bRenderLayer, bgtFilename);
+	BackgroundObject fg(bPosition, bSize, bRotation, bRenderLayer2, bstFilename);
 
 	objects.push_back(bg);
 	objects.push_back(fg);
@@ -312,8 +312,8 @@ void setupPhysicalObjects(std::vector<PhysicalObject>& objects)
 
 	// custom objects
 	std::vector<sf::Vector2f*> mPositions[2];
-		objects.push_back(PhysicalObject(sf::Vector2f(0.1, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
-		objects.push_back(PhysicalObject(sf::Vector2f(worldWidth - 2*objectRadius, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
+	objects.push_back(PhysicalObject(sf::Vector2f(0.1, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
+	objects.push_back(PhysicalObject(sf::Vector2f(worldWidth - 2*objectRadius, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
 
 	for(int i = 0; i < 10; i++)
 	{
@@ -355,8 +355,8 @@ int main()
 	Player player = Player(pPosition, pSize, pRotation, pRenderLayer, pFilename, pMass, pRadius, pVelocity, pAcceleration, pDrag, pRotationVelocity, pMaxVelocity);
 
 	// visual
-	std::vector<VisualObject> visualObjects;
-	setupVisualObjects(visualObjects);
+	std::vector<BackgroundObject> visualObjects;
+	setupBackgroundObjects(visualObjects);
 
 	// physical
 	std::vector<PhysicalObject> physicalObjects;

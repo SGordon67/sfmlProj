@@ -1,10 +1,9 @@
 #ifndef PHYSICALOBJECT_H
 #define PHYSICALOBJECT_H
 
-#include "SFML/System/Vector2.hpp"
-#include "VisualObject.h"
+#include "BasicObject.h"
 
-class PhysicalObject : public VisualObject
+class PhysicalObject : public BasicObject
 {
 protected:
 	float m_mass;

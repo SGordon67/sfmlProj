@@ -1,7 +1,3 @@
-#include "SFML/Graphics/RenderWindow.hpp"
-#include "SFML/System/Vector2.hpp"
-#include "enums.h"
-#include "globals.h"
 #include "PhysicalObject.h"
 
 extern float degreesToRadians(float degrees);
@@ -11,7 +7,7 @@ extern void detectAndHandleCollision(PhysicalObject& object, std::vector<Physica
 extern sf::Vector2f wrapPosition(sf::Vector2f position);
 
 PhysicalObject::PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity, float maxVelocity)
-	: VisualObject(position, size, rotation, renderLayer, filename)
+	: BasicObject(position, size, rotation, renderLayer, filename)
 	, m_mass(mass)
 	, m_radius(radius)
 	, m_velocity(velocity)
@@ -51,7 +47,7 @@ void PhysicalObject::setVelocity(sf::Vector2f velocity)
 
 void PhysicalObject::rotate(const float rotation)
 {
-	// std::cout << "Rotate Ojbect by: " << rotation << " degrees" << std::endl;
+	// std::cout << "Rotate Object by: " << rotation << " degrees" << std::endl;
 	m_sprite.rotate(sf::degrees(rotation));
 	m_rotation -= rotation;
 	if(m_rotation >= 360) m_rotation -= 360;

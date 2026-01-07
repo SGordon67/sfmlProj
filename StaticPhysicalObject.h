@@ -1,9 +1,9 @@
 #ifndef STATICPHYSICALOBJECT_H
 #define STATICPHYSICALOBJECT_H
 
-#include "VisualObject.h"
+#include "BasicObject.h"
 
-class StaticPhysicalObject : public VisualObject
+class StaticPhysicalObject : public BasicObject
 {
 protected:
 public:

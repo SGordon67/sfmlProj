@@ -1,11 +1,6 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "SFML/System/Vector2.hpp"
-#include <cmath>
-
-#include "globals.h"
-#include "enums.h"
 #include "PhysicalObject.h"
 
 class Player : public PhysicalObject
