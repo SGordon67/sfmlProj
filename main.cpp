@@ -28,15 +28,83 @@ float radiansToDegrees(float radians)
 	return (radians * (180 / M_PI));
 }
 
-void handleCollision(PhysicalObject& mainObject, sf::Vector2f newPosition, PhysicalObject& otherObject)
+sf::Vector2f wrapPosition(sf::Vector2f position)
 {
-	std::cout << "COLLISION BETWEEN OBJECTS: (" << newPosition.x << ", " << newPosition.y << ") and (" << otherObject.getPosition().x << ", " << otherObject.getPosition().y << ")" << std::endl;
+	position.x = std::fmod(position.x, worldWidth);
+	position.y = std::fmod(position.y, worldHeight);
+
+	if(position.x < 0) position.x += worldWidth;
+	if(position.y < 0) position.y += worldHeight;
+
+	return position;
 }
 
-void detectCollision(PhysicalObject& mainObject, sf::Vector2f newPosition, std::vector<PhysicalObject>& physicalObjects)
+void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject, float deltaTime, float restitution)
+{
+	std::cout << "COLLISION BETWEEN OBJECTS: " << mainObject.getObjectID() << ", and " << otherObject.getObjectID() << ". " << std::endl;
+	std::cout << "\tCollision occurred at position: (" << mainObject.getPosition().x << ", " << mainObject.getPosition().y << ") and (" << otherObject.getPosition().x << ", " << otherObject.getPosition().y << ")" << std::endl;
+
+	// calculate the collision normal
+	sf::Vector2f delta = otherObject.getPosition() - mainObject.getPosition();
+
+	// use the shortest path (accounting for the position wrap)
+	if (std::abs(delta.x) > worldWidth / 2.0f) {
+		delta.x = delta.x > 0 ? delta.x - worldWidth 
+		                      : delta.x + worldWidth;
+	}
+	if (std::abs(delta.y) > worldHeight / 2.0f) {
+		delta.y = delta.y > 0 ? delta.y - worldHeight 
+		                      : delta.y + worldHeight;
+	}
+
+	float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
+
+	// avoid 0 edge case
+	if(distance == 0.0f)
+	{
+		delta = sf::Vector2f(1.0f, 0.0f);
+		distance = 1.0f;
+	}
+
+	// normalize collision normal
+	sf::Vector2f normal = delta / distance;
+
+	// relative velocity
+	sf::Vector2f relativeVelocity = mainObject.getVelocity() - otherObject.getVelocity();
+
+	// project the velocity to the normal
+	float velocityAlongNormal = relativeVelocity.dot(normal);
+
+	// prevent collision being reversed if objects are still touching and moveing away from eachother
+	if(velocityAlongNormal < 0.0f) return;
+
+	// calculate impulse scalar (restitution = 1 means perfectly elastic collision)
+	float impulseScalar = (-(1.0f + restitution) * velocityAlongNormal) / 
+			((1.0f / mainObject.getMass()) + (1.0f / otherObject.getMass()));
+
+	// apply impulse to velocities
+	sf::Vector2f impulse = normal * impulseScalar;
+	mainObject.setVelocity(mainObject.getVelocity() + impulse / mainObject.getMass());
+	otherObject.setVelocity(otherObject.getVelocity() - impulse / otherObject.getMass());
+
+	// separate overlapping hitboxes
+	float overlap = (mainObject.getRadius() + otherObject.getRadius()) - distance;
+	if(overlap > 0.0f)
+	{
+		// mass based separation, lighter moves more
+		float totalMass = mainObject.getMass() + otherObject.getMass();
+		float separation1 = overlap * (otherObject.getMass() / totalMass);
+		float separation2 = overlap * (mainObject.getMass() / totalMass);
+
+		mainObject.setPosition(mainObject.getPosition() - normal * separation1);
+		otherObject.setPosition(otherObject.getPosition() - normal * separation2);
+	}
+}
+
+void detectAndHandleCollision(PhysicalObject& mainObject, std::vector<PhysicalObject>& physicalObjects, float deltaTime)
 {
 	// offset to measure from center of object
-	sf::Vector2f mainPosition = newPosition;
+	sf::Vector2f mainPosition = mainObject.getPosition();
 	float mainRadius = mainObject.getRadius();
 
 	for(auto& obj : physicalObjects)
@@ -46,13 +114,25 @@ void detectCollision(PhysicalObject& mainObject, sf::Vector2f newPosition, std::
 		sf::Vector2f objPosition = obj.getPosition();
 		float objRadius = obj.getRadius();
 
-		float distance = std::sqrt(std::pow((objPosition.y - mainPosition.y), 2) + std::pow((objPosition.x - mainPosition.x), 2));
+		// shortest distance with wrapping
+		sf::Vector2f delta = objPosition - mainPosition;
+		if(std::abs(delta.x) > worldWidth / 2.0f)
+		{
+			delta.x = delta.x > 0 ? delta.x - worldWidth : delta.x + worldWidth;
+		}
+		if(std::abs(delta.y) > worldHeight / 2.0f)
+		{
+			delta.y = delta.y > 0 ? delta.y - worldHeight : delta.y + worldHeight;
+		}
+
+		// float distance = std::sqrt(std::pow((objPosition.y - mainPosition.y), 2) + std::pow((objPosition.x - mainPosition.x), 2));
+		float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
 		if(distance <= (mainRadius + objRadius))
 		{
-			handleCollision(mainObject, mainPosition, obj);
+			handleCollision(mainObject, obj, deltaTime, restitution);
 		}
 	}
-	std::cout << std::endl;
+	// std::cout << std::endl;
 }
 
 void addDragForce(sf::Vector2f& currentVelocity, float dragCoef, float mass, float deltaTime)
@@ -183,39 +263,12 @@ void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vec
 	// draw physical objects
 	for(auto& obj : physicalObjects)
 	{
-		window.draw(obj.getSprite());
-
-		// draw the shapes used for collision
-		if(showHitboxes)
-		{
-			// get the offset coords to be centered
-
-			sf::Vector2f objPosition = obj.getPosition();
-			objPosition.x -= (obj.getSize().x / 2.f);
-			objPosition.y -= (obj.getSize().y / 2.f);
-
-			sf::CircleShape circle(obj.getRadius());
-			circle.setFillColor(sf::Color::Red);
-			circle.setPosition(objPosition);
-			window.draw(circle);
-		}
+		obj.draw(window);
 	}
 
 
 	// draw the player
-	if(showHitboxes)
-	{
-		sf::Vector2f playerPosition = player.getPosition();
-		// playerPosition.x -= (player.getSize().x / 2.f);
-		// playerPosition.y -= (player.getSize().y / 2.f);
-
-		sf::CircleShape circle(player.getRadius());
-		circle.setFillColor(sf::Color::Red);
-		circle.setOrigin({player.getRadius(), player.getRadius()});
-		circle.setPosition(playerPosition);
-		window.draw(circle);
-	}
-	window.draw(player.getSprite());
+	player.draw(window);
 	window.display();
 }
 
@@ -242,11 +295,11 @@ void setupPhysicalObjects(std::vector<PhysicalObject>& objects)
 	sf::Vector2i objectSize(17, 17);
 	float objectRotation = 90;
 	RenderLayer objectRenderLayer = RenderLayer::Main;
-	float objectMass = 50;
+	float objectMass = 10;
 	float objectRadius = 8;
 	sf::Vector2f objectVelocity = {0, 0};
 	float objectAcceleration = 0;
-	float objectDragCoef = 50;
+	float objectDragCoef = 4;
 	float objectRotationVelocity = 4;
 	std::string objectFilename = "art/basicMeteor.png";
 	float objectMaximumVelocity = 500; // equal to players for now
@@ -257,8 +310,14 @@ void setupPhysicalObjects(std::vector<PhysicalObject>& objects)
 	std::uniform_real_distribution<float> distX(0.f, (float)windowWidth);
 	std::uniform_real_distribution<float> distY(0.f, (float)windowHeight);
 
+	// custom objects
+	std::vector<sf::Vector2f*> mPositions[2];
+		objects.push_back(PhysicalObject(sf::Vector2f(0.1, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
+		objects.push_back(PhysicalObject(sf::Vector2f(worldWidth - 2*objectRadius, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
+
 	for(int i = 0; i < 10; i++)
 	{
+		// random objects
 		objects.push_back(PhysicalObject(sf::Vector2f(distX(rng), distY(rng)), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
 	}
 }

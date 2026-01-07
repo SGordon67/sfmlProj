@@ -23,7 +23,7 @@ VisualObject::VisualObject(const VisualObject& other) // copy constructor
 	, m_texture(other.m_texture)
 		, m_sprite(other.m_sprite)
 {
-	std::cout << "Copy constructor called for visual object" << std::endl;
+	// std::cout << "Copy constructor called for visual object" << std::endl;
 	m_sprite.setTexture(m_texture);
 	m_sprite.setPosition(m_position);
 }

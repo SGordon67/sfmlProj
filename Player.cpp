@@ -54,5 +54,5 @@ void Player::update(bool* (&buttons)[numButtons], std::vector<PhysicalObject>& p
 	this->updateVelocity(accel, backward);
 	this->updatePosition(FixedDeltaTime, physicalObjects);
 
-	// this->printInfo();
+	this->printInfo();
 }

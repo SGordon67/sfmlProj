@@ -1,6 +1,7 @@
 #ifndef PHYSICALOBJECT_H
 #define PHYSICALOBJECT_H
 
+#include "SFML/System/Vector2.hpp"
 #include "VisualObject.h"
 
 class PhysicalObject : public VisualObject
@@ -25,11 +26,13 @@ public:
 	sf::Vector2f getVelocity() const;
 	float getMaxVelocity() const;
 
-	void rotate(const float rotation);
+	void setVelocity(sf::Vector2f velocity);
 
+	void rotate(const float rotation);
 	void updateVelocity(float accelerate, bool backward);
 	void updatePosition(float deltaTime, std::vector<PhysicalObject>& physicalObjects);
 
+	virtual void draw(sf::RenderWindow& window);
 	virtual void update(std::vector<PhysicalObject>& physicalObjects);
 };
 
