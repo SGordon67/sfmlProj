@@ -1,17 +1,15 @@
 #include <iostream>
 
-#include "globals.h"
 #include "Player.h"
-#include "PhysicalObject.h"
 
 extern float degreesToRadians(float degrees);
 extern void addDragForce(sf::Vector2f& currentVelocity, float dragCoef, float mass, float deltaTime);
 extern void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, float direction, bool backward, float maximumVelocity, float mass, float deltaTime);
 
-Player::Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity, float maxVelocity)
-	: PhysicalObject(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, dragCoef, rotationVelocity, maxVelocity)
+Player::Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity, float maxVelocity, int hp, int maxHP)
+	: Entity(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, dragCoef, rotationVelocity, maxVelocity, hp, maxHP)
 {
-	m_sprite.setOrigin({14.5, 18}); // roughtly the point of rotation I want
+	m_sprite.setOrigin({14.5, 18}); // roughtly the point of rotation I want with the current sprite
 	std::cout << "Player constructed" << std::endl;
 }
 
@@ -22,9 +20,7 @@ void Player::printInfo()
 	std::cout << "Velocity: (" << m_velocity.x << ", " << m_velocity.y << ")" << std::endl;
 }
 
-
-
-void Player::update(bool* (&buttons)[numButtons], std::vector<PhysicalObject>& physicalObjects)
+void Player::playerUpdate(bool* (&buttons)[numButtons], std::vector<PhysicalObject>& physicalObjects)
 {
 	// handle rotation
 	float potentialRotation = 0;
@@ -42,7 +38,6 @@ void Player::update(bool* (&buttons)[numButtons], std::vector<PhysicalObject>& p
 	}
 
 	// handle acceleration
-	sf::Vector2f curVelocity = m_velocity;
 	int accel = 0;
 	bool backward = false;
 	if(*buttons[1] && !*buttons[2])

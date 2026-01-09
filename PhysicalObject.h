@@ -19,6 +19,8 @@ protected:
 
 public:
 	PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity, float maxVelocity);
+	PhysicalObject(const PhysicalObject& other); // copy constructor
+	PhysicalObject(PhysicalObject&& other) noexcept; // move constructor
 
 	float getMass() const;
 	float getRadius() const;
@@ -31,8 +33,8 @@ public:
 	void updateVelocity(float accelerate, bool backward);
 	void updatePosition(float deltaTime, std::vector<PhysicalObject>& physicalObjects);
 
-	virtual void draw(sf::RenderWindow& window);
-	virtual void update(std::vector<PhysicalObject>& physicalObjects);
+	virtual void physicalDraw(sf::RenderWindow& window);
+	virtual void physicalUpdate(std::vector<PhysicalObject>& physicalObjects);
 };
 
 #endif

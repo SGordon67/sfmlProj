@@ -1,12 +1,17 @@
 #ifndef BASICOBJECT_H
 #define BASICOBJECT_H
 
-#include "globals.h"
-#include "enums.h"
+#include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "SFML/Graphics/Rect.hpp"
 #include "SFML/Graphics/Texture.hpp"
 #include "SFML/Graphics.hpp"
+
+#include "globals.h"
+#include "enums.h"
+
+// forward declaration, this class will exist
+class PhysicalObject;
 
 class BasicObject
 {
@@ -39,7 +44,9 @@ public:
 	void loadTexture(const std::string& filename);
 
 	virtual void rotate(const float rotation);
-	virtual void update(float deltaTime, sf::Vector2f relationalVelocity);
+	virtual void basicUpdate(float deltaTime, sf::Vector2f relationalVelocity);
+
+	virtual std::vector<sf::Vector2f> basicDraw(sf::RenderWindow& window);
 };
 
 #endif

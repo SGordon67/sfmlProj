@@ -1,9 +1,12 @@
+#include <iostream>
+
 #include "PhysicalObject.h"
+#include "SFML/System/Vector2.hpp"
 
 extern float degreesToRadians(float degrees);
 extern void addDragForce(sf::Vector2f& currentVelocity, float dragCoef, float mass, float deltaTime);
 extern void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, float direction, bool backward, float maximumVelocity, float mass, float deltaTime);
-extern void detectAndHandleCollision(PhysicalObject& object, std::vector<PhysicalObject>& physicalObjects, float deltaTime);
+extern void detectAndHandleCollision(PhysicalObject& object, std::vector<PhysicalObject>& physicalObjects);
 extern sf::Vector2f wrapPosition(sf::Vector2f position);
 
 PhysicalObject::PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity, float maxVelocity)
@@ -16,8 +19,28 @@ PhysicalObject::PhysicalObject(sf::Vector2f position, sf::Vector2i size, float r
 	, m_rotationVelocity(rotationVelocity)
 	, m_maxVelocity(maxVelocity)
 {
-	m_sprite.setOrigin({size.x / 2.f, size.y / 2.f});
-	// std::cout << "PhysicalObject constructed" << std::endl;
+}
+PhysicalObject::PhysicalObject(const PhysicalObject& other) // copy constructor
+	: BasicObject(other)
+	, m_mass(other.m_mass)
+	, m_radius(other.m_radius)
+	, m_velocity(other.m_velocity)
+	, m_acceleration(other.m_acceleration)
+	, m_dragCoef(other.m_dragCoef)
+	, m_rotationVelocity(other.m_rotationVelocity)
+	, m_maxVelocity(other.m_maxVelocity)
+{
+}
+PhysicalObject::PhysicalObject(PhysicalObject&& other) noexcept // move constructor
+	: BasicObject(std::move(other))
+	, m_mass(other.m_mass)
+	, m_radius(other.m_radius)
+	, m_velocity(other.m_velocity)
+	, m_acceleration(other.m_acceleration)
+	, m_dragCoef(other.m_dragCoef)
+	, m_rotationVelocity(other.m_rotationVelocity)
+	, m_maxVelocity(other.m_maxVelocity)
+{
 }
 
 float PhysicalObject::getMass() const
@@ -76,82 +99,40 @@ void PhysicalObject::updatePosition(float deltaTime, std::vector<PhysicalObject>
 	// ensure the change will work, adjust accordingly
 	m_position += (m_velocity * deltaTime);
 	m_position = wrapPosition(m_position);
-	detectAndHandleCollision(*this, physicalObjects, deltaTime);
+	detectAndHandleCollision(*this, physicalObjects);
 
 	// apply the change to the sprite
 	m_sprite.setPosition(m_position);
 }
 
-void PhysicalObject::draw(sf::RenderWindow& window)
+void PhysicalObject::physicalDraw(sf::RenderWindow& window)
 {
 	// main object
-	window.draw(m_sprite);
-	sf::Vector2f originalPosition = m_position;
+	std::vector<sf::Vector2f> dupPositions;
+	dupPositions = basicDraw(window);
 
-	// need to replicate near the boundaries
-	bool nearLeft = (m_position.x - (viewWidth / 2.f) < 0);
-	bool nearRight = (m_position.x + (viewWidth / 2.f) > worldWidth);
-	bool nearTop = (m_position.y - (viewHeight / 2.f) < 0);
-	bool nearBottom = (m_position.y + (viewHeight / 2.f) > worldHeight);
-	if(nearLeft)
-	{
-		setPosition(m_position + sf::Vector2f{static_cast<float>(viewWidth), 0});
-		window.draw(m_sprite);
-		if(nearTop)
-		{
-			setPosition(m_position + sf::Vector2f{0, static_cast<float>(viewHeight)});
-			window.draw(m_sprite);
-		}
-		if(nearBottom)
-		{
-			setPosition(m_position - sf::Vector2f{0, static_cast<float>(viewHeight)});
-			window.draw(m_sprite);
-		}
-	}
-	if(nearRight)
-	{
-		setPosition(m_position - sf::Vector2f{static_cast<float>(viewWidth), 0});
-		window.draw(m_sprite);
-		if(nearTop)
-		{
-			setPosition(m_position + sf::Vector2f{0, static_cast<float>(viewHeight)});
-			window.draw(m_sprite);
-		}
-		if(nearBottom)
-		{
-			setPosition(m_position - sf::Vector2f{0, static_cast<float>(viewHeight)});
-			window.draw(m_sprite);
-		}
-	}
-	setPosition(originalPosition);
-	if(nearTop)
-	{
-		setPosition(m_position + sf::Vector2f{0, static_cast<float>(viewHeight)});
-		window.draw(m_sprite);
-	}
-	if(nearBottom)
-	{
-		setPosition(m_position - sf::Vector2f{0, static_cast<float>(viewHeight)});
-		window.draw(m_sprite);
-	}
-	setPosition(originalPosition);
+	// adding starting position for hitbox
+	dupPositions.push_back(m_position);
 
 	// draw the shapes used for collision
 	if(showHitboxes)
 	{
-		// get the offset coords to be centered
-		sf::Vector2f objPosition = m_position;
-		objPosition.x -= (m_size.x / 2.f);
-		objPosition.y -= (m_size.y / 2.f);
+		for(const auto& pos : dupPositions)
+		{
+			// get the offset coords to be centered
+			sf::Vector2f objPosition = pos;
+			objPosition.x -= (m_size.x / 2.f);
+			objPosition.y -= (m_size.y / 2.f);
 
-		sf::CircleShape circle(m_radius);
-		circle.setFillColor(hitboxColor);
-		circle.setPosition(objPosition);
-		window.draw(circle);
+			sf::CircleShape circle(m_radius);
+			circle.setFillColor(hitboxColor);
+			circle.setPosition(objPosition);
+			window.draw(circle);
+		}
 	}
 }
 
-void PhysicalObject::update(std::vector<PhysicalObject>& physicalObjects)
+void PhysicalObject::physicalUpdate(std::vector<PhysicalObject>& physicalObjects)
 {
 	float accel = 0;
 	bool backward = false;

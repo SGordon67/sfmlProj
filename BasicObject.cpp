@@ -1,6 +1,11 @@
 #include <iostream>
 
 #include "BasicObject.h"
+#include "SFML/System/Vector2.hpp"
+#include "enums.h"
+#include "globals.h"
+
+extern std::vector<sf::Vector2f> getDupPositions(sf::Vector2f position, sf::Vector2i size);
 
 BasicObject::BasicObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename)
 	: m_objectID(++numObjects)
@@ -13,6 +18,7 @@ BasicObject::BasicObject(sf::Vector2f position, sf::Vector2i size, float rotatio
 {
 	std::cout << "Regular constructor called for basic object" << std::endl;
 	loadTexture(filename);
+	m_sprite.setOrigin({size.x/2.f, size.y/2.f});
 	m_sprite.setPosition(m_position);
 }
 BasicObject::BasicObject(const BasicObject& other) // copy constructor
@@ -21,12 +27,13 @@ BasicObject::BasicObject(const BasicObject& other) // copy constructor
 	, m_size(other.m_size)
 	, m_rotation(other.m_rotation)
 	, m_renderLayer(other.m_renderLayer)
-	, m_spriteRect(other.m_spriteRect)
 	, m_texture(other.m_texture)
+	, m_spriteRect(other.m_spriteRect)
 	, m_sprite(other.m_sprite)
 {
 	std::cout << "Copy constructor called for basic object" << std::endl;
 	m_sprite.setTexture(m_texture);
+	m_sprite.setOrigin({m_size.x/2.f, m_size.y/2.f});
 	m_sprite.setPosition(m_position);
 }
 BasicObject::BasicObject(BasicObject&& other) noexcept // move constructor
@@ -35,12 +42,13 @@ BasicObject::BasicObject(BasicObject&& other) noexcept // move constructor
 	, m_size(other.m_size)
 	, m_rotation(other.m_rotation)
 	, m_renderLayer(other.m_renderLayer)
-	, m_spriteRect(other.m_spriteRect)
 	, m_texture(std::move(other.m_texture))
-	, m_sprite(other.m_sprite)
+	, m_spriteRect(other.m_spriteRect)
+	, m_sprite(std::move(other.m_sprite))
 {
 	std::cout << "Move constructor called for basic object" << std::endl;
 	m_sprite.setTexture(m_texture);
+	m_sprite.setOrigin({m_size.x/2.f, m_size.y/2.f});
 	m_sprite.setPosition(m_position);
 }
 
@@ -110,7 +118,7 @@ void BasicObject::rotate(const float rotation)
 	if(m_rotation < 0) m_rotation += 360;
 }
 
-void BasicObject::update(float deltaTime, sf::Vector2f relationalVelocity)
+void BasicObject::basicUpdate(float deltaTime, sf::Vector2f relationalVelocity)
 {
 	// move the background at different rates in relation to the player for a feeling of depth
 	switch(m_renderLayer)
@@ -129,4 +137,29 @@ void BasicObject::update(float deltaTime, sf::Vector2f relationalVelocity)
 			// m_sprite.move(1.3f * relationalVelocity * deltaTime);
 			break;
 	}
+}
+
+// this function draws the object on the window, and it's duplicates for edge wrapping
+// it also returns the extra coords to the calling function if more is needed to be drawn in subclasses
+std::vector<sf::Vector2f> BasicObject::basicDraw(sf::RenderWindow& window)
+{
+	// main object
+	window.draw(m_sprite);
+
+	// vector of positions to return
+	std::vector<sf::Vector2f> dupPositions;
+	if(m_renderLayer != RenderLayer::Main) return dupPositions;
+
+	// get the duplicates needed for edge wrap
+	dupPositions = getDupPositions(m_position, m_size);
+
+	sf::Vector2f originalPosition = m_position;
+	for(const auto& pos : dupPositions)
+	{
+		setPosition(pos);
+		window.draw(m_sprite);
+	}
+	setPosition(originalPosition);
+
+	return dupPositions;
 }

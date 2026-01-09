@@ -13,7 +13,8 @@
 #include "globals.h"
 #include "enums.h"
 #include "BasicObject.h"
-#include "BackgroundObject.h"
+#include "VisualObject.h"
+#include "Crate.h"
 #include "StaticPhysicalObject.h"
 #include "PhysicalObject.h"
 #include "Player.h"
@@ -39,7 +40,34 @@ sf::Vector2f wrapPosition(sf::Vector2f position)
 	return position;
 }
 
-void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject, float deltaTime, float restitution)
+std::vector<sf::Vector2f> getDupPositions(sf::Vector2f position, sf::Vector2i size)
+{
+	std::vector<sf::Vector2f> dupPositions = {};
+
+	float wrapXThreshold = (std::abs(worldWidth - (viewWidth / 2.f)) + size.x);
+	float wrapYThreshold = (std::abs(worldHeight - (viewHeight / 2.f)) + size.y);
+
+	// need to replicate near the boundaries
+	bool nearLeft = (position.x < wrapXThreshold);
+	bool nearRight = (position.x > worldWidth - wrapXThreshold);
+	bool nearTop = (position.y < wrapYThreshold);
+	bool nearBottom = (position.y > worldHeight - wrapYThreshold);
+
+	if(nearLeft) dupPositions.push_back(position + sf::Vector2f{static_cast<float>(worldWidth), 0});
+	if(nearRight) dupPositions.push_back(position + sf::Vector2f{-static_cast<float>(worldWidth), 0});
+	if(nearTop) dupPositions.push_back(position + sf::Vector2f{0, static_cast<float>(worldHeight)});
+	if(nearBottom) dupPositions.push_back(position + sf::Vector2f{0, -static_cast<float>(worldHeight)});
+
+	if(nearLeft && nearTop) dupPositions.push_back(position + sf::Vector2f{static_cast<float>(worldWidth), static_cast<float>(worldHeight)});
+	if(nearLeft && nearBottom) dupPositions.push_back(position + sf::Vector2f{static_cast<float>(worldWidth), -static_cast<float>(worldHeight)});
+	
+	if(nearRight && nearTop) dupPositions.push_back(position + sf::Vector2f{-static_cast<float>(worldWidth), static_cast<float>(worldHeight)});
+	if(nearRight && nearBottom) dupPositions.push_back(position + sf::Vector2f{-static_cast<float>(worldWidth), -static_cast<float>(worldHeight)});
+
+	return dupPositions;
+}
+
+void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject, float restitution)
 {
 	std::cout << "COLLISION BETWEEN OBJECTS: " << mainObject.getObjectID() << ", and " << otherObject.getObjectID() << ". " << std::endl;
 	std::cout << "\tCollision occurred at position: (" << mainObject.getPosition().x << ", " << mainObject.getPosition().y << ") and (" << otherObject.getPosition().x << ", " << otherObject.getPosition().y << ")" << std::endl;
@@ -91,17 +119,18 @@ void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject, fl
 	float overlap = (mainObject.getRadius() + otherObject.getRadius()) - distance;
 	if(overlap > 0.0f)
 	{
+		std::cout << "Separating overlapping hitboxes with overlap: " << overlap << std::endl;
 		// mass based separation, lighter moves more
 		float totalMass = mainObject.getMass() + otherObject.getMass();
 		float separation1 = overlap * (otherObject.getMass() / totalMass);
 		float separation2 = overlap * (mainObject.getMass() / totalMass);
 
 		mainObject.setPosition(mainObject.getPosition() - normal * separation1);
-		otherObject.setPosition(otherObject.getPosition() - normal * separation2);
+		otherObject.setPosition(otherObject.getPosition() + normal * separation2);
 	}
 }
 
-void detectAndHandleCollision(PhysicalObject& mainObject, std::vector<PhysicalObject>& physicalObjects, float deltaTime)
+void detectAndHandleCollision(PhysicalObject& mainObject, std::vector<PhysicalObject>& physicalObjects)
 {
 	// offset to measure from center of object
 	sf::Vector2f mainPosition = mainObject.getPosition();
@@ -129,7 +158,7 @@ void detectAndHandleCollision(PhysicalObject& mainObject, std::vector<PhysicalOb
 		float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
 		if(distance <= (mainRadius + objRadius))
 		{
-			handleCollision(mainObject, obj, deltaTime, restitution);
+			handleCollision(mainObject, obj, restitution);
 		}
 	}
 	// std::cout << std::endl;
@@ -137,8 +166,6 @@ void detectAndHandleCollision(PhysicalObject& mainObject, std::vector<PhysicalOb
 
 void addDragForce(sf::Vector2f& currentVelocity, float dragCoef, float mass, float deltaTime)
 {
-	sf::Vector2f dragForce = {0, 0};
-	dragForce.x = (1.0f - dragCoef * deltaTime / mass);
 	currentVelocity.x = currentVelocity.x * (1.f - dragCoef * deltaTime / mass);
 	currentVelocity.y = currentVelocity.y * (1.f - dragCoef * deltaTime / mass);
 }
@@ -228,24 +255,24 @@ void updateButtonPresses(bool* (&buttons)[numButtons])
 		}
 }
 
-void updateGame(sf::RenderWindow& window, Player& player, bool* (&buttons)[numButtons], std::vector<BackgroundObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
+void updateGame(Player& player, bool* (&buttons)[numButtons], std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
 {
 	// update visual objects
 	for(auto& obj : visualObjects)
 	{
-		obj.update(FixedDeltaTime, player.getVelocity());
+		obj.basicUpdate(FixedDeltaTime, player.getVelocity());
 	}
 	
 	// update physical objects
 	for(auto& obj : physicalObjects)
 	{
-		obj.update(physicalObjects);
+		obj.physicalUpdate(physicalObjects);
 	}
 
-	player.update(buttons, physicalObjects);
+	player.playerUpdate(buttons, physicalObjects);
 }
 
-void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vector<BackgroundObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
+void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
 {
 	// clear the window, then draw, then display
 	window.clear();
@@ -257,36 +284,48 @@ void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vec
 	// draw visual objects
 	for(auto& obj : visualObjects)
 	{
-		window.draw(obj.getSprite());
+		obj.basicDraw(window);
 	}
 	
 	// draw physical objects
 	for(auto& obj : physicalObjects)
 	{
-		obj.draw(window);
+		obj.physicalDraw(window);
 	}
 
 
 	// draw the player
-	player.draw(window);
+	player.physicalDraw(window);
 	window.display();
 }
 
-void setupBackgroundObjects(std::vector<BackgroundObject>& objects)
+void setupVisualObjects(std::vector<VisualObject>& objects)
 {
 	// far background
 	sf::Vector2i bSize(1000 * windowWidth, 1000 * windowHeight);
-	sf::Vector2f bPosition(-bSize.x/2.f, -bSize.y/2.f);
+	sf::Vector2f bPosition({0, 0});
 	float bRotation = 90;
 	RenderLayer bRenderLayer = RenderLayer::FarBackground;
 	RenderLayer bRenderLayer2 = RenderLayer::CloseBackground;
 	std::string bgtFilename = "art/basicBackground.png";
 	std::string bstFilename = "art/basicStars.png";
-	BackgroundObject bg(bPosition, bSize, bRotation, bRenderLayer, bgtFilename);
-	BackgroundObject fg(bPosition, bSize, bRotation, bRenderLayer2, bstFilename);
+	VisualObject bg(bPosition, bSize, bRotation, bRenderLayer, bgtFilename);
+	VisualObject fg(bPosition, bSize, bRotation, bRenderLayer2, bstFilename);
 
 	objects.push_back(bg);
 	objects.push_back(fg);
+
+
+	// other visual objects
+	sf::Vector2f cPosition({100, 100});
+	sf::Vector2i cSize(17, 17);
+	float cRotation = 90;
+	RenderLayer cRenderLayer = RenderLayer::Main;
+	std::string cFilename = "art/basicCrate.png";
+	float cInteractRadius = 30;
+	Crate c1(cPosition, cSize, cRotation, cRenderLayer, cFilename, cInteractRadius);
+
+	objects.push_back(c1);
 }
 
 void setupPhysicalObjects(std::vector<PhysicalObject>& objects)
@@ -311,14 +350,19 @@ void setupPhysicalObjects(std::vector<PhysicalObject>& objects)
 	std::uniform_real_distribution<float> distY(0.f, (float)windowHeight);
 
 	// custom objects
+	
+	// two objects VERY close to eachother on opposite sides of the world
 	std::vector<sf::Vector2f*> mPositions[2];
 	objects.push_back(PhysicalObject(sf::Vector2f(0.1, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
 	objects.push_back(PhysicalObject(sf::Vector2f(worldWidth - 2*objectRadius, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
 
+	// two objects touching eachother near the middle of the board
+	objects.push_back(PhysicalObject(sf::Vector2f(500, 200), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
+	objects.push_back(PhysicalObject(sf::Vector2f(500 + objectRadius, 200.5), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
 	for(int i = 0; i < 10; i++)
 	{
 		// random objects
-		objects.push_back(PhysicalObject(sf::Vector2f(distX(rng), distY(rng)), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
+		// objects.push_back(PhysicalObject(sf::Vector2f(distX(rng), distY(rng)), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
 	}
 }
 
@@ -352,11 +396,12 @@ int main()
 	float pRotationVelocity = 4;
 	float pDrag = 4;
 	float pMaxVelocity = 500;
-	Player player = Player(pPosition, pSize, pRotation, pRenderLayer, pFilename, pMass, pRadius, pVelocity, pAcceleration, pDrag, pRotationVelocity, pMaxVelocity);
+	int pMaxHP = 100;
+	Player player = Player(pPosition, pSize, pRotation, pRenderLayer, pFilename, pMass, pRadius, pVelocity, pAcceleration, pDrag, pRotationVelocity, pMaxVelocity, pMaxHP, pMaxHP);
 
 	// visual
-	std::vector<BackgroundObject> visualObjects;
-	setupBackgroundObjects(visualObjects);
+	std::vector<VisualObject> visualObjects;
+	setupVisualObjects(visualObjects);
 
 	// physical
 	std::vector<PhysicalObject> physicalObjects;
@@ -394,7 +439,7 @@ int main()
 
 		while(timeAccumulator >= FixedDeltaTime)
 		{
-			updateGame(window, player, buttons, visualObjects, physicalObjects);
+			updateGame(player, buttons, visualObjects, physicalObjects);
 			timeAccumulator -= FixedDeltaTime;
 		}
 		drawGame(window, playerView, player, visualObjects, physicalObjects);
