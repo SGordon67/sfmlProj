@@ -31,10 +31,10 @@ public:
 
 	void rotate(const float rotation);
 	void updateVelocity(float accelerate, bool backward);
-	void updatePosition(float deltaTime, std::vector<PhysicalObject>& physicalObjects);
+	void updatePosition(float deltaTime);
 
 	virtual void physicalDraw(sf::RenderWindow& window);
-	virtual void physicalUpdate(std::vector<PhysicalObject>& physicalObjects);
+	virtual void physicalUpdate();
 };
 
 #endif

@@ -94,12 +94,11 @@ void PhysicalObject::updateVelocity(float accelerate, bool backward)
 	// std::cout << "Position: " << m_position.x << ", " << m_position.y << std::endl;
 }
 
-void PhysicalObject::updatePosition(float deltaTime, std::vector<PhysicalObject>& physicalObjects)
+void PhysicalObject::updatePosition(float deltaTime)
 {
 	// ensure the change will work, adjust accordingly
 	m_position += (m_velocity * deltaTime);
 	m_position = wrapPosition(m_position);
-	detectAndHandleCollision(*this, physicalObjects);
 
 	// apply the change to the sprite
 	m_sprite.setPosition(m_position);
@@ -132,10 +131,10 @@ void PhysicalObject::physicalDraw(sf::RenderWindow& window)
 	}
 }
 
-void PhysicalObject::physicalUpdate(std::vector<PhysicalObject>& physicalObjects)
+void PhysicalObject::physicalUpdate()
 {
 	float accel = 0;
 	bool backward = false;
 	this->updateVelocity(accel, backward);
-	this->updatePosition(FixedDeltaTime, physicalObjects);
+	this->updatePosition(FixedDeltaTime);
 }

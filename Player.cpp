@@ -20,7 +20,7 @@ void Player::printInfo()
 	std::cout << "Velocity: (" << m_velocity.x << ", " << m_velocity.y << ")" << std::endl;
 }
 
-void Player::playerUpdate(bool* (&buttons)[numButtons], std::vector<PhysicalObject>& physicalObjects)
+void Player::playerUpdate(bool* (&buttons)[numButtons])
 {
 	// handle rotation
 	float potentialRotation = 0;
@@ -49,7 +49,7 @@ void Player::playerUpdate(bool* (&buttons)[numButtons], std::vector<PhysicalObje
 		accel = -m_acceleration;
 	}
 	this->updateVelocity(accel, backward);
-	this->updatePosition(FixedDeltaTime, physicalObjects);
+	this->updatePosition(FixedDeltaTime);
 
 	// this->printInfo();
 }

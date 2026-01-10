@@ -3,8 +3,6 @@
 
 #include "Player.h"
 
-class Player;
-
 class Interactable
 {
 public:
@@ -12,14 +10,19 @@ public:
 
 	virtual void interact(Player& player) = 0;
 
+	virtual sf::Vector2f getPosition() const
+	{
+		return sf::Vector2f(0.f, 0.f);
+	}
+
 	virtual float getInteractionRadius() const
 	{
 		return 50.0f;
 	}
 
-	virtual bool canInteract(const Player& player) const
+	virtual bool canInteract() const
 	{
-		std::cout << "Determining if can interact with player: " << player.getObjectID() << std::endl;
+		std::cout << "Determining if object can be interacted with." << std::endl;
 		return true;
 	}
 

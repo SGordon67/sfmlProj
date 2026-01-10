@@ -8,8 +8,10 @@
 #include "SFML/Window.hpp"
 #include <iostream>
 #include <cmath>
+#include <memory>
 #include <random>
 
+#include "SFML/Window/Mouse.hpp"
 #include "globals.h"
 #include "enums.h"
 #include "BasicObject.h"
@@ -38,6 +40,39 @@ sf::Vector2f wrapPosition(sf::Vector2f position)
 	if(position.y < 0) position.y += worldHeight;
 
 	return position;
+}
+
+bool detectIntersection(sf::Vector2f pos1, float radius1, sf::Vector2f pos2, float radius2)
+{
+	// shortest distance with wrapping
+	sf::Vector2f delta = pos1 - pos2;
+	if(std::abs(delta.x) > worldWidth / 2.0f)
+	{
+		delta.x = delta.x > 0 ? delta.x - worldWidth : delta.x + worldWidth;
+	}
+	if(std::abs(delta.y) > worldHeight / 2.0f)
+	{
+		delta.y = delta.y > 0 ? delta.y - worldHeight : delta.y + worldHeight;
+	}
+
+	float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
+	if(distance <= (radius1 + radius2))
+	{
+		return true;
+	}
+	return false;
+}
+
+void detectAndHandleInteractions(Player& player, std::vector<std::unique_ptr<Interactable>>& interactableObjects)
+{
+	for(auto& obj : interactableObjects)
+	{
+		bool overlap = detectIntersection(player.getPosition(), player.getRadius(), obj->getPosition(), obj->getInteractionRadius());
+		if(overlap)
+		{
+			std::cout << "Interacting with overlapping object: " << player.getObjectID() << ", " << obj->canInteract() << std::endl;
+		}
+	}
 }
 
 std::vector<sf::Vector2f> getDupPositions(sf::Vector2f position, sf::Vector2i size)
@@ -133,33 +168,40 @@ void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject, fl
 void detectAndHandleCollision(PhysicalObject& mainObject, std::vector<PhysicalObject>& physicalObjects)
 {
 	// offset to measure from center of object
-	sf::Vector2f mainPosition = mainObject.getPosition();
-	float mainRadius = mainObject.getRadius();
+	// sf::Vector2f mainPosition = mainObject.getPosition();
+	// float mainRadius = mainObject.getRadius();
 
 	for(auto& obj : physicalObjects)
 	{
 		if(mainObject.getObjectID() == obj.getObjectID()) continue;
-
-		sf::Vector2f objPosition = obj.getPosition();
-		float objRadius = obj.getRadius();
-
-		// shortest distance with wrapping
-		sf::Vector2f delta = objPosition - mainPosition;
-		if(std::abs(delta.x) > worldWidth / 2.0f)
-		{
-			delta.x = delta.x > 0 ? delta.x - worldWidth : delta.x + worldWidth;
-		}
-		if(std::abs(delta.y) > worldHeight / 2.0f)
-		{
-			delta.y = delta.y > 0 ? delta.y - worldHeight : delta.y + worldHeight;
-		}
-
-		// float distance = std::sqrt(std::pow((objPosition.y - mainPosition.y), 2) + std::pow((objPosition.x - mainPosition.x), 2));
-		float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
-		if(distance <= (mainRadius + objRadius))
+		bool overlap = detectIntersection(mainObject.getPosition(), mainObject.getRadius(), obj.getPosition(), obj.getRadius());
+		if(overlap)
 		{
 			handleCollision(mainObject, obj, restitution);
 		}
+
+		// if(mainObject.getObjectID() == obj.getObjectID()) continue;
+		//
+		// sf::Vector2f objPosition = obj.getPosition();
+		// float objRadius = obj.getRadius();
+		//
+		// // shortest distance with wrapping
+		// sf::Vector2f delta = objPosition - mainPosition;
+		// if(std::abs(delta.x) > worldWidth / 2.0f)
+		// {
+		// 	delta.x = delta.x > 0 ? delta.x - worldWidth : delta.x + worldWidth;
+		// }
+		// if(std::abs(delta.y) > worldHeight / 2.0f)
+		// {
+		// 	delta.y = delta.y > 0 ? delta.y - worldHeight : delta.y + worldHeight;
+		// }
+		//
+		// // float distance = std::sqrt(std::pow((objPosition.y - mainPosition.y), 2) + std::pow((objPosition.x - mainPosition.x), 2));
+		// float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
+		// if(distance <= (mainRadius + objRadius))
+		// {
+		// 	handleCollision(mainObject, obj, restitution);
+		// }
 	}
 	// std::cout << std::endl;
 }
@@ -213,49 +255,57 @@ void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, flo
 
 void updateButtonPresses(bool* (&buttons)[numButtons])
 {
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape))
-		{
-			// std::cout << "Key Pressed: Escape" << std::endl;
-			*buttons[0] = true;
-		}else
-		{
-			*buttons[0] = false;
-		}
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
-		{
-			// std::cout << "Key Pressed: W/Up" << std::endl;
-			*buttons[1] = true;
-		}else
-		{
-			*buttons[1] = false;
-		}
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
-		{
-			// std::cout << "Key Pressed: S/Down" << std::endl;
-			*buttons[2] = true;
-		}else 
-		{
-			*buttons[2] = false;
-		}
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
-		{
-			// std::cout << "Key Pressed: A/Left" << std::endl;
-			*buttons[3] = true;
-		}else
-		{
-			*buttons[3] = false;
-		}
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
-		{
-			// std::cout << "Key Pressed: D/Right" << std::endl;
-			*buttons[4] = true;
-		}else
-		{
-			*buttons[4] = false;
-		}
+	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape))
+	{
+		// std::cout << "Key Pressed: Escape" << std::endl;
+		*buttons[0] = true;
+	}else
+	{
+		*buttons[0] = false;
+	}
+	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
+	{
+		// std::cout << "Key Pressed: W/Up" << std::endl;
+		*buttons[1] = true;
+	}else
+	{
+		*buttons[1] = false;
+	}
+	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
+	{
+		// std::cout << "Key Pressed: S/Down" << std::endl;
+		*buttons[2] = true;
+	}else 
+	{
+		*buttons[2] = false;
+	}
+	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
+	{
+		// std::cout << "Key Pressed: A/Left" << std::endl;
+		*buttons[3] = true;
+	}else
+	{
+		*buttons[3] = false;
+	}
+	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
+	{
+		// std::cout << "Key Pressed: D/Right" << std::endl;
+		*buttons[4] = true;
+	}else
+	{
+		*buttons[4] = false;
+	}
+	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space))
+	{
+		// std::cout << "E or Space Pressed" << std::endl;
+		*buttons[5] = true;
+	}else
+	{
+		*buttons[5] = false;
+	}
 }
 
-void updateGame(Player& player, bool* (&buttons)[numButtons], std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
+void updateGame(Player& player, bool* (&buttons)[numButtons], std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects, std::vector<std::unique_ptr<Interactable>>& interactableObjects)
 {
 	// update visual objects
 	for(auto& obj : visualObjects)
@@ -266,10 +316,15 @@ void updateGame(Player& player, bool* (&buttons)[numButtons], std::vector<Visual
 	// update physical objects
 	for(auto& obj : physicalObjects)
 	{
-		obj.physicalUpdate(physicalObjects);
+		obj.physicalUpdate();
+		detectAndHandleCollision(obj, physicalObjects);
 	}
-
-	player.playerUpdate(buttons, physicalObjects);
+	player.playerUpdate(buttons);
+	if(*buttons[5])
+	{
+		detectAndHandleInteractions(player, interactableObjects);
+	}
+	detectAndHandleCollision(player, physicalObjects);
 }
 
 void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
@@ -293,14 +348,14 @@ void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vec
 		obj.physicalDraw(window);
 	}
 
-
 	// draw the player
 	player.physicalDraw(window);
 	window.display();
 }
 
-void setupVisualObjects(std::vector<VisualObject>& objects)
+void setupGame(std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects, std::vector<std::unique_ptr<Interactable>>& interactableObjects)
 {
+	// VISUAL OBJECTS
 	// far background
 	sf::Vector2i bSize(1000 * windowWidth, 1000 * windowHeight);
 	sf::Vector2f bPosition({0, 0});
@@ -312,9 +367,8 @@ void setupVisualObjects(std::vector<VisualObject>& objects)
 	VisualObject bg(bPosition, bSize, bRotation, bRenderLayer, bgtFilename);
 	VisualObject fg(bPosition, bSize, bRotation, bRenderLayer2, bstFilename);
 
-	objects.push_back(bg);
-	objects.push_back(fg);
-
+	visualObjects.push_back(bg);
+	visualObjects.push_back(fg);
 
 	// other visual objects
 	sf::Vector2f cPosition({100, 100});
@@ -325,11 +379,12 @@ void setupVisualObjects(std::vector<VisualObject>& objects)
 	float cInteractRadius = 30;
 	Crate c1(cPosition, cSize, cRotation, cRenderLayer, cFilename, cInteractRadius);
 
-	objects.push_back(c1);
-}
+	visualObjects.push_back(c1);
+	interactableObjects.push_back(std::make_unique<Crate>(c1));
 
-void setupPhysicalObjects(std::vector<PhysicalObject>& objects)
-{
+
+	// PHYSICAL OBJECTS
+
 	// testing meteor
 	sf::Vector2i objectSize(17, 17);
 	float objectRotation = 90;
@@ -353,12 +408,12 @@ void setupPhysicalObjects(std::vector<PhysicalObject>& objects)
 	
 	// two objects VERY close to eachother on opposite sides of the world
 	std::vector<sf::Vector2f*> mPositions[2];
-	objects.push_back(PhysicalObject(sf::Vector2f(0.1, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
-	objects.push_back(PhysicalObject(sf::Vector2f(worldWidth - 2*objectRadius, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
+	physicalObjects.push_back(PhysicalObject(sf::Vector2f(0.1, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
+	physicalObjects.push_back(PhysicalObject(sf::Vector2f(worldWidth - 2*objectRadius, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
 
 	// two objects touching eachother near the middle of the board
-	objects.push_back(PhysicalObject(sf::Vector2f(500, 200), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
-	objects.push_back(PhysicalObject(sf::Vector2f(500 + objectRadius, 200.5), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
+	physicalObjects.push_back(PhysicalObject(sf::Vector2f(500, 200), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
+	physicalObjects.push_back(PhysicalObject(sf::Vector2f(500 + objectRadius, 200.5), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
 	for(int i = 0; i < 10; i++)
 	{
 		// random objects
@@ -374,12 +429,14 @@ int main()
 	bool downPressed = false;
 	bool leftPressed = false;
 	bool rightPressed = false;
+	bool interactPressed = false;
 	bool* buttons[numButtons];
 	buttons[0] = &escPressed;
 	buttons[1] = &upPressed;
 	buttons[2] = &downPressed;
 	buttons[3] = &leftPressed;
 	buttons[4] = &rightPressed;
+	buttons[5] = &interactPressed;
 
 	// setup game objects
 	
@@ -399,13 +456,15 @@ int main()
 	int pMaxHP = 100;
 	Player player = Player(pPosition, pSize, pRotation, pRenderLayer, pFilename, pMass, pRadius, pVelocity, pAcceleration, pDrag, pRotationVelocity, pMaxVelocity, pMaxHP, pMaxHP);
 
-	// visual
-	std::vector<VisualObject> visualObjects;
-	setupVisualObjects(visualObjects);
 
-	// physical
+
+	std::vector<VisualObject> visualObjects;
 	std::vector<PhysicalObject> physicalObjects;
-	setupPhysicalObjects(physicalObjects);
+	std::vector<std::unique_ptr<Interactable>> interactableObjects;
+	setupGame(visualObjects, physicalObjects, interactableObjects);
+
+
+
 
 	// window
 	sf::Vector2<uint> winSize(windowWidth, windowHeight);
@@ -439,7 +498,7 @@ int main()
 
 		while(timeAccumulator >= FixedDeltaTime)
 		{
-			updateGame(player, buttons, visualObjects, physicalObjects);
+			updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects);
 			timeAccumulator -= FixedDeltaTime;
 		}
 		drawGame(window, playerView, player, visualObjects, physicalObjects);

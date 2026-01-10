@@ -9,13 +9,34 @@ protected:
 	int m_hp;
 	int m_maxHP;
 public:
-	Entity(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity, float maxVelocity, int hp, int maxHP);
 
-	int getHP() const;
-	int getMaxHP() const;
+	Entity(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity, float maxVelocity, int hp, int maxHP)
+			: PhysicalObject(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, dragCoef, rotationVelocity, maxVelocity)
+			  , m_hp(hp)
+			  , m_maxHP(maxHP)
+	{
+	}
 
-	void reduceHealth(int damage);
-	void increaseHealth(int heal);
+	int getHP() const
+	{
+		return m_hp;
+	}
+
+	int getMaxHP() const
+	{
+		return m_maxHP;
+	}
+
+	void reduceHealth(int damage)
+	{
+		m_hp -= damage;
+	}
+
+	void increaseHealth(int heal)
+	{
+		m_hp += heal;
+		if(m_hp > m_maxHP) m_hp = m_maxHP;
+	}
 };
 
 #endif
