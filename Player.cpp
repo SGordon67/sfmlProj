@@ -3,13 +3,14 @@
 #include "Player.h"
 
 extern float degreesToRadians(float degrees);
-extern void addDragForce(sf::Vector2f& currentVelocity, float dragCoef, float mass, float deltaTime);
+extern void addDragForce(sf::Vector2f& currentVelocity, float mass, float deltaTime);
 extern void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, float direction, bool backward, float maximumVelocity, float mass, float deltaTime);
 
-Player::Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity, float maxVelocity, int hp, int maxHP)
-	: Entity(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, dragCoef, rotationVelocity, maxVelocity, hp, maxHP)
+Player::Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, int hp, int maxHP, float angularAccleration)
+	: Entity(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, hp, maxHP)
+	, m_angularAcceleration(angularAccleration)
 {
-	m_sprite.setOrigin({14.5, 18}); // roughtly the point of rotation I want with the current sprite
+	m_sprite.setOrigin({getSize().x / 2.f, getSize().y / 1.6f}); // roughtly the point of rotation I want with the current sprite in relation to the collision
 	std::cout << "Player constructed" << std::endl;
 }
 
@@ -20,21 +21,27 @@ void Player::printInfo()
 	std::cout << "Velocity: (" << m_velocity.x << ", " << m_velocity.y << ")" << std::endl;
 }
 
+void Player::updateRotation()
+{
+	rotate(m_angularVelocity);
+}
+
 void Player::playerUpdate(bool* (&buttons)[numButtons])
 {
 	// handle rotation
 	float potentialRotation = 0;
 	if(*buttons[3]) // left
 	{
-		potentialRotation -= m_rotationVelocity;
+		potentialRotation -= m_angularAcceleration;
 	}
 	if(*buttons[4]) // right
 	{
-		potentialRotation += m_rotationVelocity;
+		potentialRotation += m_angularAcceleration;
 	}
 	if(potentialRotation != 0) 
 	{
-		this->rotate(potentialRotation);
+		m_angularVelocity = potentialRotation;
+		updateRotation();
 	}
 
 	// handle acceleration
@@ -48,8 +55,8 @@ void Player::playerUpdate(bool* (&buttons)[numButtons])
 		backward = true;
 		accel = -m_acceleration;
 	}
-	this->updateVelocity(accel, backward);
-	this->updatePosition(FixedDeltaTime);
+	updateVelocity(accel, backward);
+	updatePosition(FixedDeltaTime);
 
 	// this->printInfo();
 }

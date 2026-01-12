@@ -2,21 +2,21 @@
 
 #include "PhysicalObject.h"
 #include "SFML/System/Vector2.hpp"
+#include "globals.h"
 
 extern float degreesToRadians(float degrees);
-extern void addDragForce(sf::Vector2f& currentVelocity, float dragCoef, float mass, float deltaTime);
+extern void addDragForce(sf::Vector2f& currentVelocity, float mass, float deltaTime);
 extern void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, float direction, bool backward, float maximumVelocity, float mass, float deltaTime);
 extern void detectAndHandleCollision(PhysicalObject& object, std::vector<PhysicalObject>& physicalObjects);
 extern sf::Vector2f wrapPosition(sf::Vector2f position);
 
-PhysicalObject::PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity, float maxVelocity)
+PhysicalObject::PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float angularVelocity, float maxVelocity)
 	: BasicObject(position, size, rotation, renderLayer, filename)
 	, m_mass(mass)
 	, m_radius(radius)
 	, m_velocity(velocity)
 	, m_acceleration(acceleration)
-	, m_dragCoef(dragCoef)
-	, m_rotationVelocity(rotationVelocity)
+	, m_angularVelocity(angularVelocity)
 	, m_maxVelocity(maxVelocity)
 {
 }
@@ -26,8 +26,7 @@ PhysicalObject::PhysicalObject(const PhysicalObject& other) // copy constructor
 	, m_radius(other.m_radius)
 	, m_velocity(other.m_velocity)
 	, m_acceleration(other.m_acceleration)
-	, m_dragCoef(other.m_dragCoef)
-	, m_rotationVelocity(other.m_rotationVelocity)
+	, m_angularVelocity(other.m_angularVelocity)
 	, m_maxVelocity(other.m_maxVelocity)
 {
 }
@@ -37,8 +36,7 @@ PhysicalObject::PhysicalObject(PhysicalObject&& other) noexcept // move construc
 	, m_radius(other.m_radius)
 	, m_velocity(other.m_velocity)
 	, m_acceleration(other.m_acceleration)
-	, m_dragCoef(other.m_dragCoef)
-	, m_rotationVelocity(other.m_rotationVelocity)
+	, m_angularVelocity(other.m_angularVelocity)
 	, m_maxVelocity(other.m_maxVelocity)
 {
 }
@@ -47,34 +45,69 @@ float PhysicalObject::getMass() const
 {
 	return m_mass;
 }
+void PhysicalObject::setMass(float mass)
+{
+	m_mass = mass;
+}
 
 float PhysicalObject::getRadius() const
 {
 	return m_radius;
+}
+void PhysicalObject::setRadius(float radius)
+{
+	m_radius = radius;
 }
 
 sf::Vector2f PhysicalObject::getVelocity() const
 {
 	return m_velocity;
 }
-
-float PhysicalObject::getMaxVelocity() const
-{
-	return m_maxVelocity;
-}
-
 void PhysicalObject::setVelocity(sf::Vector2f velocity)
 {
 	m_velocity = velocity;
 }
 
+float PhysicalObject::getMaxVelocity() const
+{
+	return m_maxVelocity;
+}
+void PhysicalObject::setMaxVelocity(float maxVelocity)
+{
+	m_maxVelocity = maxVelocity;
+}
+
+float PhysicalObject::getAngularVelocity() const
+{
+	return m_angularVelocity;
+}
+void PhysicalObject::setAngularVelocity(float angularVelocity)
+{
+	m_angularVelocity = angularVelocity;
+}
+
 void PhysicalObject::rotate(const float rotation)
 {
-	// std::cout << "Rotate Object by: " << rotation << " degrees" << std::endl;
-	m_sprite.rotate(sf::degrees(rotation));
-	m_rotation -= rotation;
-	if(m_rotation >= 360) m_rotation -= 360;
-	if(m_rotation < 0) m_rotation += 360;
+	m_sprite.rotate(sf::degrees(radiansToDegrees(rotation)));
+	m_rotation += rotation;
+
+	// wrap the rotation
+	if(m_rotation >= 2 * M_PI) m_rotation -= 2 * M_PI;
+	if(m_rotation < 0) m_rotation += 2 * M_PI;
+}
+void PhysicalObject::updateRotation()
+{
+	if(m_angularVelocity == 0) return;
+	// std::cout << "Rotating by: " << m_angularVelocity * FixedDeltaTime << " radians (" << radiansToDegrees(m_angularVelocity * FixedDeltaTime) << " degrees)" << std::endl;
+	PhysicalObject::rotate(m_angularVelocity * FixedDeltaTime);
+	PhysicalObject::rotate(m_angularVelocity * FixedDeltaTime);
+	m_angularVelocity *= angularDrag;
+
+	// clamp small values
+	if(std::abs(m_angularVelocity) < 0.01f)
+	{
+		m_angularVelocity = 0.0f;
+	}
 }
 
 void PhysicalObject::updateVelocity(float accelerate, bool backward)
@@ -84,10 +117,9 @@ void PhysicalObject::updateVelocity(float accelerate, bool backward)
 	if(m_velocity.y < 0.5 && m_velocity.y > -0.5) m_velocity.y = 0;
 
 	float direction = m_rotation;
-	if(backward) direction += 180;
-	direction = degreesToRadians(direction);
+	if(backward) direction += M_PI;
 
-	addDragForce(m_velocity, m_dragCoef, m_mass, FixedDeltaTime);
+	addDragForce(m_velocity, m_mass, FixedDeltaTime);
 	addAccelerationForce(m_velocity, accelerate, direction, backward, getMaxVelocity(), m_mass, FixedDeltaTime);
 
 	// std::cout << "Velocity: " << m_velocity.x << ", " << m_velocity.y << std::endl;
@@ -120,8 +152,8 @@ void PhysicalObject::physicalDraw(sf::RenderWindow& window)
 		{
 			// get the offset coords to be centered
 			sf::Vector2f objPosition = pos;
-			objPosition.x -= (m_size.x / 2.f);
-			objPosition.y -= (m_size.y / 2.f);
+			objPosition.x -= (getRadius());
+			objPosition.y -= (getRadius());
 
 			sf::CircleShape circle(m_radius);
 			circle.setFillColor(hitboxColor);
@@ -135,6 +167,7 @@ void PhysicalObject::physicalUpdate()
 {
 	float accel = 0;
 	bool backward = false;
-	this->updateVelocity(accel, backward);
-	this->updatePosition(FixedDeltaTime);
+	updateRotation();
+	updateVelocity(accel, backward);
+	updatePosition(FixedDeltaTime);
 }

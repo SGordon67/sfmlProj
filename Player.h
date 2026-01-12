@@ -6,9 +6,11 @@
 class Player : public Entity
 {
 private:
+	float m_angularAcceleration;
 public:
-	Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity, float maxVelocity, int hp, int maxHP);
+	Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, int hp, int maxHP, float angularAccleration);
 
+	void updateRotation() override;
 	void printInfo();
 	void playerUpdate(bool* (&buttons)[numButtons]);
 };

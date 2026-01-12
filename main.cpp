@@ -11,13 +11,11 @@
 #include <memory>
 #include <random>
 
-#include "SFML/Window/Mouse.hpp"
 #include "globals.h"
 #include "enums.h"
 #include "BasicObject.h"
 #include "VisualObject.h"
 #include "Crate.h"
-#include "StaticPhysicalObject.h"
 #include "PhysicalObject.h"
 #include "Player.h"
 
@@ -102,60 +100,137 @@ std::vector<sf::Vector2f> getDupPositions(sf::Vector2f position, sf::Vector2i si
 	return dupPositions;
 }
 
-void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject, float restitution)
+// void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject, float restitution)
+// {
+void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject,
+                     float restitution = 1.0f, float friction = 0.5f)
 {
 	std::cout << "COLLISION BETWEEN OBJECTS: " << mainObject.getObjectID() << ", and " << otherObject.getObjectID() << ". " << std::endl;
 	std::cout << "\tCollision occurred at position: (" << mainObject.getPosition().x << ", " << mainObject.getPosition().y << ") and (" << otherObject.getPosition().x << ", " << otherObject.getPosition().y << ")" << std::endl;
 
-	// calculate the collision normal
-	sf::Vector2f delta = otherObject.getPosition() - mainObject.getPosition();
+	// varials to keep track of collision information
+	sf::Vector2f normal;
+	sf::Vector2f contact1;
+	sf::Vector2f contact2;
+	sf::Vector2f r1;
+	sf::Vector2f r2;
+	float overlap;
 
-	// use the shortest path (accounting for the position wrap)
+	// Calculate the collision normal
+	sf::Vector2f delta = otherObject.getPosition() - mainObject.getPosition();
+	// Use the shortest path (accounting for position wrap)
 	if (std::abs(delta.x) > worldWidth / 2.0f) {
-		delta.x = delta.x > 0 ? delta.x - worldWidth 
-		                      : delta.x + worldWidth;
+		delta.x = delta.x > 0 ? delta.x - worldWidth : delta.x + worldWidth;
 	}
 	if (std::abs(delta.y) > worldHeight / 2.0f) {
-		delta.y = delta.y > 0 ? delta.y - worldHeight 
-		                      : delta.y + worldHeight;
+		delta.y = delta.y > 0 ? delta.y - worldHeight : delta.y + worldHeight;
 	}
-
 	float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
-
-	// avoid 0 edge case
-	if(distance == 0.0f)
-	{
+	// Avoid 0 edge case
+	if (distance == 0.0f) {
 		delta = sf::Vector2f(1.0f, 0.0f);
 		distance = 1.0f;
 	}
+	// Normalize collision normal
+	normal = delta / distance;
+	// Calculate contact points
+	contact1 = mainObject.getPosition() + normal * mainObject.getRadius();
+	contact2 = otherObject.getPosition() - normal * otherObject.getRadius();
+	// Radii from center of mass to contact points
+	r1 = contact1 - mainObject.getPosition();
+	r2 = contact2 - otherObject.getPosition();
+	// Calculate overlap
+	overlap = (mainObject.getRadius() + otherObject.getRadius()) - distance;
 
-	// normalize collision normal
-	sf::Vector2f normal = delta / distance;
 
-	// relative velocity
-	sf::Vector2f relativeVelocity = mainObject.getVelocity() - otherObject.getVelocity();
 
-	// project the velocity to the normal
+	// Apply normal impulse (velocity response)
+	// Calculate velocity at contact points (including rotational velocity)
+	sf::Vector2f v1 = mainObject.getVelocity() + 
+	                  sf::Vector2f(-mainObject.getAngularVelocity() * r1.y,
+	                               mainObject.getAngularVelocity() * r1.x);
+	sf::Vector2f v2 = otherObject.getVelocity() + 
+	                  sf::Vector2f(-otherObject.getAngularVelocity() * r2.y,
+	                               otherObject.getAngularVelocity() * r2.x);
+	// Relative velocity
+	sf::Vector2f relativeVelocity = v1 - v2;
+	// Project velocity onto normal
 	float velocityAlongNormal = relativeVelocity.dot(normal);
-
-	// prevent collision being reversed if objects are still touching and moveing away from eachother
-	if(velocityAlongNormal < 0.0f) return;
-
-	// calculate impulse scalar (restitution = 1 means perfectly elastic collision)
-	float impulseScalar = (-(1.0f + restitution) * velocityAlongNormal) / 
-			((1.0f / mainObject.getMass()) + (1.0f / otherObject.getMass()));
-
-	// apply impulse to velocities
+	// Objects already separating, don't apply impulse
+	if (velocityAlongNormal < 0.0f) return;
+	// Calculate moment of inertia
+	float I1 = 0.05f * mainObject.getMass() * mainObject.getRadius() * mainObject.getRadius();
+	float I2 = 0.05f * otherObject.getMass() * otherObject.getRadius() * otherObject.getRadius();
+	// Cross products for rotational contributio
+	float r1CrossN = r1.x * normal.y - r1.y * normal.x;
+	float r2CrossN = r2.x * normal.y - r2.y * normal.x;
+	// Calculate impulse scalar
+	float impulseScalar = (-(1.0f + restitution) * velocityAlongNormal) /
+	                      ((1.0f / mainObject.getMass()) + (1.0f / otherObject.getMass()) +
+	                       (r1CrossN * r1CrossN / I1) + (r2CrossN * r2CrossN / I2));
+	// Apply impulse to linear velocitie
 	sf::Vector2f impulse = normal * impulseScalar;
 	mainObject.setVelocity(mainObject.getVelocity() + impulse / mainObject.getMass());
 	otherObject.setVelocity(otherObject.getVelocity() - impulse / otherObject.getMass());
+	// Apply rotational impulse
+	float torque1 = r1.x * impulse.y - r1.y * impulse.x;
+	float angularImpulse1 = torque1 / I1;
+	mainObject.setAngularVelocity(mainObject.getAngularVelocity() + angularImpulse1);
+	float torque2 = r2.x * impulse.y - r2.y * impulse.x;
+	float angularImpulse2 = torque2 / I2;
+	otherObject.setAngularVelocity(otherObject.getAngularVelocity() + angularImpulse2);
 
-	// separate overlapping hitboxes
-	float overlap = (mainObject.getRadius() + otherObject.getRadius()) - distance;
-	if(overlap > 0.0f)
-	{
+
+
+	// Apply friction impulse (creates rotation for circles)
+	// Calculate tangent (perpendicular to normal)
+	sf::Vector2f tangent(-normal.y, normal.x);
+	
+	// Velocity at contact points
+	v1 = mainObject.getVelocity() +
+	                  sf::Vector2f(-mainObject.getAngularVelocity() * r1.y,
+	                               mainObject.getAngularVelocity() * r1.x);
+	v2 = otherObject.getVelocity() +
+	                  sf::Vector2f(-otherObject.getAngularVelocity() * r2.y,
+	                               otherObject.getAngularVelocity() * r2.x);
+
+	relativeVelocity = v1 - v2;
+	float relativeVelocityTangent = relativeVelocity.dot(tangent);
+
+	// Calculate moment of inertia
+	I1 = 0.05f * mainObject.getMass() * mainObject.getRadius() * mainObject.getRadius();
+	I2 = 0.05f * otherObject.getMass() * otherObject.getRadius() * otherObject.getRadius();
+	
+	// Cross products for tangent
+	float r1CrossT = r1.x * tangent.y - r1.y * tangent.x;
+	float r2CrossT = r2.x * tangent.y - r2.y * tangent.x;
+	
+	// Friction impulse scala
+	float frictionImpulseScalar = -relativeVelocityTangent * friction /
+	                              ((1.0f / mainObject.getMass()) + (1.0f / otherObject.getMass()) +
+	                               (r1CrossT * r1CrossT / I1) + (r2CrossT * r2CrossT / I2));
+	
+	sf::Vector2f frictionImpulse = tangent * frictionImpulseScalar;
+
+	// Apply friction to linear velocity
+	mainObject.setVelocity(mainObject.getVelocity() + frictionImpulse / mainObject.getMass());
+	otherObject.setVelocity(otherObject.getVelocity() - frictionImpulse / otherObject.getMass());
+	
+	// Apply friction torque
+	float frictionTorque1 = r1.x * frictionImpulse.y - r1.y * frictionImpulse.x;
+	float frictionAngularImpulse1 = frictionTorque1 / I1;
+	mainObject.setAngularVelocity(mainObject.getAngularVelocity() + frictionAngularImpulse1);
+
+	float frictionTorque2 = -(r2.x * frictionImpulse.y - r2.y * frictionImpulse.x);
+	float frictionAngularImpulse2 = frictionTorque2 / I2;
+	otherObject.setAngularVelocity(otherObject.getAngularVelocity() + frictionAngularImpulse2);
+
+
+
+	// Separate overlapping objects
+	if (overlap > 0.0f) {
 		std::cout << "Separating overlapping hitboxes with overlap: " << overlap << std::endl;
-		// mass based separation, lighter moves more
+		// Mass-based separation (lighter object moves more)
 		float totalMass = mainObject.getMass() + otherObject.getMass();
 		float separation1 = overlap * (otherObject.getMass() / totalMass);
 		float separation2 = overlap * (mainObject.getMass() / totalMass);
@@ -167,46 +242,18 @@ void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject, fl
 
 void detectAndHandleCollision(PhysicalObject& mainObject, std::vector<PhysicalObject>& physicalObjects)
 {
-	// offset to measure from center of object
-	// sf::Vector2f mainPosition = mainObject.getPosition();
-	// float mainRadius = mainObject.getRadius();
-
 	for(auto& obj : physicalObjects)
 	{
 		if(mainObject.getObjectID() == obj.getObjectID()) continue;
 		bool overlap = detectIntersection(mainObject.getPosition(), mainObject.getRadius(), obj.getPosition(), obj.getRadius());
 		if(overlap)
 		{
-			handleCollision(mainObject, obj, restitution);
+			handleCollision(mainObject, obj, restitution, friction);
 		}
-
-		// if(mainObject.getObjectID() == obj.getObjectID()) continue;
-		//
-		// sf::Vector2f objPosition = obj.getPosition();
-		// float objRadius = obj.getRadius();
-		//
-		// // shortest distance with wrapping
-		// sf::Vector2f delta = objPosition - mainPosition;
-		// if(std::abs(delta.x) > worldWidth / 2.0f)
-		// {
-		// 	delta.x = delta.x > 0 ? delta.x - worldWidth : delta.x + worldWidth;
-		// }
-		// if(std::abs(delta.y) > worldHeight / 2.0f)
-		// {
-		// 	delta.y = delta.y > 0 ? delta.y - worldHeight : delta.y + worldHeight;
-		// }
-		//
-		// // float distance = std::sqrt(std::pow((objPosition.y - mainPosition.y), 2) + std::pow((objPosition.x - mainPosition.x), 2));
-		// float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
-		// if(distance <= (mainRadius + objRadius))
-		// {
-		// 	handleCollision(mainObject, obj, restitution);
-		// }
 	}
-	// std::cout << std::endl;
 }
 
-void addDragForce(sf::Vector2f& currentVelocity, float dragCoef, float mass, float deltaTime)
+void addDragForce(sf::Vector2f& currentVelocity, float mass, float deltaTime)
 {
 	currentVelocity.x = currentVelocity.x * (1.f - dragCoef * deltaTime / mass);
 	currentVelocity.y = currentVelocity.y * (1.f - dragCoef * deltaTime / mass);
@@ -226,11 +273,11 @@ void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, flo
 	{
 		if(acceleration > 0)
 		{
-			fAccel.x = (acceleration / mass) * std::cos(direction) * deltaTime;
+			fAccel.x = (-acceleration / mass) * std::cos(direction) * deltaTime;
 			fAccel.y = (-acceleration / mass) * std::sin(direction) * deltaTime;
 		} else if(backward) // reverse direction
 		{
-			fAccel.x = (-0.5f * acceleration / mass) * std::cos(direction) * deltaTime;
+			fAccel.x = (0.5f * acceleration / mass) * std::cos(direction) * deltaTime;
 			fAccel.y = (0.5f * acceleration / mass) * std::sin(direction) * deltaTime;
 		}
 	}
@@ -303,6 +350,14 @@ void updateButtonPresses(bool* (&buttons)[numButtons])
 	{
 		*buttons[5] = false;
 	}
+	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Tab))
+	{
+		// std::cout << "E or Space Pressed" << std::endl;
+		*buttons[6] = true;
+	}else
+	{
+		*buttons[6] = false;
+	}
 }
 
 void updateGame(Player& player, bool* (&buttons)[numButtons], std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects, std::vector<std::unique_ptr<Interactable>>& interactableObjects)
@@ -359,7 +414,7 @@ void setupGame(std::vector<VisualObject>& visualObjects, std::vector<PhysicalObj
 	// far background
 	sf::Vector2i bSize(1000 * windowWidth, 1000 * windowHeight);
 	sf::Vector2f bPosition({0, 0});
-	float bRotation = 90;
+	float bRotation = M_PI / 2;
 	RenderLayer bRenderLayer = RenderLayer::FarBackground;
 	RenderLayer bRenderLayer2 = RenderLayer::CloseBackground;
 	std::string bgtFilename = "art/basicBackground.png";
@@ -373,7 +428,7 @@ void setupGame(std::vector<VisualObject>& visualObjects, std::vector<PhysicalObj
 	// other visual objects
 	sf::Vector2f cPosition({100, 100});
 	sf::Vector2i cSize(17, 17);
-	float cRotation = 90;
+	float cRotation = M_PI / 2;
 	RenderLayer cRenderLayer = RenderLayer::Main;
 	std::string cFilename = "art/basicCrate.png";
 	float cInteractRadius = 30;
@@ -387,16 +442,33 @@ void setupGame(std::vector<VisualObject>& visualObjects, std::vector<PhysicalObj
 
 	// testing meteor
 	sf::Vector2i objectSize(17, 17);
-	float objectRotation = 90;
+	float objectRotation = M_PI / 2;
 	RenderLayer objectRenderLayer = RenderLayer::Main;
+	std::string objectFilename = "art/basicMeteor.png";
 	float objectMass = 10;
 	float objectRadius = 8;
 	sf::Vector2f objectVelocity = {0, 0};
 	float objectAcceleration = 0;
-	float objectDragCoef = 4;
-	float objectRotationVelocity = 4;
-	std::string objectFilename = "art/basicMeteor.png";
+	float objectAngularVelocity = 0;
 	float objectMaximumVelocity = 500; // equal to players for now
+
+	// custom objects
+	// player position (900, 500);
+	
+	// two objects VERY close to eachother on opposite sides of the world
+	std::vector<sf::Vector2f*> mPositions[2];
+	physicalObjects.push_back(PhysicalObject(sf::Vector2f(0.1, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity));
+	physicalObjects.push_back(PhysicalObject(sf::Vector2f(worldWidth - 2*objectRadius, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity));
+
+	// two objects touching eachother near the middle of the board
+	physicalObjects.push_back(PhysicalObject(sf::Vector2f(500, 200), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity));
+	physicalObjects.push_back(PhysicalObject(sf::Vector2f(500 + objectRadius, 200.5), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity));
+
+	// two objects near above player start to test collision rotation
+	physicalObjects.push_back(PhysicalObject(sf::Vector2f({900, 400}), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity));
+	physicalObjects.push_back(PhysicalObject(sf::Vector2f({914, 340}), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity));
+	
+
 
 	// create 10 objects randomely on the first screen
 	std::random_device rd;
@@ -404,20 +476,10 @@ void setupGame(std::vector<VisualObject>& visualObjects, std::vector<PhysicalObj
 	std::uniform_real_distribution<float> distX(0.f, (float)windowWidth);
 	std::uniform_real_distribution<float> distY(0.f, (float)windowHeight);
 
-	// custom objects
-	
-	// two objects VERY close to eachother on opposite sides of the world
-	std::vector<sf::Vector2f*> mPositions[2];
-	physicalObjects.push_back(PhysicalObject(sf::Vector2f(0.1, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
-	physicalObjects.push_back(PhysicalObject(sf::Vector2f(worldWidth - 2*objectRadius, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
-
-	// two objects touching eachother near the middle of the board
-	physicalObjects.push_back(PhysicalObject(sf::Vector2f(500, 200), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
-	physicalObjects.push_back(PhysicalObject(sf::Vector2f(500 + objectRadius, 200.5), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
 	for(int i = 0; i < 10; i++)
 	{
 		// random objects
-		// objects.push_back(PhysicalObject(sf::Vector2f(distX(rng), distY(rng)), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectDragCoef, objectRotationVelocity, objectMaximumVelocity));
+		// objects.push_back(PhysicalObject(sf::Vector2f(distX(rng), distY(rng)), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectRotationVelocity, objectMaximumVelocity));
 	}
 }
 
@@ -430,6 +492,7 @@ int main()
 	bool leftPressed = false;
 	bool rightPressed = false;
 	bool interactPressed = false;
+	bool tabPressed = false;
 	bool* buttons[numButtons];
 	buttons[0] = &escPressed;
 	buttons[1] = &upPressed;
@@ -437,24 +500,25 @@ int main()
 	buttons[3] = &leftPressed;
 	buttons[4] = &rightPressed;
 	buttons[5] = &interactPressed;
+	buttons[6] = &tabPressed;
 
 	// setup game objects
 	
 	// player
 	sf::Vector2f pPosition(900, 500);
-	sf::Vector2i pSize(29, 30);
-	float pRotation = 90;
+	sf::Vector2i pSize(24, 30);
+	float pRotation = M_PI / 2;
 	RenderLayer pRenderLayer = RenderLayer::Main;
 	std::string pFilename = "art/basicSpriteL.png";
 	float pMass = 10;
-	float pRadius = 14;
+	float pRadius = pSize.x / 2.f;
 	sf::Vector2f pVelocity = {0, 0};
 	float pAcceleration = 5000;
-	float pRotationVelocity = 4;
-	float pDrag = 4;
+	float pAngularVelocity = 0;
 	float pMaxVelocity = 500;
 	int pMaxHP = 100;
-	Player player = Player(pPosition, pSize, pRotation, pRenderLayer, pFilename, pMass, pRadius, pVelocity, pAcceleration, pDrag, pRotationVelocity, pMaxVelocity, pMaxHP, pMaxHP);
+	float angularAccleration = degreesToRadians(4);
+	Player player = Player(pPosition, pSize, pRotation, pRenderLayer, pFilename, pMass, pRadius, pVelocity, pAcceleration, pAngularVelocity, pMaxVelocity, pMaxHP, pMaxHP, angularAccleration);
 
 
 

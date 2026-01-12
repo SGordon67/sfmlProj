@@ -1,6 +1,7 @@
 #ifndef BASICOBJECT_H
 #define BASICOBJECT_H
 
+#include <cmath>
 #include <iostream>
 
 #include "SFML/Graphics/RenderWindow.hpp"
@@ -13,6 +14,7 @@
 #include "enums.h"
 
 extern std::vector<sf::Vector2f> getDupPositions(sf::Vector2f position, sf::Vector2i size);
+extern float radiansToDegrees(float radians);
 
 // forward declaration, this class will exist
 class PhysicalObject;
@@ -136,10 +138,10 @@ public:
 	void rotate(const float rotation)
 	{
 		// std::cout << "Rotation object by: " << rotation << " degrees" << std::endl;
-		m_sprite.rotate(sf::degrees(rotation));
-		m_rotation -= rotation;
-		if(m_rotation >= 360) m_rotation -= 360;
-		if(m_rotation < 0) m_rotation += 360;
+		m_sprite.rotate(sf::degrees(radiansToDegrees(rotation)));
+		m_rotation += rotation;
+		if(m_rotation >= 2 * M_PI) m_rotation -= 2 * M_PI;
+		if(m_rotation < 0) m_rotation += 2 * M_PI;
 	}
 
 	void basicUpdate(float deltaTime, sf::Vector2f relationalVelocity)

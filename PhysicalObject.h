@@ -11,25 +11,29 @@ protected:
 
 	sf::Vector2f m_velocity;
 	float m_acceleration;
-	float m_dragCoef;
 
-	float m_rotationVelocity;
+	float m_angularVelocity;
 
 	float m_maxVelocity;
 
 public:
-	PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float dragCoef, float rotationVelocity, float maxVelocity);
+	PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float angularVelocity, float maxVelocity);
 	PhysicalObject(const PhysicalObject& other); // copy constructor
 	PhysicalObject(PhysicalObject&& other) noexcept; // move constructor
 
 	float getMass() const;
+	void setMass(float mass);
 	float getRadius() const;
+	void setRadius(float radius);
 	sf::Vector2f getVelocity() const;
-	float getMaxVelocity() const;
-
 	void setVelocity(sf::Vector2f velocity);
+	float getMaxVelocity() const;
+	void setMaxVelocity(float maxVelocity);
+	float getAngularVelocity() const;
+	void setAngularVelocity(float angularVelocity);
 
 	void rotate(const float rotation);
+	virtual void updateRotation();
 	void updateVelocity(float accelerate, bool backward);
 	void updatePosition(float deltaTime);
 

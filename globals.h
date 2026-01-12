@@ -8,13 +8,16 @@
 constexpr bool showHitboxes = true;
 
 // structural values
-constexpr int numButtons = 6;
+constexpr int numButtons = 7;
 constexpr float FixedDeltaTime = 1.0f / 60.0f;
 
 // globals consts
-constexpr sf::Color hitboxColor = sf::Color(255, 0, 0, 50);
+constexpr sf::Color hitboxColor = sf::Color(255, 0, 0, 150);
 
-constexpr float restitution = 0.8f;
+constexpr float restitution = 1.f;
+constexpr float friction = 0.5f;
+constexpr float dragCoef = 4;
+constexpr float angularDrag = 0.99f;
 
 // global variables
 extern int numObjects;
