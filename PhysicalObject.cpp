@@ -68,6 +68,15 @@ void PhysicalObject::setVelocity(sf::Vector2f velocity)
 	m_velocity = velocity;
 }
 
+float PhysicalObject::getAcceleration() const
+{
+	return m_acceleration;
+}
+void PhysicalObject::setAcceleration(float acceleration)
+{
+	m_acceleration = acceleration;
+}
+
 float PhysicalObject::getMaxVelocity() const
 {
 	return m_maxVelocity;
@@ -89,51 +98,43 @@ void PhysicalObject::setAngularVelocity(float angularVelocity)
 void PhysicalObject::rotate(const float rotation)
 {
 	m_sprite.rotate(sf::degrees(radiansToDegrees(rotation)));
-	m_rotation += rotation;
+	setRotation(getRotation() + rotation);
 
 	// wrap the rotation
-	if(m_rotation >= 2 * M_PI) m_rotation -= 2 * M_PI;
-	if(m_rotation < 0) m_rotation += 2 * M_PI;
+	if(getRotation() >= 2 * M_PI) setRotation(getRotation() - 2 * M_PI);
+	if(getRotation() < 0) setRotation(getRotation() + 2 * M_PI);
 }
 void PhysicalObject::updateRotation()
 {
-	if(m_angularVelocity == 0) return;
-	// std::cout << "Rotating by: " << m_angularVelocity * FixedDeltaTime << " radians (" << radiansToDegrees(m_angularVelocity * FixedDeltaTime) << " degrees)" << std::endl;
-	PhysicalObject::rotate(m_angularVelocity * FixedDeltaTime);
-	PhysicalObject::rotate(m_angularVelocity * FixedDeltaTime);
-	m_angularVelocity *= angularDrag;
+	if(getAngularVelocity() == 0) return;
+	PhysicalObject::rotate(getAngularVelocity() * FixedDeltaTime);
+	PhysicalObject::rotate(getAngularVelocity() * FixedDeltaTime);
+	setAngularVelocity(getAngularVelocity() * angularDrag);
 
 	// clamp small values
-	if(std::abs(m_angularVelocity) < 0.01f)
+	if(std::abs(getAngularVelocity()) < 0.01f)
 	{
-		m_angularVelocity = 0.0f;
+		setAngularVelocity(0.0f);
 	}
 }
 
 void PhysicalObject::updateVelocity(float accelerate, bool backward)
 {
 	// zero out the velocity if its small enough
-	if(m_velocity.x < 0.5 && m_velocity.x > -0.5) m_velocity.x = 0;
-	if(m_velocity.y < 0.5 && m_velocity.y > -0.5) m_velocity.y = 0;
+	if(getVelocity().x < 0.5 && getVelocity().x > -0.5) setVelocity({0, getVelocity().y});
+	if(getVelocity().y < 0.5 && getVelocity().y > -0.5) setVelocity({getVelocity().x, 0});
 
-	float direction = m_rotation;
+	float direction = getRotation();
 	if(backward) direction += M_PI;
 
-	addDragForce(m_velocity, m_mass, FixedDeltaTime);
-	addAccelerationForce(m_velocity, accelerate, direction, backward, getMaxVelocity(), m_mass, FixedDeltaTime);
-
-	// std::cout << "Velocity: " << m_velocity.x << ", " << m_velocity.y << std::endl;
-	// std::cout << "Position: " << m_position.x << ", " << m_position.y << std::endl;
+	// manipulating the velocity directly, maybe bad practice?
+	addDragForce(m_velocity, getMass(), FixedDeltaTime);
+	addAccelerationForce(m_velocity, accelerate, direction, backward, getMaxVelocity(), getMass(), FixedDeltaTime);
 }
 
 void PhysicalObject::updatePosition(float deltaTime)
 {
-	// ensure the change will work, adjust accordingly
-	m_position += (m_velocity * deltaTime);
-	m_position = wrapPosition(m_position);
-
-	// apply the change to the sprite
-	m_sprite.setPosition(m_position);
+	setPosition(wrapPosition(getPosition() + (getVelocity() * deltaTime)));
 }
 
 void PhysicalObject::physicalDraw(sf::RenderWindow& window)
@@ -143,7 +144,7 @@ void PhysicalObject::physicalDraw(sf::RenderWindow& window)
 	dupPositions = basicDraw(window);
 
 	// adding starting position for hitbox
-	dupPositions.push_back(m_position);
+	dupPositions.push_back(getPosition());
 
 	// draw the shapes used for collision
 	if(showHitboxes)
@@ -155,7 +156,7 @@ void PhysicalObject::physicalDraw(sf::RenderWindow& window)
 			objPosition.x -= (getRadius());
 			objPosition.y -= (getRadius());
 
-			sf::CircleShape circle(m_radius);
+			sf::CircleShape circle(getRadius());
 			circle.setFillColor(hitboxColor);
 			circle.setPosition(objPosition);
 			window.draw(circle);

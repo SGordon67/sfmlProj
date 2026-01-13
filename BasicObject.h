@@ -87,20 +87,37 @@ public:
 	{
 		return m_position;
 	}
+	void setPosition(sf::Vector2f position)
+	{
+		m_position = position;
+		m_sprite.setPosition(position);
+	}
 
 	sf::Vector2i getSize() const
 	{
 		return m_size;
+	}
+	void setSize(sf::Vector2i size)
+	{
+		m_size = size;
 	}
 
 	float getRotation() const
 	{
 		return m_rotation;
 	}
+	void setRotation(float rotation)
+	{
+		m_rotation = rotation;
+	}
 
 	RenderLayer getRenderLayer() const
 	{
 		return m_renderLayer;
+	}
+	void setRenderLayer(RenderLayer layer)
+	{
+		m_renderLayer = layer;
 	}
 
 	sf::Texture getTexture() const
@@ -116,12 +133,6 @@ public:
 	sf::Sprite getSprite() const
 	{
 		return m_sprite;
-	}
-
-	void setPosition(sf::Vector2f position)
-	{
-		m_position = position;
-		m_sprite.setPosition(m_position);
 	}
 
 	void loadTexture(const std::string& filename)

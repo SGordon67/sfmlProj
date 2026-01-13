@@ -27,15 +27,17 @@ public:
 	void setRadius(float radius);
 	sf::Vector2f getVelocity() const;
 	void setVelocity(sf::Vector2f velocity);
+	float getAcceleration() const;
+	void setAcceleration(float acceleration);
 	float getMaxVelocity() const;
 	void setMaxVelocity(float maxVelocity);
 	float getAngularVelocity() const;
 	void setAngularVelocity(float angularVelocity);
 
-	void rotate(const float rotation);
+	virtual void rotate(const float rotation);
 	virtual void updateRotation();
-	void updateVelocity(float accelerate, bool backward);
-	void updatePosition(float deltaTime);
+	virtual void updateVelocity(float accelerate, bool backward);
+	virtual void updatePosition(float deltaTime);
 
 	virtual void physicalDraw(sf::RenderWindow& window);
 	virtual void physicalUpdate();

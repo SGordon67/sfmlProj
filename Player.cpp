@@ -14,6 +14,15 @@ Player::Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderL
 	std::cout << "Player constructed" << std::endl;
 }
 
+float Player::getAngularAcceleration()
+{
+	return m_angularAcceleration;
+}
+void Player::setAngularAcceleration(float angularAcceleration)
+{
+	m_angularAcceleration = angularAcceleration;
+}
+
 void Player::printInfo()
 {
 	std::cout << std::endl << "Player Info: " << std::endl;
@@ -23,7 +32,7 @@ void Player::printInfo()
 
 void Player::updateRotation()
 {
-	rotate(m_angularVelocity);
+	rotate(getAngularVelocity());
 }
 
 void Player::playerUpdate(bool* (&buttons)[numButtons])
@@ -32,15 +41,15 @@ void Player::playerUpdate(bool* (&buttons)[numButtons])
 	float potentialRotation = 0;
 	if(*buttons[3]) // left
 	{
-		potentialRotation -= m_angularAcceleration;
+		potentialRotation -= getAngularAcceleration();
 	}
 	if(*buttons[4]) // right
 	{
-		potentialRotation += m_angularAcceleration;
+		potentialRotation += getAngularAcceleration();
 	}
 	if(potentialRotation != 0) 
 	{
-		m_angularVelocity = potentialRotation;
+		setAngularVelocity(potentialRotation);
 		updateRotation();
 	}
 
@@ -49,11 +58,11 @@ void Player::playerUpdate(bool* (&buttons)[numButtons])
 	bool backward = false;
 	if(*buttons[1] && !*buttons[2])
 	{
-		accel = m_acceleration;
+		accel = getAcceleration();
 	} else if(!*buttons[1] && *buttons[2])
 	{
 		backward = true;
-		accel = -m_acceleration;
+		accel = -getAcceleration();
 	}
 	updateVelocity(accel, backward);
 	updatePosition(FixedDeltaTime);
