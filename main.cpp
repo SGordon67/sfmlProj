@@ -1,3 +1,4 @@
+#include "HealthCrate.h"
 #include "SFML/Graphics/CircleShape.hpp"
 #include "SFML/Graphics/Rect.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
@@ -17,7 +18,9 @@
 #include "VisualObject.h"
 #include "Crate.h"
 #include "PhysicalObject.h"
+#include "Ball.h"
 #include "Player.h"
+#include "Spikey.h"
 
 float degreesToRadians(float degrees)
 {
@@ -61,7 +64,7 @@ bool detectIntersection(sf::Vector2f pos1, float radius1, sf::Vector2f pos2, flo
 	return false;
 }
 
-void detectAndHandleInteractions(Player& player, std::vector<std::unique_ptr<Interactable>>& interactableObjects)
+void detectAndHandleInteractions(Player& player, std::vector<std::shared_ptr<Interactable>>& interactableObjects)
 {
 	for(auto& obj : interactableObjects)
 	{
@@ -106,7 +109,8 @@ void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject,
                      float restitution = 1.0f, float friction = 0.5f)
 {
 	std::cout << "COLLISION BETWEEN OBJECTS: " << mainObject.getObjectID() << ", and " << otherObject.getObjectID() << ". " << std::endl;
-	std::cout << "\tCollision occurred at position: (" << mainObject.getPosition().x << ", " << mainObject.getPosition().y << ") and (" << otherObject.getPosition().x << ", " << otherObject.getPosition().y << ")" << std::endl;
+	std::cout << "\tCollision occurred at position: (" << mainObject.getPosition().x << ", " << mainObject.getPosition().y 
+        << ") and (" << otherObject.getPosition().x << ", " << otherObject.getPosition().y << ")" << std::endl;
 
 	// varials to keep track of collision information
 	sf::Vector2f normal;
@@ -167,7 +171,7 @@ void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject,
 	// Calculate impulse scalar
 	float impulseScalar = (-(1.0f + restitution) * velocityAlongNormal) /
 	                      ((1.0f / mainObject.getMass()) + (1.0f / otherObject.getMass()) +
-	                       (r1CrossN * r1CrossN / I1) + (r2CrossN * r2CrossN / I2));
+                           (r1CrossN * r1CrossN / I1) + (r2CrossN * r2CrossN / I2));
 	// Apply impulse to linear velocitie
 	sf::Vector2f impulse = normal * impulseScalar;
 	mainObject.setVelocity(mainObject.getVelocity() + impulse / mainObject.getMass());
@@ -240,15 +244,15 @@ void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject,
 	}
 }
 
-void detectAndHandleCollision(PhysicalObject& mainObject, std::vector<PhysicalObject>& physicalObjects)
+void detectAndHandleCollision(PhysicalObject& mainObject, std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects)
 {
 	for(auto& obj : physicalObjects)
 	{
-		if(mainObject.getObjectID() == obj.getObjectID()) continue;
-		bool overlap = detectIntersection(mainObject.getPosition(), mainObject.getRadius(), obj.getPosition(), obj.getRadius());
+		if(mainObject.getObjectID() == obj->getObjectID()) continue;
+		bool overlap = detectIntersection(mainObject.getPosition(), mainObject.getRadius(), obj->getPosition(), obj->getRadius());
 		if(overlap)
 		{
-			handleCollision(mainObject, obj, restitution, friction);
+			handleCollision(mainObject, *obj, restitution, friction);
 		}
 	}
 }
@@ -360,19 +364,19 @@ void updateButtonPresses(bool* (&buttons)[numButtons])
 	}
 }
 
-void updateGame(Player& player, bool* (&buttons)[numButtons], std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects, std::vector<std::unique_ptr<Interactable>>& interactableObjects)
+void updateGame(Player& player, bool* (&buttons)[numButtons], std::vector<std::unique_ptr<VisualObject>>& visualObjects, std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects, std::vector<std::shared_ptr<Interactable>>& interactableObjects)
 {
 	// update visual objects
 	for(auto& obj : visualObjects)
 	{
-		obj.basicUpdate(FixedDeltaTime, player.getVelocity());
+		obj->basicUpdate(FixedDeltaTime, player.getVelocity());
 	}
 	
 	// update physical objects
 	for(auto& obj : physicalObjects)
 	{
-		obj.physicalUpdate();
-		detectAndHandleCollision(obj, physicalObjects);
+		obj->physicalUpdate();
+		detectAndHandleCollision(*obj, physicalObjects);
 	}
 	player.playerUpdate(buttons);
 	if(*buttons[5])
@@ -382,7 +386,7 @@ void updateGame(Player& player, bool* (&buttons)[numButtons], std::vector<Visual
 	detectAndHandleCollision(player, physicalObjects);
 }
 
-void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects)
+void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vector<std::unique_ptr<VisualObject>>& visualObjects, std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects)
 {
 	// clear the window, then draw, then display
 	window.clear();
@@ -394,13 +398,13 @@ void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vec
 	// draw visual objects
 	for(auto& obj : visualObjects)
 	{
-		obj.basicDraw(window);
+		obj->basicDraw(window);
 	}
 	
 	// draw physical objects
 	for(auto& obj : physicalObjects)
 	{
-		obj.physicalDraw(window);
+		obj->physicalDraw(window);
 	}
 
 	// draw the player
@@ -408,7 +412,7 @@ void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vec
 	window.display();
 }
 
-void setupGame(std::vector<VisualObject>& visualObjects, std::vector<PhysicalObject>& physicalObjects, std::vector<std::unique_ptr<Interactable>>& interactableObjects)
+void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects, std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects, std::vector<std::shared_ptr<Interactable>>& interactableObjects)
 {
 	// VISUAL OBJECTS
 	// far background
@@ -422,20 +426,9 @@ void setupGame(std::vector<VisualObject>& visualObjects, std::vector<PhysicalObj
 	VisualObject bg(bPosition, bSize, bRotation, bRenderLayer, bgtFilename);
 	VisualObject fg(bPosition, bSize, bRotation, bRenderLayer2, bstFilename);
 
-	visualObjects.push_back(bg);
-	visualObjects.push_back(fg);
+	visualObjects.push_back(std::make_unique<VisualObject>(bg));
+	visualObjects.push_back(std::make_unique<VisualObject>(fg));
 
-	// other visual objects
-	sf::Vector2f cPosition({100, 100});
-	sf::Vector2i cSize(17, 17);
-	float cRotation = M_PI / 2;
-	RenderLayer cRenderLayer = RenderLayer::Main;
-	std::string cFilename = "art/basicCrate.png";
-	float cInteractRadius = 30;
-	Crate c1(cPosition, cSize, cRotation, cRenderLayer, cFilename, cInteractRadius);
-
-	visualObjects.push_back(c1);
-	interactableObjects.push_back(std::make_unique<Crate>(c1));
 
 
 	// PHYSICAL OBJECTS
@@ -457,30 +450,69 @@ void setupGame(std::vector<VisualObject>& visualObjects, std::vector<PhysicalObj
 	
 	// two objects VERY close to eachother on opposite sides of the world
 	std::vector<sf::Vector2f*> mPositions[2];
-	physicalObjects.push_back(PhysicalObject(sf::Vector2f(0.1, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity));
-	physicalObjects.push_back(PhysicalObject(sf::Vector2f(worldWidth - 2*objectRadius, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity));
+	physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(0.1, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, 
+				       objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity)));
+	physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(worldWidth - 2*objectRadius, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, 
+				       objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity)));
 
 	// two objects touching eachother near the middle of the board
-	physicalObjects.push_back(PhysicalObject(sf::Vector2f(500, 200), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity));
-	physicalObjects.push_back(PhysicalObject(sf::Vector2f(500 + objectRadius, 200.5), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity));
+	physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(500, 200), objectSize, objectRotation, objectRenderLayer, objectFilename, 
+				       objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity)));
+	physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(500 + objectRadius, 200.5), objectSize, objectRotation, objectRenderLayer, objectFilename, 
+				       objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity)));
 
 	// two objects near above player start to test collision rotation
-	physicalObjects.push_back(PhysicalObject(sf::Vector2f({900, 400}), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity));
-	physicalObjects.push_back(PhysicalObject(sf::Vector2f({914, 340}), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity));
+	physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f({900, 400}), objectSize, objectRotation, objectRenderLayer, objectFilename, 
+				       objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity)));
+	physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f({914, 340}), objectSize, objectRotation, objectRenderLayer, objectFilename, 
+				       objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity)));
 	
-
-
 	// create 10 objects randomely on the first screen
 	std::random_device rd;
 	std::mt19937 rng(rd());
 	std::uniform_real_distribution<float> distX(0.f, (float)windowWidth);
 	std::uniform_real_distribution<float> distY(0.f, (float)windowHeight);
-
-	for(int i = 0; i < 10; i++)
+	for(int i = 0; i < 5; i++)
 	{
 		// random objects
-		// objects.push_back(PhysicalObject(sf::Vector2f(distX(rng), distY(rng)), objectSize, objectRotation, objectRenderLayer, objectFilename, objectMass, objectRadius, objectVelocity, objectAcceleration, objectRotationVelocity, objectMaximumVelocity));
+		physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(distX(rng), distY(rng)), objectSize, objectRotation, objectRenderLayer, objectFilename, 
+					       objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity)));
 	}
+
+	// crates
+	sf::Vector2f cPosition({100, 100});
+	sf::Vector2i cSize(17, 17);
+	float cRotation = M_PI / 2;
+	RenderLayer cRenderLayer = RenderLayer::Main;
+	std::string cFilename = "art/basicCrate.png";
+	float cMass = 10;
+	float cRadius = 8;
+	sf::Vector2f cVelocity = {0, 0};
+	float cAcceleration = 0;
+	float cAngularVelocity = 0;
+	float cMaximumVelocity = 500; // equal to players for now
+    int cHP = 100;
+    int cMaxHP = 100;
+    int cValue = 10;
+    
+    auto c1 = std::make_shared<HealthCrate>(HealthCrate(cPosition, cSize, cRotation, cRenderLayer, cFilename, 
+                    cMass, cRadius, cVelocity, cAcceleration, cAngularVelocity, cMaximumVelocity, cHP, cMaxHP, cValue));
+	physicalObjects.push_back(c1);
+	interactableObjects.push_back(c1);
+
+
+    // Hazards
+	sf::Vector2i spikeySize(20, 20);
+    int spikeyHP = 100;
+    int spikeyMaxHP = 100;
+    int spikeyDamage = 10;
+	std::string spikeyFilename = "art/basicSpikey.png";
+	float spikeyRadius = 10;
+
+	// create hazards
+    auto h1 = std::make_shared<Spikey>(sf::Vector2f(distX(rng), distY(rng)), spikeySize, objectRotation, objectRenderLayer, spikeyFilename, 
+                objectMass, spikeyRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity, spikeyHP, spikeyMaxHP, spikeyDamage);
+    physicalObjects.push_back(h1);
 }
 
 int main()
@@ -518,13 +550,15 @@ int main()
 	float pMaxVelocity = 500;
 	int pMaxHP = 100;
 	float angularAccleration = degreesToRadians(4);
-	Player player = Player(pPosition, pSize, pRotation, pRenderLayer, pFilename, pMass, pRadius, pVelocity, pAcceleration, pAngularVelocity, pMaxVelocity, pMaxHP, pMaxHP, angularAccleration);
+	Player player = Player(pPosition, pSize, pRotation, pRenderLayer, pFilename, 
+            pMass, pRadius, pVelocity, pAcceleration, pAngularVelocity, pMaxVelocity, 
+            pMaxHP, pMaxHP, angularAccleration);
 
 
 
-	std::vector<VisualObject> visualObjects;
-	std::vector<PhysicalObject> physicalObjects;
-	std::vector<std::unique_ptr<Interactable>> interactableObjects;
+	std::vector<std::unique_ptr<VisualObject>> visualObjects;
+	std::vector<std::shared_ptr<PhysicalObject>> physicalObjects;
+	std::vector<std::shared_ptr<Interactable>> interactableObjects;
 	setupGame(visualObjects, physicalObjects, interactableObjects);
 
 

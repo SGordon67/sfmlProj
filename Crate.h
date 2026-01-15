@@ -1,26 +1,52 @@
 #ifndef CRATE_H
 #define CRATE_H
 
-#include "VisualObject.h"
-#include "Interactable.h"
+#include "PhysicalObject.h"
 
-class Crate : public VisualObject, public Interactable
+class Crate : public PhysicalObject
 {
 protected:
 	float m_interactRadius;
 	bool m_used;
 public:
-	Crate(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float interactRadius);
-	Crate(const Crate& other); // copy constructor
-	Crate(Crate&& other) noexcept; // move constructor
+	Crate(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, 
+		float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
+		float interactRadius, bool used)
+        : PhysicalObject(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity)
+          , m_interactRadius(interactRadius)
+          , m_used(used)
+    {
+    }
+    Crate(const Crate& other) // copy constructor
+        : PhysicalObject(other)
+          , m_interactRadius(other.m_interactRadius)
+          , m_used(other.m_used)
+    {
+    }
+    Crate(Crate&& other) noexcept // copy constructor
+        : PhysicalObject(std::move(other))
+          , m_interactRadius(other.m_interactRadius)
+          , m_used(other.m_used)
+    {
+    }
 
-	sf::Vector2f getPosition() const override;
+    float getInteractionRadius()
+    {
+        return m_interactRadius;
+    }
+    void setInteractionRadius(float radius)
+    {
+        m_interactRadius = radius;
+    }
 
-	bool canInteract() const override;
-	float getInteractionRadius() const override;
-
-	void interact(Player& player) override;
-	std::string getInteractionPrompt() const override;
+    bool getUsed()
+    {
+        return m_used;
+    }
+    void setUsed(bool used)
+    {
+        m_used = used;
+    }
 };
 
 #endif

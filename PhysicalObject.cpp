@@ -151,14 +151,10 @@ void PhysicalObject::physicalDraw(sf::RenderWindow& window)
 	{
 		for(const auto& pos : dupPositions)
 		{
-			// get the offset coords to be centered
-			sf::Vector2f objPosition = pos;
-			objPosition.x -= (getRadius());
-			objPosition.y -= (getRadius());
-
 			sf::CircleShape circle(getRadius());
+            circle.setOrigin(sf::Vector2f(getRadius(), getRadius()));
 			circle.setFillColor(hitboxColor);
-			circle.setPosition(objPosition);
+			circle.setPosition(pos);
 			window.draw(circle);
 		}
 	}

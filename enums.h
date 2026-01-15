@@ -9,4 +9,10 @@ enum class RenderLayer
 	Foreground
 };
 
+enum class ShapeType
+{
+	Circle,
+	Rectangle
+};
+
 #endif
