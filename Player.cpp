@@ -6,7 +6,9 @@ extern float degreesToRadians(float degrees);
 extern void addDragForce(sf::Vector2f& currentVelocity, float mass, float deltaTime);
 extern void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, float direction, bool backward, float maximumVelocity, float mass, float deltaTime);
 
-Player::Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, int hp, int maxHP, float angularAccleration)
+Player::Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, 
+        float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
+        int hp, int maxHP, float angularAccleration)
 	: Entity(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, hp, maxHP)
 	, m_angularAcceleration(angularAccleration)
 {
@@ -26,8 +28,9 @@ void Player::setAngularAcceleration(float angularAcceleration)
 void Player::printInfo()
 {
 	std::cout << std::endl << "Player Info: " << std::endl;
-	std::cout << "Position: (" << m_position.x << ", " << m_position.y << ")" << std::endl;
-	std::cout << "Velocity: (" << m_velocity.x << ", " << m_velocity.y << ")" << std::endl;
+    std::cout << "Health: (" << getHP() << ")" << std::endl;
+	// std::cout << "Position: (" << getPosition().x << ", " << getPosition().y << ")" << std::endl;
+	// std::cout << "Velocity: (" << getVelocity().x << ", " << getVelocity().y << ")" << std::endl;
 }
 
 void Player::updateRotation()
@@ -67,5 +70,5 @@ void Player::playerUpdate(bool* (&buttons)[numButtons])
 	updateVelocity(accel, backward);
 	updatePosition(FixedDeltaTime);
 
-	// this->printInfo();
+	this->printInfo();
 }

@@ -1,9 +1,11 @@
 #ifndef CRATE_H
 #define CRATE_H
 
+#include "BasicObject.h"
 #include "PhysicalObject.h"
+#include "Interactable.h"
 
-class Crate : public PhysicalObject
+class Crate : public PhysicalObject, public Interactable
 {
 protected:
 	float m_interactRadius;
@@ -30,7 +32,7 @@ public:
     {
     }
 
-    float getInteractionRadius()
+    float getInteractionRadius() const override
     {
         return m_interactRadius;
     }
@@ -38,7 +40,6 @@ public:
     {
         m_interactRadius = radius;
     }
-
     bool getUsed()
     {
         return m_used;
@@ -46,6 +47,25 @@ public:
     void setUsed(bool used)
     {
         m_used = used;
+    }
+
+
+    // interactable interface
+    virtual int getObjectID() const override
+    {
+        return BasicObject::getObjectID();
+    }
+    virtual sf::Vector2f getPosition() const override
+    {
+        return BasicObject::getPosition();
+    }
+    virtual bool canInteract() const override
+    {
+        return true;
+    }
+    virtual void interact(Player& player) override
+    {
+        std::cout << "Player " << player.getObjectID() << " interacting with " << getObjectID() << std::endl;
     }
 };
 

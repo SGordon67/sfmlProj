@@ -32,6 +32,11 @@ void HealthCrate::setValue(int value)
     m_health = value;
 }
 
+int HealthCrate::getObjectID() const
+{
+    return BasicObject::getObjectID();
+}
+
 sf::Vector2f HealthCrate::getPosition() const
 {
 	return BasicObject::getPosition();

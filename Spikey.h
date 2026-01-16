@@ -4,8 +4,9 @@
 #include "SFML/System/Vector2.hpp"
 
 #include "Entity.h"
+#include "Hazardous.h"
 
-class Spikey: public Entity
+class Spikey: public Entity, public Hazardous
 {
 private:
 	int m_damage;
@@ -15,9 +16,15 @@ public:
 	       int hp, int maxHP, int damage);
 	Spikey(const Spikey& other); // copy constructor
 	Spikey(Spikey&& other) noexcept; // move constructor
-					 //
+
 	int getDamage() const;
 	void setDamage(int damage);
+
+    // interface hazardous
+    virtual int getObjectID() const override;
+	virtual sf::Vector2f getPosition() const override;
+	virtual float getRadius() const override;
+	virtual void dealDamage(Player& player) override;
 };
 
 #endif

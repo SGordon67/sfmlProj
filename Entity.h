@@ -21,15 +21,23 @@ public:
 	{
 		return m_hp;
 	}
+    void setHP(int hp)
+    {
+        m_hp = hp;
+    }
 
 	int getMaxHP() const
 	{
 		return m_maxHP;
 	}
+    void setMaxHP(int hp)
+    {
+        m_maxHP = hp;
+    }
 
 	void reduceHealth(int damage)
 	{
-		m_hp -= damage;
+        setHP(getHP() - damage);
 	}
 
 	void increaseHealth(int heal)

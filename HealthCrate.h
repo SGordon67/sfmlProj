@@ -2,9 +2,8 @@
 #define HEALTHCRATE_H
 
 #include "Crate.h"
-#include "Interactable.h"
 
-class HealthCrate : public Crate, public Interactable
+class HealthCrate : public Crate
 {
 protected:
     int m_health;
@@ -19,6 +18,7 @@ public:
     void setValue(int value);
 
     // Interactable
+    int getObjectID() const override;
 	sf::Vector2f getPosition() const override;
 	bool canInteract() const override;
 	float getInteractionRadius() const override;

@@ -71,7 +71,8 @@ void detectAndHandleInteractions(Player& player, std::vector<std::shared_ptr<Int
 		bool overlap = detectIntersection(player.getPosition(), player.getRadius(), obj->getPosition(), obj->getInteractionRadius());
 		if(overlap)
 		{
-			std::cout << "Interacting with overlapping object: " << player.getObjectID() << ", " << obj->canInteract() << std::endl;
+            obj->interact(player);
+			// std::cout << "Interacting with overlapping object: " << player.getObjectID() << ", " << obj->canInteract() << std::endl;
 		}
 	}
 }
@@ -244,7 +245,22 @@ void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject,
 	}
 }
 
-void detectAndHandleCollision(PhysicalObject& mainObject, std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects)
+void detectAndHandleHazards(Player& player, 
+    std::vector<std::shared_ptr<Hazardous>>& hazardousObjects)
+{
+    for(auto& hazard : hazardousObjects)
+    {
+		bool overlap = detectIntersection(player.getPosition(), player.getRadius(), hazard->getPosition(), hazard->getRadius());
+        if(overlap)
+        {
+            std::cout << "OVERLAP WITH A HAZARD" << std::endl;
+            hazard->dealDamage(player);
+        }
+    }
+}
+
+void detectAndHandleCollision(PhysicalObject& mainObject, 
+        std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects)
 {
 	for(auto& obj : physicalObjects)
 	{
@@ -364,7 +380,12 @@ void updateButtonPresses(bool* (&buttons)[numButtons])
 	}
 }
 
-void updateGame(Player& player, bool* (&buttons)[numButtons], std::vector<std::unique_ptr<VisualObject>>& visualObjects, std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects, std::vector<std::shared_ptr<Interactable>>& interactableObjects)
+void updateGame(Player& player, 
+        bool* (&buttons)[numButtons], 
+        std::vector<std::unique_ptr<VisualObject>>& visualObjects, 
+        std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects, 
+        std::vector<std::shared_ptr<Interactable>>& interactableObjects, 
+        std::vector<std::shared_ptr<Hazardous>>& hazardousObjects)
 {
 	// update visual objects
 	for(auto& obj : visualObjects)
@@ -378,11 +399,13 @@ void updateGame(Player& player, bool* (&buttons)[numButtons], std::vector<std::u
 		obj->physicalUpdate();
 		detectAndHandleCollision(*obj, physicalObjects);
 	}
+
 	player.playerUpdate(buttons);
 	if(*buttons[5])
 	{
 		detectAndHandleInteractions(player, interactableObjects);
 	}
+	detectAndHandleHazards(player, hazardousObjects);
 	detectAndHandleCollision(player, physicalObjects);
 }
 
@@ -412,7 +435,10 @@ void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vec
 	window.display();
 }
 
-void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects, std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects, std::vector<std::shared_ptr<Interactable>>& interactableObjects)
+void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects, 
+        std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects, 
+        std::vector<std::shared_ptr<Interactable>>& interactableObjects, 
+        std::vector<std::shared_ptr<Hazardous>>& hazardousObjects)
 {
 	// VISUAL OBJECTS
 	// far background
@@ -513,6 +539,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects, std::v
     auto h1 = std::make_shared<Spikey>(sf::Vector2f(distX(rng), distY(rng)), spikeySize, objectRotation, objectRenderLayer, spikeyFilename, 
                 objectMass, spikeyRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity, spikeyHP, spikeyMaxHP, spikeyDamage);
     physicalObjects.push_back(h1);
+	hazardousObjects.push_back(h1);
 }
 
 int main()
@@ -559,7 +586,8 @@ int main()
 	std::vector<std::unique_ptr<VisualObject>> visualObjects;
 	std::vector<std::shared_ptr<PhysicalObject>> physicalObjects;
 	std::vector<std::shared_ptr<Interactable>> interactableObjects;
-	setupGame(visualObjects, physicalObjects, interactableObjects);
+    std::vector<std::shared_ptr<Hazardous>> hazardousObjects;
+	setupGame(visualObjects, physicalObjects, interactableObjects, hazardousObjects);
 
 
 
@@ -596,7 +624,7 @@ int main()
 
 		while(timeAccumulator >= FixedDeltaTime)
 		{
-			updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects);
+			updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects, hazardousObjects);
 			timeAccumulator -= FixedDeltaTime;
 		}
 		drawGame(window, playerView, player, visualObjects, physicalObjects);

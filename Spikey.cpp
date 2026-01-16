@@ -1,4 +1,6 @@
 #include "Spikey.h"
+#include "PhysicalObject.h"
+#include "SFML/System/Vector2.hpp"
 
 Spikey::Spikey(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, 
 	       float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
@@ -17,7 +19,6 @@ Spikey::Spikey(Spikey&& other) noexcept // move constructor
 	, m_damage(other.getDamage())
 {
 }
-
 int Spikey::getDamage() const
 {
 	return m_damage;
@@ -25,4 +26,24 @@ int Spikey::getDamage() const
 void Spikey::setDamage(int damage)
 {
 	m_damage = damage;
+}
+
+// hazardous interface
+int Spikey::getObjectID() const
+{
+    return BasicObject::getObjectID();
+}
+
+sf::Vector2f Spikey::getPosition() const
+{
+    return BasicObject::getPosition();
+}
+float Spikey::getRadius() const
+{
+    return PhysicalObject::getRadius();
+}
+void Spikey::dealDamage(Player& player)
+{
+    std::cout << "DEALING DAMAGE TO PLAYER" << std::endl;
+    player.reduceHealth(getDamage());
 }

@@ -1,27 +1,15 @@
-#include <iostream>
-
 #include "Player.h"
 
 class Interactable
 {
 public:
-	virtual ~Interactable() = default;
-
-	virtual void interact(Player& player) = 0;
-
-	virtual sf::Vector2f getPosition() const
-	{
-		return sf::Vector2f(0.f, 0.f);
-	}
-
+	virtual ~Interactable() {}
+    virtual int getObjectID() const = 0;
+	virtual sf::Vector2f getPosition() const = 0;
 	virtual float getInteractionRadius() const
 	{
 		return 50.0f;
 	}
-
-	virtual bool canInteract() const
-	{
-		std::cout << "Determining if object can be interacted with." << std::endl;
-		return true;
-	}
+	virtual bool canInteract() const = 0;
+	virtual void interact(Player& player) = 0;
 };
