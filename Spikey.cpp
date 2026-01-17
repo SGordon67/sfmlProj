@@ -33,7 +33,6 @@ int Spikey::getObjectID() const
 {
     return BasicObject::getObjectID();
 }
-
 sf::Vector2f Spikey::getPosition() const
 {
     return BasicObject::getPosition();
@@ -42,8 +41,11 @@ float Spikey::getRadius() const
 {
     return PhysicalObject::getRadius();
 }
-void Spikey::dealDamage(Player& player)
+void Spikey::dealDamage(Entity& entity)
 {
-    std::cout << "DEALING DAMAGE TO PLAYER" << std::endl;
-    player.reduceHealth(getDamage());
+    entity.reduceHealth(getDamage());
+}
+void Spikey::update()
+{
+    std::cout << "Updating Spikey: " << getObjectID() << std::endl;
 }

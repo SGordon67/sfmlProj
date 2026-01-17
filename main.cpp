@@ -11,7 +11,10 @@
 #include <cmath>
 #include <memory>
 #include <random>
+#include <vector>
 
+#include "UIElement.h"
+#include "UIHealth.h"
 #include "globals.h"
 #include "enums.h"
 #include "BasicObject.h"
@@ -109,9 +112,9 @@ std::vector<sf::Vector2f> getDupPositions(sf::Vector2f position, sf::Vector2i si
 void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject,
                      float restitution = 1.0f, float friction = 0.5f)
 {
-	std::cout << "COLLISION BETWEEN OBJECTS: " << mainObject.getObjectID() << ", and " << otherObject.getObjectID() << ". " << std::endl;
-	std::cout << "\tCollision occurred at position: (" << mainObject.getPosition().x << ", " << mainObject.getPosition().y 
-        << ") and (" << otherObject.getPosition().x << ", " << otherObject.getPosition().y << ")" << std::endl;
+	std::cout << "COLLISION -- " << mainObject.getObjectID() << " | " << otherObject.getObjectID() << std::endl;
+	// std::cout << "\tCollision occurred at position: (" << mainObject.getPosition().x << ", " << mainObject.getPosition().y 
+	//        << ") and (" << otherObject.getPosition().x << ", " << otherObject.getPosition().y << ")" << std::endl;
 
 	// varials to keep track of collision information
 	sf::Vector2f normal;
@@ -234,7 +237,7 @@ void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject,
 
 	// Separate overlapping objects
 	if (overlap > 0.0f) {
-		std::cout << "Separating overlapping hitboxes with overlap: " << overlap << std::endl;
+		// std::cout << "Separating overlapping hitboxes with overlap: " << overlap << std::endl;
 		// Mass-based separation (lighter object moves more)
 		float totalMass = mainObject.getMass() + otherObject.getMass();
 		float separation1 = overlap * (otherObject.getMass() / totalMass);
@@ -253,7 +256,6 @@ void detectAndHandleHazards(Player& player,
 		bool overlap = detectIntersection(player.getPosition(), player.getRadius(), hazard->getPosition(), hazard->getRadius());
         if(overlap)
         {
-            std::cout << "OVERLAP WITH A HAZARD" << std::endl;
             hazard->dealDamage(player);
         }
     }
@@ -385,7 +387,8 @@ void updateGame(Player& player,
         std::vector<std::unique_ptr<VisualObject>>& visualObjects, 
         std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects, 
         std::vector<std::shared_ptr<Interactable>>& interactableObjects, 
-        std::vector<std::shared_ptr<Hazardous>>& hazardousObjects)
+        std::vector<std::shared_ptr<Hazardous>>& hazardousObjects,
+        std::vector<std::unique_ptr<UIElement>>& UIElements)
 {
 	// update visual objects
 	for(auto& obj : visualObjects)
@@ -407,9 +410,18 @@ void updateGame(Player& player,
 	}
 	detectAndHandleHazards(player, hazardousObjects);
 	detectAndHandleCollision(player, physicalObjects);
+
+    // update the UI
+    for(auto& element : UIElements)
+    {
+        element->update();
+    }
 }
 
-void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vector<std::unique_ptr<VisualObject>>& visualObjects, std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects)
+void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, 
+        std::vector<std::unique_ptr<VisualObject>>& visualObjects, 
+        std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects,
+        std::vector<std::unique_ptr<UIElement>>& UIElements)
 {
 	// clear the window, then draw, then display
 	window.clear();
@@ -432,6 +444,14 @@ void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, std::vec
 
 	// draw the player
 	player.physicalDraw(window);
+
+    // update the UI
+    window.setView(window.getDefaultView());
+    for(auto& element : UIElements)
+    {
+        element->render(window);
+    }
+
 	window.display();
 }
 
@@ -442,7 +462,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 {
 	// VISUAL OBJECTS
 	// far background
-	sf::Vector2i bSize(1000 * windowWidth, 1000 * windowHeight);
+	sf::Vector2i bSize(1000 * worldWidth, 1000 * worldHeight);
 	sf::Vector2f bPosition({0, 0});
 	float bRotation = M_PI / 2;
 	RenderLayer bRenderLayer = RenderLayer::FarBackground;
@@ -496,8 +516,8 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 	// create 10 objects randomely on the first screen
 	std::random_device rd;
 	std::mt19937 rng(rd());
-	std::uniform_real_distribution<float> distX(0.f, (float)windowWidth);
-	std::uniform_real_distribution<float> distY(0.f, (float)windowHeight);
+	std::uniform_real_distribution<float> distX(0.f, (float)worldWidth);
+	std::uniform_real_distribution<float> distY(0.f, (float)worldHeight);
 	for(int i = 0; i < 5; i++)
 	{
 		// random objects
@@ -517,12 +537,13 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 	float cAcceleration = 0;
 	float cAngularVelocity = 0;
 	float cMaximumVelocity = 500; // equal to players for now
-    int cHP = 100;
-    int cMaxHP = 100;
+    float cInteractRadius = 50;
+    bool cUsed = false;
     int cValue = 10;
     
     auto c1 = std::make_shared<HealthCrate>(HealthCrate(cPosition, cSize, cRotation, cRenderLayer, cFilename, 
-                    cMass, cRadius, cVelocity, cAcceleration, cAngularVelocity, cMaximumVelocity, cHP, cMaxHP, cValue));
+                    cMass, cRadius, cVelocity, cAcceleration, cAngularVelocity, cMaximumVelocity, 
+                    cInteractRadius, cUsed, cValue));
 	physicalObjects.push_back(c1);
 	interactableObjects.push_back(c1);
 
@@ -536,10 +557,16 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 	float spikeyRadius = 10;
 
 	// create hazards
-    auto h1 = std::make_shared<Spikey>(sf::Vector2f(distX(rng), distY(rng)), spikeySize, objectRotation, objectRenderLayer, spikeyFilename, 
-                objectMass, spikeyRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity, spikeyHP, spikeyMaxHP, spikeyDamage);
+    auto h1 = std::make_shared<Spikey>(Spikey(sf::Vector2f(distX(rng), distY(rng)), spikeySize, objectRotation, objectRenderLayer, spikeyFilename, 
+                objectMass, spikeyRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity, spikeyHP, spikeyMaxHP, spikeyDamage));
     physicalObjects.push_back(h1);
 	hazardousObjects.push_back(h1);
+}
+
+void setupUI(std::vector<std::unique_ptr<UIElement>>& UIElements, Player& player)
+{
+    // health bar
+    UIElements.push_back(std::make_unique<UIHealth>(UIHealth(&player)));
 }
 
 int main()
@@ -588,7 +615,8 @@ int main()
 	std::vector<std::shared_ptr<Interactable>> interactableObjects;
     std::vector<std::shared_ptr<Hazardous>> hazardousObjects;
 	setupGame(visualObjects, physicalObjects, interactableObjects, hazardousObjects);
-
+    std::vector<std::unique_ptr<UIElement>> UIElements;
+    setupUI(UIElements, player);
 
 
 
@@ -619,15 +647,26 @@ int main()
 			if(event->is<sf::Event::Closed>() || escPressed)
 			{
 				window.close();
-			}
+			}else if(const auto* resized = event->getIf<sf::Event::Resized>())
+            {
+                // Update the view to the new size of the window to prevent stretching
+                windowWidth = resized->size.x;
+                windowHeight = resized->size.y;
+                viewWidth = windowWidth;
+                viewHeight = windowHeight;
+                playerView.setSize({(float)resized->size.x, (float)resized->size.y});
+
+                // std::cout << "New window width: " << resized->size.x << std::endl;
+                // std::cout << "New window height: " << resized->size.y << std::endl;
+            }
 		}
 
 		while(timeAccumulator >= FixedDeltaTime)
 		{
-			updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects, hazardousObjects);
+			updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects, hazardousObjects, UIElements);
 			timeAccumulator -= FixedDeltaTime;
 		}
-		drawGame(window, playerView, player, visualObjects, physicalObjects);
+		drawGame(window, playerView, player, visualObjects, physicalObjects, UIElements);
 	}
 	return 0;
 }

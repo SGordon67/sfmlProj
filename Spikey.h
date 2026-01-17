@@ -6,7 +6,7 @@
 #include "Entity.h"
 #include "Hazardous.h"
 
-class Spikey: public Entity, public Hazardous
+class Spikey : public Entity, public Hazardous
 {
 private:
 	int m_damage;
@@ -24,7 +24,8 @@ public:
     virtual int getObjectID() const override;
 	virtual sf::Vector2f getPosition() const override;
 	virtual float getRadius() const override;
-	virtual void dealDamage(Player& player) override;
+	virtual void dealDamage(Entity& entity) override;
+    virtual void update() override;
 };
 
 #endif

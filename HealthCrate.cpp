@@ -54,6 +54,7 @@ float HealthCrate::getInteractionRadius() const
 
 void HealthCrate::interact(Player& player)
 {
+    if(m_used) return;
 	m_used = true;
-	std::cout << "Player ID (" << player.getObjectID() << ") interacting with object (" << m_objectID << ")" << std::endl;
+    std::cout << "INTERACTION (C) -- " << player.getObjectID() << " | " << getObjectID() << std::endl;
 }

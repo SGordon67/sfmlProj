@@ -70,5 +70,5 @@ void Player::playerUpdate(bool* (&buttons)[numButtons])
 	updateVelocity(accel, backward);
 	updatePosition(FixedDeltaTime);
 
-	this->printInfo();
+	// this->printInfo();
 }

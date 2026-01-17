@@ -65,7 +65,7 @@ public:
     }
     virtual void interact(Player& player) override
     {
-        std::cout << "Player " << player.getObjectID() << " interacting with " << getObjectID() << std::endl;
+        std::cout << "INTERACTION (H) -- " << player.getObjectID() << " | " << getObjectID() << std::endl;
     }
 };
 
