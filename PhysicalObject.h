@@ -126,7 +126,6 @@ class PhysicalObject : public BasicObject
         {
             if(getAngularVelocity() == 0) return;
             rotate(getAngularVelocity() * FixedDeltaTime);
-            rotate(getAngularVelocity() * FixedDeltaTime);
             setAngularVelocity(getAngularVelocity() * angularDrag);
 
             // clamp small values

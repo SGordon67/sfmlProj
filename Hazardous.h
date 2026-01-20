@@ -1,3 +1,6 @@
+#ifndef HAZARDOUS_H
+#define HAZARDOUS_H
+
 #include "Entity.h"
 
 class Hazardous
@@ -11,3 +14,5 @@ public:
 	virtual void dealDamage(Entity& Entity) = 0;
     virtual void update() = 0;
 };
+
+#endif

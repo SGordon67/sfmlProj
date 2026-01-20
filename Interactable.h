@@ -1,3 +1,6 @@
+#ifndef INTERACTABLE_H
+#define INTERACTABLE_H
+
 #include "Player.h"
 
 class Interactable
@@ -13,3 +16,5 @@ public:
 	virtual bool canInteract() const = 0;
 	virtual void interact(Player& player) = 0;
 };
+
+#endif

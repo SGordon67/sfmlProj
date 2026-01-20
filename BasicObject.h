@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "SFML/Graphics/RenderWindow.hpp"
+#include "SFML/System/Angle.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "SFML/Graphics/Rect.hpp"
 #include "SFML/Graphics/Texture.hpp"
@@ -109,6 +110,7 @@ public:
 	void setRotation(float rotation)
 	{
 		m_rotation = rotation;
+        // m_sprite.setRotation(sf::Angle::asRadians(rotation));
 	}
 
 	RenderLayer getRenderLayer() const

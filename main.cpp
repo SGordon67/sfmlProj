@@ -24,6 +24,8 @@
 #include "Ball.h"
 #include "Player.h"
 #include "Spikey.h"
+#include "Enemy.h"
+#include "Enemy1.h"
 
 float degreesToRadians(float degrees)
 {
@@ -390,6 +392,15 @@ void updateGame(Player& player,
         std::vector<std::shared_ptr<Hazardous>>& hazardousObjects,
         std::vector<std::unique_ptr<UIElement>>& UIElements)
 {
+    // update the player first
+	detectAndHandleHazards(player, hazardousObjects);
+	detectAndHandleCollision(player, physicalObjects);
+	player.playerUpdate(buttons);
+	if(*buttons[5])
+	{
+		detectAndHandleInteractions(player, interactableObjects);
+	}
+
 	// update visual objects
 	for(auto& obj : visualObjects)
 	{
@@ -403,13 +414,6 @@ void updateGame(Player& player,
 		detectAndHandleCollision(*obj, physicalObjects);
 	}
 
-	player.playerUpdate(buttons);
-	if(*buttons[5])
-	{
-		detectAndHandleInteractions(player, interactableObjects);
-	}
-	detectAndHandleHazards(player, hazardousObjects);
-	detectAndHandleCollision(player, physicalObjects);
 
     // update the UI
     for(auto& element : UIElements)
@@ -458,7 +462,8 @@ void drawGame(sf::RenderWindow& window, sf::View& view, Player& player,
 void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects, 
         std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects, 
         std::vector<std::shared_ptr<Interactable>>& interactableObjects, 
-        std::vector<std::shared_ptr<Hazardous>>& hazardousObjects)
+        std::vector<std::shared_ptr<Hazardous>>& hazardousObjects,
+        Player& player)
 {
 	// VISUAL OBJECTS
 	// far background
@@ -561,6 +566,25 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
                 objectMass, spikeyRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity, spikeyHP, spikeyMaxHP, spikeyDamage));
     physicalObjects.push_back(h1);
 	hazardousObjects.push_back(h1);
+
+	sf::Vector2f ePosition({100, 190});
+	sf::Vector2i eSize(13, 11);
+	float eRotation = M_PI / 2;
+	RenderLayer eRenderLayer = RenderLayer::Main;
+	std::string eFilename = "art/basicEnemy.png";
+	float eMass = 10;
+	float eRadius = eSize.x / 2.f;
+	sf::Vector2f eVelocity = {0, 0};
+	float eAcceleration = 10;
+	float eAngularVelocity = 0;
+	float eMaximumVelocity = 400; // players is 500 currently
+    int eHP = 100;
+    int eMHP = 100;
+    int eDamage = 10;
+    auto enemy1 = std::make_shared<Enemy1>(Enemy1(ePosition, eSize, eRotation, eRenderLayer, eFilename, eMass, eRadius, eVelocity, eAcceleration, eAngularVelocity, eMaximumVelocity,
+                eHP, eMHP, eDamage, player));
+    physicalObjects.push_back(enemy1);
+    hazardousObjects.push_back(enemy1);
 }
 
 void setupUI(std::vector<std::unique_ptr<UIElement>>& UIElements, Player& player)
@@ -614,7 +638,7 @@ int main()
 	std::vector<std::shared_ptr<PhysicalObject>> physicalObjects;
 	std::vector<std::shared_ptr<Interactable>> interactableObjects;
     std::vector<std::shared_ptr<Hazardous>> hazardousObjects;
-	setupGame(visualObjects, physicalObjects, interactableObjects, hazardousObjects);
+	setupGame(visualObjects, physicalObjects, interactableObjects, hazardousObjects, player);
     std::vector<std::unique_ptr<UIElement>> UIElements;
     setupUI(UIElements, player);
 
