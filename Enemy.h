@@ -1,11 +1,13 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
+#include "SFML/System/Angle.hpp"
 #include "SFML/System/Vector2.hpp"
 
 #include "Player.h"
 #include "Entity.h"
 #include "Hazardous.h"
+#include "globals.h"
 
 class Enemy : public Entity, public Hazardous
 {
@@ -47,10 +49,22 @@ public:
     {
         // face toward the player
         sf::Vector2f pPosition = m_player->getPosition();
+        sf::Vector2f delta = pPosition - m_position;
 
-        float angle = std::atan2(pPosition.y - m_position.y, pPosition.x - m_position.x);
-        setRotation(angle);
-        m_sprite.setRotation(sf::degrees(radiansToDegrees(angle)));
+        // adjust for wrapping
+        if(std::abs(delta.x) > worldWidth / 2.0f)
+        {
+            delta.x = delta.x > 0 ? delta.x - worldWidth : delta.x + worldWidth;
+        }
+        if(std::abs(delta.y) > worldHeight / 2.0f)
+        {
+            delta.y = delta.y > 0 ? delta.y - worldHeight : delta.y + worldHeight;
+        }
+
+        float angle = std::atan2(delta.y, delta.x);
+
+        setRotation(angle + M_PI);
+        m_sprite.setRotation(sf::radians(angle + M_PI/2));
     }
 
     virtual int getObjectID() const override
@@ -69,13 +83,16 @@ public:
     {
         entity.reduceHealth(getDamage());
     }
-    virtual void update() override
+    virtual void physicalUpdate() override
     {
         float accel = getAcceleration();
         bool backward = false;
         updateRotation();
         updateVelocity(accel, backward);
         updatePosition(FixedDeltaTime);
+    }
+    virtual void update() override
+    {
     }
 };
 

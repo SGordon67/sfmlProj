@@ -575,7 +575,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 	float eMass = 10;
 	float eRadius = eSize.x / 2.f;
 	sf::Vector2f eVelocity = {0, 0};
-	float eAcceleration = 10;
+	float eAcceleration = 5000;
 	float eAngularVelocity = 0;
 	float eMaximumVelocity = 400; // players is 500 currently
     int eHP = 100;
