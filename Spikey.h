@@ -24,7 +24,7 @@ public:
     virtual int getObjectID() const override;
 	virtual sf::Vector2f getPosition() const override;
 	virtual float getRadius() const override;
-	virtual void dealDamage(Entity& entity) override;
+	virtual void dealDamage(std::shared_ptr<Entity> entity) override;
     virtual void update() override;
 };
 

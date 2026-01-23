@@ -4,6 +4,7 @@
 #include "BasicObject.h"
 #include "PhysicalObject.h"
 #include "Interactable.h"
+#include <memory>
 
 class Crate : public PhysicalObject, public Interactable
 {
@@ -63,9 +64,9 @@ public:
     {
         return true;
     }
-    virtual void interact(Player& player) override
+    virtual void interact(std::shared_ptr<Player> player) override
     {
-        std::cout << "INTERACTION (H) -- " << player.getObjectID() << " | " << getObjectID() << std::endl;
+        std::cout << "INTERACTION (H) -- " << player->getObjectID() << " | " << getObjectID() << std::endl;
     }
 };
 

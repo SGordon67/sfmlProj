@@ -41,9 +41,9 @@ float Spikey::getRadius() const
 {
     return PhysicalObject::getRadius();
 }
-void Spikey::dealDamage(Entity& entity)
+void Spikey::dealDamage(std::shared_ptr<Entity> entity)
 {
-    entity.reduceHealth(getDamage());
+    entity->reduceHealth(getDamage());
 }
 void Spikey::update()
 {

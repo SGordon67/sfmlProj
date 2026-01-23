@@ -2,16 +2,17 @@
 #define UIELEMENT_H
 
 #include <iostream>
+#include <memory>
 
 #include "Player.h"
 
 class UIElement
 {
     protected:
-        Player* m_player;
+        std::shared_ptr<Player> m_player;
 
     public:
-        UIElement(Player* player)
+        UIElement(std::shared_ptr<Player> player)
             : m_player(player)
         {
             std::cout << "Regular constructor called for basic object" << std::endl;

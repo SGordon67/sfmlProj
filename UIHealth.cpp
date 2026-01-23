@@ -5,6 +5,7 @@
 #include "globals.h"
 #include "UIHealth.h"
 #include "Player.h"
+#include <memory>
 
 float barWidth = 0.005;
 float barHeight = 0.98;
@@ -14,7 +15,7 @@ float yMarginMultiplier = (1.0 - barHeight) / 2; // centered vertically
 sf::Color bgColor = sf::Color::Cyan;
 sf::Color hpColor = sf::Color::Red;
 
-UIHealth::UIHealth(Player* player)
+UIHealth::UIHealth(std::shared_ptr<Player> player)
 	: UIElement(player)
 {
     m_rect = sf::RectangleShape();

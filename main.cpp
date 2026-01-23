@@ -7,12 +7,14 @@
 #include "SFML/Window/Keyboard.hpp"
 #include "SFML/Graphics.hpp"
 #include "SFML/Window.hpp"
+#include <chrono>
 #include <iostream>
 #include <cmath>
 #include <memory>
 #include <random>
 #include <vector>
 
+#include "SpatialHashGrid.h"
 #include "UIElement.h"
 #include "UIHealth.h"
 #include "globals.h"
@@ -69,11 +71,11 @@ bool detectIntersection(sf::Vector2f pos1, float radius1, sf::Vector2f pos2, flo
 	return false;
 }
 
-void detectAndHandleInteractions(Player& player, std::vector<std::shared_ptr<Interactable>>& interactableObjects)
+void detectAndHandleInteractions(std::shared_ptr<Player> player, std::vector<std::shared_ptr<Interactable>>& interactableObjects)
 {
 	for(auto& obj : interactableObjects)
 	{
-		bool overlap = detectIntersection(player.getPosition(), player.getRadius(), obj->getPosition(), obj->getInteractionRadius());
+		bool overlap = detectIntersection(player->getPosition(), player->getRadius(), obj->getPosition(), obj->getInteractionRadius());
 		if(overlap)
 		{
             obj->interact(player);
@@ -111,10 +113,10 @@ std::vector<sf::Vector2f> getDupPositions(sf::Vector2f position, sf::Vector2i si
 
 // void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject, float restitution)
 // {
-void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject,
+void handleCollision(std::shared_ptr<PhysicalObject>& mainObject, std::shared_ptr<PhysicalObject>& otherObject,
                      float restitution = 1.0f, float friction = 0.5f)
 {
-	std::cout << "COLLISION -- " << mainObject.getObjectID() << " | " << otherObject.getObjectID() << std::endl;
+	// std::cout << "COLLISION -- " << mainObject.getObjectID() << " | " << otherObject.getObjectID() << std::endl;
 	// std::cout << "\tCollision occurred at position: (" << mainObject.getPosition().x << ", " << mainObject.getPosition().y 
 	//        << ") and (" << otherObject.getPosition().x << ", " << otherObject.getPosition().y << ")" << std::endl;
 
@@ -127,7 +129,7 @@ void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject,
 	float overlap;
 
 	// Calculate the collision normal
-	sf::Vector2f delta = otherObject.getPosition() - mainObject.getPosition();
+	sf::Vector2f delta = otherObject->getPosition() - mainObject->getPosition();
 	// Use the shortest path (accounting for position wrap)
 	if (std::abs(delta.x) > worldWidth / 2.0f) {
 		delta.x = delta.x > 0 ? delta.x - worldWidth : delta.x + worldWidth;
@@ -144,24 +146,24 @@ void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject,
 	// Normalize collision normal
 	normal = delta / distance;
 	// Calculate contact points
-	contact1 = mainObject.getPosition() + normal * mainObject.getRadius();
-	contact2 = otherObject.getPosition() - normal * otherObject.getRadius();
+	contact1 = mainObject->getPosition() + normal * mainObject->getRadius();
+	contact2 = otherObject->getPosition() - normal * otherObject->getRadius();
 	// Radii from center of mass to contact points
-	r1 = contact1 - mainObject.getPosition();
-	r2 = contact2 - otherObject.getPosition();
+	r1 = contact1 - mainObject->getPosition();
+	r2 = contact2 - otherObject->getPosition();
 	// Calculate overlap
-	overlap = (mainObject.getRadius() + otherObject.getRadius()) - distance;
+	overlap = (mainObject->getRadius() + otherObject->getRadius()) - distance;
 
 
 
 	// Apply normal impulse (velocity response)
 	// Calculate velocity at contact points (including rotational velocity)
-	sf::Vector2f v1 = mainObject.getVelocity() + 
-	                  sf::Vector2f(-mainObject.getAngularVelocity() * r1.y,
-	                               mainObject.getAngularVelocity() * r1.x);
-	sf::Vector2f v2 = otherObject.getVelocity() + 
-	                  sf::Vector2f(-otherObject.getAngularVelocity() * r2.y,
-	                               otherObject.getAngularVelocity() * r2.x);
+	sf::Vector2f v1 = mainObject->getVelocity() + 
+	                  sf::Vector2f(-mainObject->getAngularVelocity() * r1.y,
+	                               mainObject->getAngularVelocity() * r1.x);
+	sf::Vector2f v2 = otherObject->getVelocity() + 
+	                  sf::Vector2f(-otherObject->getAngularVelocity() * r2.y,
+	                               otherObject->getAngularVelocity() * r2.x);
 	// Relative velocity
 	sf::Vector2f relativeVelocity = v1 - v2;
 	// Project velocity onto normal
@@ -169,26 +171,26 @@ void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject,
 	// Objects already separating, don't apply impulse
 	if (velocityAlongNormal < 0.0f) return;
 	// Calculate moment of inertia
-	float I1 = 0.05f * mainObject.getMass() * mainObject.getRadius() * mainObject.getRadius();
-	float I2 = 0.05f * otherObject.getMass() * otherObject.getRadius() * otherObject.getRadius();
+	float I1 = 0.05f * mainObject->getMass() * mainObject->getRadius() * mainObject->getRadius();
+	float I2 = 0.05f * otherObject->getMass() * otherObject->getRadius() * otherObject->getRadius();
 	// Cross products for rotational contributio
 	float r1CrossN = r1.x * normal.y - r1.y * normal.x;
 	float r2CrossN = r2.x * normal.y - r2.y * normal.x;
 	// Calculate impulse scalar
 	float impulseScalar = (-(1.0f + restitution) * velocityAlongNormal) /
-	                      ((1.0f / mainObject.getMass()) + (1.0f / otherObject.getMass()) +
+	                      ((1.0f / mainObject->getMass()) + (1.0f / otherObject->getMass()) +
                            (r1CrossN * r1CrossN / I1) + (r2CrossN * r2CrossN / I2));
 	// Apply impulse to linear velocitie
 	sf::Vector2f impulse = normal * impulseScalar;
-	mainObject.setVelocity(mainObject.getVelocity() + impulse / mainObject.getMass());
-	otherObject.setVelocity(otherObject.getVelocity() - impulse / otherObject.getMass());
+	mainObject->setVelocity(mainObject->getVelocity() + impulse / mainObject->getMass());
+	otherObject->setVelocity(otherObject->getVelocity() - impulse / otherObject->getMass());
 	// Apply rotational impulse
 	float torque1 = r1.x * impulse.y - r1.y * impulse.x;
 	float angularImpulse1 = torque1 / I1;
-	mainObject.setAngularVelocity(mainObject.getAngularVelocity() + angularImpulse1);
+	mainObject->setAngularVelocity(mainObject->getAngularVelocity() + angularImpulse1);
 	float torque2 = r2.x * impulse.y - r2.y * impulse.x;
 	float angularImpulse2 = torque2 / I2;
-	otherObject.setAngularVelocity(otherObject.getAngularVelocity() + angularImpulse2);
+	otherObject->setAngularVelocity(otherObject->getAngularVelocity() + angularImpulse2);
 
 
 
@@ -197,19 +199,19 @@ void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject,
 	sf::Vector2f tangent(-normal.y, normal.x);
 	
 	// Velocity at contact points
-	v1 = mainObject.getVelocity() +
-	                  sf::Vector2f(-mainObject.getAngularVelocity() * r1.y,
-	                               mainObject.getAngularVelocity() * r1.x);
-	v2 = otherObject.getVelocity() +
-	                  sf::Vector2f(-otherObject.getAngularVelocity() * r2.y,
-	                               otherObject.getAngularVelocity() * r2.x);
+	v1 = mainObject->getVelocity() +
+	                  sf::Vector2f(-mainObject->getAngularVelocity() * r1.y,
+	                               mainObject->getAngularVelocity() * r1.x);
+	v2 = otherObject->getVelocity() +
+	                  sf::Vector2f(-otherObject->getAngularVelocity() * r2.y,
+	                               otherObject->getAngularVelocity() * r2.x);
 
 	relativeVelocity = v1 - v2;
 	float relativeVelocityTangent = relativeVelocity.dot(tangent);
 
 	// Calculate moment of inertia
-	I1 = 0.05f * mainObject.getMass() * mainObject.getRadius() * mainObject.getRadius();
-	I2 = 0.05f * otherObject.getMass() * otherObject.getRadius() * otherObject.getRadius();
+	I1 = 0.05f * mainObject->getMass() * mainObject->getRadius() * mainObject->getRadius();
+	I2 = 0.05f * otherObject->getMass() * otherObject->getRadius() * otherObject->getRadius();
 	
 	// Cross products for tangent
 	float r1CrossT = r1.x * tangent.y - r1.y * tangent.x;
@@ -217,23 +219,23 @@ void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject,
 	
 	// Friction impulse scala
 	float frictionImpulseScalar = -relativeVelocityTangent * friction /
-	                              ((1.0f / mainObject.getMass()) + (1.0f / otherObject.getMass()) +
+	                              ((1.0f / mainObject->getMass()) + (1.0f / otherObject->getMass()) +
 	                               (r1CrossT * r1CrossT / I1) + (r2CrossT * r2CrossT / I2));
 	
 	sf::Vector2f frictionImpulse = tangent * frictionImpulseScalar;
 
 	// Apply friction to linear velocity
-	mainObject.setVelocity(mainObject.getVelocity() + frictionImpulse / mainObject.getMass());
-	otherObject.setVelocity(otherObject.getVelocity() - frictionImpulse / otherObject.getMass());
+	mainObject->setVelocity(mainObject->getVelocity() + frictionImpulse / mainObject->getMass());
+	otherObject->setVelocity(otherObject->getVelocity() - frictionImpulse / otherObject->getMass());
 	
 	// Apply friction torque
 	float frictionTorque1 = r1.x * frictionImpulse.y - r1.y * frictionImpulse.x;
 	float frictionAngularImpulse1 = frictionTorque1 / I1;
-	mainObject.setAngularVelocity(mainObject.getAngularVelocity() + frictionAngularImpulse1);
+	mainObject->setAngularVelocity(mainObject->getAngularVelocity() + frictionAngularImpulse1);
 
 	float frictionTorque2 = -(r2.x * frictionImpulse.y - r2.y * frictionImpulse.x);
 	float frictionAngularImpulse2 = frictionTorque2 / I2;
-	otherObject.setAngularVelocity(otherObject.getAngularVelocity() + frictionAngularImpulse2);
+	otherObject->setAngularVelocity(otherObject->getAngularVelocity() + frictionAngularImpulse2);
 
 
 
@@ -241,21 +243,21 @@ void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject,
 	if (overlap > 0.0f) {
 		// std::cout << "Separating overlapping hitboxes with overlap: " << overlap << std::endl;
 		// Mass-based separation (lighter object moves more)
-		float totalMass = mainObject.getMass() + otherObject.getMass();
-		float separation1 = overlap * (otherObject.getMass() / totalMass);
-		float separation2 = overlap * (mainObject.getMass() / totalMass);
+		float totalMass = mainObject->getMass() + otherObject->getMass();
+		float separation1 = overlap * (otherObject->getMass() / totalMass);
+		float separation2 = overlap * (mainObject->getMass() / totalMass);
 
-		mainObject.setPosition(mainObject.getPosition() - normal * separation1);
-		otherObject.setPosition(otherObject.getPosition() + normal * separation2);
+		mainObject->setPosition(mainObject->getPosition() - normal * separation1);
+		otherObject->setPosition(otherObject->getPosition() + normal * separation2);
 	}
 }
 
-void detectAndHandleHazards(Player& player, 
+void detectAndHandleHazards(std::shared_ptr<Player> player, 
     std::vector<std::shared_ptr<Hazardous>>& hazardousObjects)
 {
     for(auto& hazard : hazardousObjects)
     {
-		bool overlap = detectIntersection(player.getPosition(), player.getRadius(), hazard->getPosition(), hazard->getRadius());
+		bool overlap = detectIntersection(player->getPosition(), player->getRadius(), hazard->getPosition(), hazard->getRadius());
         if(overlap)
         {
             hazard->dealDamage(player);
@@ -263,16 +265,43 @@ void detectAndHandleHazards(Player& player,
     }
 }
 
-void detectAndHandleCollision(PhysicalObject& mainObject, 
-        std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects)
+void detectAndHandleCollision(std::shared_ptr<PhysicalObject>& mainObject, 
+        SpatialHashGrid& spatialGrid)
 {
-	for(auto& obj : physicalObjects)
+    std::vector<std::shared_ptr<PhysicalObject>> nearbyObjects = spatialGrid.getNearby(mainObject);
+
+	for(auto& obj : nearbyObjects)
 	{
-		if(mainObject.getObjectID() == obj->getObjectID()) continue;
-		bool overlap = detectIntersection(mainObject.getPosition(), mainObject.getRadius(), obj->getPosition(), obj->getRadius());
+		if(mainObject->getObjectID() == obj->getObjectID()) continue;
+		bool overlap = detectIntersection(mainObject->getPosition(), mainObject->getRadius(), obj->getPosition(), obj->getRadius());
 		if(overlap)
 		{
-			handleCollision(mainObject, *obj, restitution, friction);
+			handleCollision(mainObject, obj, restitution, friction);
+
+            auto player1 = std::dynamic_pointer_cast<Player>(mainObject);
+            auto player2 = std::dynamic_pointer_cast<Player>(obj);
+
+            auto hazard1 = std::dynamic_pointer_cast<Hazardous>(mainObject);
+            auto hazard2 = std::dynamic_pointer_cast<Hazardous>(obj);
+
+            if(player1 && hazard2)
+            {
+                hazard2->dealDamage(player1);
+            }else if(player2 && hazard1)
+            {
+                hazard1->dealDamage(player2);
+            }
+
+            // if(hazard1 && hazard2)
+            // {
+            //     std::cout << "both hazards" << std::endl;
+            // } else if(hazard1)
+            // {
+            //     std::cout << "first is hazard" << std::endl;
+            // } else if(hazard2)
+            // {
+            //     std::cout << "second is hazard" << std::endl;
+            // }
 		}
 	}
 }
@@ -324,7 +353,7 @@ void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, flo
 	// std::cout << "Acceleration Force: " << fAccel.x << ", " << fAccel.y << std::endl;
 }
 
-void updateButtonPresses(bool* (&buttons)[numButtons])
+void updateButtonPresses()
 {
 	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape))
 	{
@@ -384,54 +413,65 @@ void updateButtonPresses(bool* (&buttons)[numButtons])
 	}
 }
 
-void updateGame(Player& player, 
+void updateGame(std::shared_ptr<Player> player, 
         bool* (&buttons)[numButtons], 
         std::vector<std::unique_ptr<VisualObject>>& visualObjects, 
         std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects, 
         std::vector<std::shared_ptr<Interactable>>& interactableObjects, 
         std::vector<std::shared_ptr<Hazardous>>& hazardousObjects,
-        std::vector<std::unique_ptr<UIElement>>& UIElements)
+        std::vector<std::unique_ptr<UIElement>>& UIElements,
+        SpatialHashGrid& spatialGrid)
 {
-    // update the player first
-	detectAndHandleHazards(player, hazardousObjects);
-	detectAndHandleCollision(player, physicalObjects);
-	player.playerUpdate(buttons);
+	player->playerUpdate(buttons);
 	if(*buttons[5])
 	{
 		detectAndHandleInteractions(player, interactableObjects);
 	}
 
-	// update visual objects
+
+    spatialGrid.clear();
+    for(auto& obj : physicalObjects)
+    {
+        spatialGrid.insert(obj);
+    }
+    for(auto& obj : physicalObjects)
+    {
+        float distToPlayer = std::sqrt(
+                std::pow(obj->getPosition().x - player->getPosition().x, 2) +
+                std::pow(obj->getPosition().y - player->getPosition().y, 2)
+                );
+
+        // don't handle collisions of far away objects
+        obj->physicalUpdate();
+        if(distToPlayer < 1000.0f)
+        {
+            detectAndHandleCollision(obj, spatialGrid);
+        }
+    }
+
+    // non-physical hazards
+	detectAndHandleHazards(player, hazardousObjects);
+
+	// update visual objects then UI
 	for(auto& obj : visualObjects)
 	{
-		obj->basicUpdate(FixedDeltaTime, player.getVelocity());
+		obj->basicUpdate(FixedDeltaTime, player->getVelocity());
 	}
-	
-	// update physical objects
-	for(auto& obj : physicalObjects)
-	{
-		obj->physicalUpdate();
-		detectAndHandleCollision(*obj, physicalObjects);
-	}
-
-
-    // update the UI
     for(auto& element : UIElements)
     {
         element->update();
     }
 }
 
-void drawGame(sf::RenderWindow& window, sf::View& view, Player& player, 
+void drawGame(sf::RenderWindow& window, sf::View& view, std::shared_ptr<Player> player, 
         std::vector<std::unique_ptr<VisualObject>>& visualObjects, 
         std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects,
         std::vector<std::unique_ptr<UIElement>>& UIElements)
 {
 	// clear the window, then draw, then display
 	window.clear();
-
 	// Get view in correct spot
-	view.setCenter(player.getPosition());
+	view.setCenter(player->getPosition());
 	window.setView(view);
 
 	// draw visual objects
@@ -447,7 +487,7 @@ void drawGame(sf::RenderWindow& window, sf::View& view, Player& player,
 	}
 
 	// draw the player
-	player.physicalDraw(window);
+	player->physicalDraw(window);
 
     // update the UI
     window.setView(window.getDefaultView());
@@ -463,7 +503,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
         std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects, 
         std::vector<std::shared_ptr<Interactable>>& interactableObjects, 
         std::vector<std::shared_ptr<Hazardous>>& hazardousObjects,
-        Player& player)
+        std::shared_ptr<Player>& player)
 {
 	// VISUAL OBJECTS
 	// far background
@@ -565,7 +605,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
     auto h1 = std::make_shared<Spikey>(Spikey(sf::Vector2f(distX(rng), distY(rng)), spikeySize, objectRotation, objectRenderLayer, spikeyFilename, 
                 objectMass, spikeyRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity, spikeyHP, spikeyMaxHP, spikeyDamage));
     physicalObjects.push_back(h1);
-	hazardousObjects.push_back(h1);
+	// hazardousObjects.push_back(h1);
 
 	sf::Vector2f ePosition({100, 190});
 	sf::Vector2i eSize(13, 11);
@@ -581,63 +621,43 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
     int eHP = 100;
     int eMHP = 100;
     int eDamage = 10;
-    auto enemy1 = std::make_shared<Enemy1>(Enemy1(ePosition, eSize, eRotation, eRenderLayer, eFilename, eMass, eRadius, eVelocity, eAcceleration, eAngularVelocity, eMaximumVelocity,
-                eHP, eMHP, eDamage, player));
-    physicalObjects.push_back(enemy1);
-    hazardousObjects.push_back(enemy1);
+    // hazardousObjects.push_back(enemy1);
+
+    // a bunch of randomely placed enemies
+    // NUMBER OF RANDOM ENEMIES TO START
+    int numEnemies = 300;
+	for(int i = 0; i < numEnemies; i++)
+	{
+		// random objects
+
+        auto eR = std::make_shared<Enemy1>(Enemy1(sf::Vector2f(distX(rng), distY(rng)), eSize, eRotation, eRenderLayer, eFilename, 
+                    eMass, eRadius, eVelocity, eAcceleration, eAngularVelocity, eMaximumVelocity, eHP, eMHP, eDamage, player));
+        physicalObjects.push_back(eR);
+        // hazardousObjects.push_back(eR);
+	}
 }
 
-void setupUI(std::vector<std::unique_ptr<UIElement>>& UIElements, Player& player)
+void setupUI(std::vector<std::unique_ptr<UIElement>>& UIElements, std::shared_ptr<Player> player)
 {
     // health bar
-    UIElements.push_back(std::make_unique<UIHealth>(UIHealth(&player)));
+    UIElements.push_back(std::make_unique<UIHealth>(UIHealth(player)));
 }
 
 int main()
 {
-	// keys
-	bool escPressed = false;
-	bool upPressed = false;
-	bool downPressed = false;
-	bool leftPressed = false;
-	bool rightPressed = false;
-	bool interactPressed = false;
-	bool tabPressed = false;
-	bool* buttons[numButtons];
-	buttons[0] = &escPressed;
-	buttons[1] = &upPressed;
-	buttons[2] = &downPressed;
-	buttons[3] = &leftPressed;
-	buttons[4] = &rightPressed;
-	buttons[5] = &interactPressed;
-	buttons[6] = &tabPressed;
+    initializeButtons();
+
 
 	// setup game objects
 	
 	// player
-	sf::Vector2f pPosition(900, 500);
-	sf::Vector2i pSize(24, 30);
-	float pRotation = M_PI / 2;
-	RenderLayer pRenderLayer = RenderLayer::Main;
-	std::string pFilename = "art/basicSpriteL.png";
-	float pMass = 10;
-	float pRadius = pSize.x / 2.f;
-	sf::Vector2f pVelocity = {0, 0};
-	float pAcceleration = 5000;
-	float pAngularVelocity = 0;
-	float pMaxVelocity = 500;
-	int pMaxHP = 100;
-	float angularAccleration = degreesToRadians(4);
-	Player player = Player(pPosition, pSize, pRotation, pRenderLayer, pFilename, 
-            pMass, pRadius, pVelocity, pAcceleration, pAngularVelocity, pMaxVelocity, 
-            pMaxHP, pMaxHP, angularAccleration);
-
-
+    std::shared_ptr<Player> player = std::make_shared<Player>(Player());
 
 	std::vector<std::unique_ptr<VisualObject>> visualObjects;
 	std::vector<std::shared_ptr<PhysicalObject>> physicalObjects;
 	std::vector<std::shared_ptr<Interactable>> interactableObjects;
     std::vector<std::shared_ptr<Hazardous>> hazardousObjects;
+    physicalObjects.push_back(player);
 	setupGame(visualObjects, physicalObjects, interactableObjects, hazardousObjects, player);
     std::vector<std::unique_ptr<UIElement>> UIElements;
     setupUI(UIElements, player);
@@ -651,12 +671,28 @@ int main()
 	window.setPosition(windowPos);
 
 	//view
-	sf::View playerView(player.getPosition() + player.getSprite().getOrigin(), {(float)viewWidth, (float)viewHeight});
+	sf::View playerView(player->getPosition() + player->getSprite().getOrigin(), {(float)viewWidth, (float)viewHeight});
 	window.setView(playerView);
 
 	// time
 	sf::Clock clock;
 	float timeAccumulator = 0.0f;
+
+    // spacial grid for more efficient collision detection
+    SpatialHashGrid spacialGrid(200.0f);
+
+
+
+
+
+
+
+    // chrono for debugging
+    static int frameCount = 0;
+    static float totalUpdateTime = 0;
+    static float totalDrawTime = 0;
+    static float maxUpdateTime = 0;
+    static float maxDrawTime = 0;
 
 	while(window.isOpen())
 	{
@@ -665,7 +701,7 @@ int main()
 			frameTime = 0.25;
 		timeAccumulator += frameTime;
 
-		updateButtonPresses(buttons);
+		updateButtonPresses();
 		while(const std::optional event = window.pollEvent())
 		{
 			if(event->is<sf::Event::Closed>() || escPressed)
@@ -685,12 +721,57 @@ int main()
             }
 		}
 
-		while(timeAccumulator >= FixedDeltaTime)
+        // start timing update
+        auto updateStart = std::chrono::high_resolution_clock::now();
+
+        int maxUpdates = 3;
+        int updateCount = 0;
+		while(timeAccumulator >= FixedDeltaTime && updateCount < maxUpdates)
 		{
-			updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects, hazardousObjects, UIElements);
+			updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects, hazardousObjects, UIElements, spacialGrid);
 			timeAccumulator -= FixedDeltaTime;
+            updateCount++;
 		}
+        if(updateCount >= maxUpdates)
+        {
+            timeAccumulator = 0;
+        }
+
+        auto updateEnd = std::chrono::high_resolution_clock::now();
+        auto updateDuration = std::chrono::duration_cast<std::chrono::microseconds>(updateEnd - updateStart);
+        float currentUpdate = updateDuration.count() / 1000.0f;
+        totalUpdateTime += currentUpdate;
+        if(currentUpdate > maxUpdateTime) maxUpdateTime = currentUpdate;
+        if(currentUpdate > 10.0f)
+        {
+            std::cout << "!!! UPDATE SPIKE: " << currentUpdate << "ms !!!" << std::endl;
+        }
+
+
+        // start timing draw
+        auto drawStart = std::chrono::high_resolution_clock::now();
+
 		drawGame(window, playerView, player, visualObjects, physicalObjects, UIElements);
+
+        auto drawEnd = std::chrono::high_resolution_clock::now();
+        auto drawDuration = std::chrono::duration_cast<std::chrono::microseconds>(drawEnd - drawStart);
+        float currentDraw = drawDuration.count() / 1000.0f;
+        totalDrawTime += currentDraw;
+        if(currentDraw > maxDrawTime) maxDrawTime = currentDraw;
+        if(currentDraw > 10.0f)
+        {
+            std::cout << "!!! UPDATE SPIKE: " << currentDraw << "ms !!!" << std::endl;
+        }
+
+        frameCount++;
+        if(frameCount % 60)
+        {
+            std::cout << "Avg Update: " << totalUpdateTime / 60.0f << "ms, "
+                << "Avg Draw: " << totalDrawTime / 60.0f << "ms, "
+                << "Total: " << (totalUpdateTime + totalDrawTime) / 60.0f << "ms" << std::endl;
+            totalUpdateTime = 0;
+            totalDrawTime = 0;
+        }
 	}
 	return 0;
 }

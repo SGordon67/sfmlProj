@@ -173,7 +173,7 @@ public:
 			case RenderLayer::Main:
 				break;
 			case RenderLayer::Foreground:
-				// m_sprite.move(1.3f * relationalVelocity * deltaTime);
+				m_sprite.move(1.2f * relationalVelocity * deltaTime);
 				break;
 		}
 	}
@@ -182,8 +182,29 @@ public:
 	// it also returns the extra coords to the calling function if more is needed to be drawn in subclasses
 	std::vector<sf::Vector2f> basicDraw(sf::RenderWindow& window)
 	{
-		// main object
-		window.draw(m_sprite);
+		if(m_renderLayer == RenderLayer::FarBackground || m_renderLayer == RenderLayer::CloseBackground)
+        {
+            window.draw(m_sprite);
+            return {};
+        }
+
+        sf::View wView = window.getView();
+        sf::Vector2f viewCenter = wView.getCenter();
+        sf::Vector2f viewSize = wView.getSize();
+
+        auto isOnScreen = [&](const sf::Vector2f& pos)
+        {
+            float dx = std::abs(pos.x - viewCenter.x);
+            float dy = std::abs(pos.y - viewCenter.y);
+            return (dx < viewSize.x * 0.6f && dy < viewSize.y * 0.6f);
+        };
+
+        // main object
+        if(isOnScreen(getPosition()))
+        {
+            window.draw(m_sprite);
+        }
+
 
 		// vector of positions to return
 		std::vector<sf::Vector2f> dupPositions;
@@ -191,12 +212,14 @@ public:
 
 		// get the duplicates needed for edge wrap
 		dupPositions = getDupPositions(m_position, m_size);
-
 		sf::Vector2f originalPosition = m_position;
 		for(const auto& pos : dupPositions)
 		{
-			setPosition(pos);
-			window.draw(m_sprite);
+            if(isOnScreen(pos))
+            {
+                setPosition(pos);
+                window.draw(m_sprite);
+            }
 		}
 		setPosition(originalPosition);
 

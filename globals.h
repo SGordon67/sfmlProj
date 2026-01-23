@@ -33,4 +33,15 @@ extern sf::Vector2i windowPos;
 extern int viewWidth;
 extern int viewHeight;
 
+// keys
+extern bool escPressed;
+extern bool upPressed;
+extern bool downPressed;
+extern bool leftPressed;
+extern bool rightPressed;
+extern bool interactPressed;
+extern bool tabPressed;
+extern bool* buttons[numButtons];
+extern void initializeButtons();
+
 #endif

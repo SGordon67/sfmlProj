@@ -4,13 +4,13 @@ LIBS = -lsfml-graphics -lsfml-window -lsfml-system
 LDFLAGS = -L/home/sgo/SFML-3.0.2/lib
 
 #Object files
-OBJS = main.o globals.o VisualObject.o HealthCrate.o Ball.o Player.o Spikey.o Enemy1.o UIHealth.o
+OBJS = main.o globals.o VisualObject.o HealthCrate.o Ball.o Player.o Spikey.o Enemy1.o CircleWeapon.o UIHealth.o
 all: main
 
 main: $(OBJS)
 	$(CXX) $(OBJS) -o main $(LDFLAGS) $(LIBS)
 
-main.o: main.cpp globals.h enums.h BasicObject.h VisualObject.h PhysicalObject.h Ball.h HealthCrate.h Entity.h Player.h Spikey.h Enemy.h Enemy1.h UIElement.h UIHealth.h Interactable.h Hazardous.h
+main.o: main.cpp globals.h enums.h BasicObject.h VisualObject.h PhysicalObject.h Ball.h HealthCrate.h Entity.h Player.h Spikey.h Enemy.h Enemy1.h CircleWeapon.h UIElement.h UIHealth.h Interactable.h Hazardous.h
 	$(CXX) $(CXXFLAGS) -c main.cpp
 
 globals.o: globals.cpp globals.h enums.h
@@ -33,6 +33,9 @@ Spikey.o: Spikey.cpp Spikey.h Entity.h globals.h enums.h
 
 Enemy1.o: Enemy1.cpp Enemy1.h Enemy.h globals.h enums.h
 	$(CXX) $(CXXFLAGS) -c Enemy1.cpp
+
+CircleWeapon.o: CircleWeapon.cpp CircleWeapon.h Weapon.h globals.h enums.h
+	$(CXX) $(CXXFLAGS) -c CircleWeapon.cpp
 
 UIHealth.o: UIHealth.cpp UIHealth.h UIElement.h Player.h globals.h enums.h
 	$(CXX) $(CXXFLAGS) -c UIHealth.cpp

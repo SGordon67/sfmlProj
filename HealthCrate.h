@@ -2,6 +2,7 @@
 #define HEALTHCRATE_H
 
 #include "Crate.h"
+#include <memory>
 
 class HealthCrate : public Crate
 {
@@ -22,7 +23,7 @@ public:
 	sf::Vector2f getPosition() const override;
 	bool canInteract() const override;
 	float getInteractionRadius() const override;
-	void interact(Player& player) override;
+	void interact(std::shared_ptr<Player> player) override;
 };
 
 #endif

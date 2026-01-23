@@ -2,6 +2,7 @@
 #define INTERACTABLE_H
 
 #include "Player.h"
+#include <memory>
 
 class Interactable
 {
@@ -14,7 +15,7 @@ public:
 		return 50.0f;
 	}
 	virtual bool canInteract() const = 0;
-	virtual void interact(Player& player) = 0;
+	virtual void interact(std::shared_ptr<Player> player) = 0;
 };
 
 #endif

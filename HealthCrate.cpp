@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 
 #include "HealthCrate.h"
 #include "BasicObject.h"
@@ -52,11 +53,11 @@ float HealthCrate::getInteractionRadius() const
 	return m_interactRadius;
 }
 
-void HealthCrate::interact(Player& player)
+void HealthCrate::interact(std::shared_ptr<Player> player)
 {
     if(m_used) return;
     // std::cout << "INTERACTION (C) -- " << player.getObjectID() << " | " << getObjectID() << std::endl;
 
 	m_used = true;
-    player.increaseHealth(m_health);
+    player->increaseHealth(m_health);
 }

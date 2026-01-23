@@ -11,7 +11,7 @@ public:
     virtual int getObjectID() const = 0;
 	virtual sf::Vector2f getPosition() const = 0;
 	virtual float getRadius() const = 0;
-	virtual void dealDamage(Entity& Entity) = 0;
+	virtual void dealDamage(std::shared_ptr<Entity> Entity) = 0;
     virtual void update() = 0;
 };
 

@@ -11,6 +11,8 @@ public:
 	VisualObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename);
 	VisualObject(const VisualObject& other); // copy constructor
 	VisualObject(VisualObject&& other) noexcept; // move constructor
+
+	virtual void visualUpdate(float deltaTime, sf::Vector2f relationalVelocity);
 };
 
 #endif
