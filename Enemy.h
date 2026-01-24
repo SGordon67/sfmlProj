@@ -55,14 +55,9 @@ public:
 
         // adjust for wrapping
         if(std::abs(delta.x) > worldWidth / 2.0f)
-        {
             delta.x = delta.x > 0 ? delta.x - worldWidth : delta.x + worldWidth;
-        }
         if(std::abs(delta.y) > worldHeight / 2.0f)
-        {
             delta.y = delta.y > 0 ? delta.y - worldHeight : delta.y + worldHeight;
-        }
-
         float angle = std::atan2(delta.y, delta.x);
 
         setRotation(angle + M_PI);

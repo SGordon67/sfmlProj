@@ -12,6 +12,7 @@
 #include <cmath>
 #include <memory>
 #include <random>
+#include <ratio>
 #include <vector>
 
 #include "SpatialHashGrid.h"
@@ -263,46 +264,36 @@ void detectAndHandleHazards(std::shared_ptr<Player> player,
     }
 }
 
-void detectAndHandleCollision(std::shared_ptr<PhysicalObject>& mainObject, 
-        SpatialHashGrid& spatialGrid)
-{
-    std::vector<std::shared_ptr<PhysicalObject>> nearbyObjects = spatialGrid.getNearby(mainObject);
-
-	for(auto& obj : nearbyObjects)
-	{
-		if(mainObject->getObjectID() == obj->getObjectID()) continue;
-		bool overlap = detectIntersection(mainObject->getPosition(), mainObject->getRadius(), obj->getPosition(), obj->getRadius());
-		if(overlap)
-		{
-			handleCollision(mainObject, obj, restitution, friction);
-
-            auto player1 = std::dynamic_pointer_cast<Player>(mainObject);
-            auto player2 = std::dynamic_pointer_cast<Player>(obj);
-
-            auto hazard1 = std::dynamic_pointer_cast<Hazardous>(mainObject);
-            auto hazard2 = std::dynamic_pointer_cast<Hazardous>(obj);
-
-            if(player1 && hazard2)
-            {
-                hazard2->dealDamage(player1);
-            }else if(player2 && hazard1)
-            {
-                hazard1->dealDamage(player2);
-            }
-
-            // if(hazard1 && hazard2)
-            // {
-            //     std::cout << "both hazards" << std::endl;
-            // } else if(hazard1)
-            // {
-            //     std::cout << "first is hazard" << std::endl;
-            // } else if(hazard2)
-            // {
-            //     std::cout << "second is hazard" << std::endl;
-            // }
-		}
-	}
-}
+// void detectAndHandleCollision(std::shared_ptr<PhysicalObject>& mainObject, 
+//         SpatialHashGrid& spatialGrid)
+// {
+//
+//     std::vector<std::shared_ptr<PhysicalObject>> nearbyObjects = spatialGrid.getNearby(mainObject);
+//
+// 	for(auto& obj : nearbyObjects)
+// 	{
+// 		if(mainObject->getObjectID() == obj->getObjectID()) continue;
+// 		bool overlap = detectIntersection(mainObject->getPosition(), mainObject->getRadius(), obj->getPosition(), obj->getRadius());
+// 		if(overlap)
+// 		{
+// 			handleCollision(mainObject, obj, restitution, friction);
+//
+//             auto player1 = std::dynamic_pointer_cast<Player>(mainObject);
+//             auto player2 = std::dynamic_pointer_cast<Player>(obj);
+//
+//             auto hazard1 = std::dynamic_pointer_cast<Hazardous>(mainObject);
+//             auto hazard2 = std::dynamic_pointer_cast<Hazardous>(obj);
+//
+//             if(player1 && hazard2)
+//             {
+//                 hazard2->dealDamage(player1);
+//             }else if(player2 && hazard1)
+//             {
+//                 hazard1->dealDamage(player2);
+//             }
+// 		}
+// 	}
+// }
 
 void addDragForce(sf::Vector2f& currentVelocity, float mass, float deltaTime)
 {
@@ -316,39 +307,24 @@ void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, flo
 	float maxXVelocity = maximumVelocity * std::abs(std::cos(direction));
 	float maxYVelocity = maximumVelocity * std::abs(std::sin(direction));
 	
-	// std::cout << "Maximum velocity allowed: " << maximumVelocity << ", (" << maxXVelocity << ", " << maxYVelocity << ")" << std::endl;
-	// std::cout << "Current velocity " << currentVelocity.x << ", " << currentVelocity.y << std::endl;
-
 	sf::Vector2f fAccel = {0, 0};
 	if(acceleration != 0)
 	{
-		if(acceleration > 0)
+        fAccel.x = (-acceleration / mass) * std::cos(direction) * deltaTime;
+        fAccel.y = (-acceleration / mass) * std::sin(direction) * deltaTime;
+		if(backward) // reverse direction
 		{
-			fAccel.x = (-acceleration / mass) * std::cos(direction) * deltaTime;
-			fAccel.y = (-acceleration / mass) * std::sin(direction) * deltaTime;
-		} else if(backward) // reverse direction
-		{
-			fAccel.x = (0.5f * acceleration / mass) * std::cos(direction) * deltaTime;
-			fAccel.y = (0.5f * acceleration / mass) * std::sin(direction) * deltaTime;
+			fAccel.x *= -1;
+			fAccel.y *= -1;
 		}
 	}
 	sf::Vector2f newVelocity = {currentVelocity.x + fAccel.x, currentVelocity.y + fAccel.y};
 
 	// only add acceleration if we wouldn't go over the max
 	if(std::abs(newVelocity.x) <= maxXVelocity)
-	{
-		// std::cout << "Max not reached in x direction, accelerate" << std::endl;
 		currentVelocity.x = newVelocity.x;
-	}
-	// else std::cout << "Max x velocity reached, acceleration ignored" << std::endl;
 	if(std::abs(newVelocity.y) <= maxYVelocity)
-	{
-		// std::cout << "Max not reached in y direction, accelerate" << std::endl;
 		currentVelocity.y = newVelocity.y;
-	}
-	// else std::cout << "Max y velocity reached, acceleration ignored" << std::endl;
-
-	// std::cout << "Acceleration Force: " << fAccel.x << ", " << fAccel.y << std::endl;
 }
 
 void updateButtonPresses()
@@ -420,36 +396,93 @@ void updateGame(std::shared_ptr<Player> player,
         std::vector<std::unique_ptr<UIElement>>& UIElements,
         SpatialHashGrid& spatialGrid)
 {
+    auto totalStart = std::chrono::high_resolution_clock::now();
+
+    auto interactionStart = std::chrono::high_resolution_clock::now();
 	player->playerUpdate(buttons);
 	if(*buttons[5])
 	{
 		detectAndHandleInteractions(player, interactableObjects);
 	}
+    auto interactionEnd = std::chrono::high_resolution_clock::now();
+    float interactionTime = std::chrono::duration_cast<std::chrono::microseconds>(interactionEnd - interactionStart).count() / 1000.0f;
 
-
+    auto gridStart = std::chrono::high_resolution_clock::now();
     spatialGrid.clear();
     for(auto& obj : physicalObjects)
-    {
         spatialGrid.insert(obj);
-    }
+    auto gridEnd = std::chrono::high_resolution_clock::now();
+    float gridTime = std::chrono::duration_cast<std::chrono::microseconds>(gridEnd - gridStart).count() / 1000.0f;
+
+    // pre-allocate reusable vector intead of creatin a bunch every frame
+    auto physicsStart = std::chrono::high_resolution_clock::now();
+    int collisionChecks = 0;
+    int actualCollisions = 0;
+    float totalUpdateTime = 0;
+    float totalGridQueryTime = 0;
+    float totalCollisionCheckTime = 0;
+
+    std::vector<std::shared_ptr<PhysicalObject>> nearbyCache;
+    nearbyCache.reserve(50);
+    auto playerPtr = std::dynamic_pointer_cast<Player>(player);
     for(auto& obj : physicalObjects)
     {
-        float distToPlayer = std::sqrt(
-                std::pow(obj->getPosition().x - player->getPosition().x, 2) +
-                std::pow(obj->getPosition().y - player->getPosition().y, 2)
-                );
+        auto updateStart = std::chrono::high_resolution_clock::now();
+        obj->physicalUpdate();
+        auto updateEnd = std::chrono::high_resolution_clock::now();
+        totalUpdateTime += std::chrono::duration_cast<std::chrono::microseconds>(updateEnd - updateStart).count() / 1000.0f;
 
         // don't handle collisions of far away objects
-        obj->physicalUpdate();
-        if(distToPlayer < 1000.0f)
+        float dx = obj->getPosition().x - player->getPosition().x;
+        float dy = obj->getPosition().y - player->getPosition().y;
+        float distSqr = dx * dx + dy * dy;
+        if(distSqr < 4000000.0f)
         {
-            detectAndHandleCollision(obj, spatialGrid);
+            auto gridQueryStart = std::chrono::high_resolution_clock::now();
+            nearbyCache.clear();
+            spatialGrid.getNearby(obj, nearbyCache);
+            auto gridQueryEnd = std::chrono::high_resolution_clock::now();
+            totalGridQueryTime += std::chrono::duration_cast<std::chrono::microseconds>(gridQueryEnd - gridQueryStart).count() / 1000.0f;
+
+            for(auto& other : nearbyCache)
+            {
+                if(obj->getObjectID() == other->getObjectID()) continue;
+
+                collisionChecks++;
+
+                auto collisionStart = std::chrono::high_resolution_clock::now();
+                bool overlap = detectIntersection(obj->getPosition(), obj->getRadius(),
+                        other->getPosition(), other->getRadius());
+
+                if(overlap)
+                {
+                    handleCollision(obj, other, restitution, friction);
+
+                    bool objIsPlayer = (obj == player);
+                    bool otherIsPlayer = (other == player);
+
+                    if(objIsPlayer)
+                    {
+                        auto hazard = std::dynamic_pointer_cast<Hazardous>(other);
+                        if(hazard) hazard->dealDamage(playerPtr);
+                    } else if(otherIsPlayer)
+                    {
+                        auto hazard = std::dynamic_pointer_cast<Hazardous>(obj);
+                        if(hazard) hazard->dealDamage(playerPtr);
+                    }
+                }
+                auto collisionEnd = std::chrono::high_resolution_clock::now();
+                totalCollisionCheckTime += std::chrono::duration_cast<std::chrono::microseconds>(collisionEnd - collisionStart).count() / 1000.0f;
+            }
         }
     }
+    auto physicsEnd = std::chrono::high_resolution_clock::now();
+    float physicsTime = std::chrono::duration_cast<std::chrono::microseconds>(physicsEnd - physicsStart).count() / 1000.0f;
 
+
+    auto otherStart = std::chrono::high_resolution_clock::now();
     // non-physical hazards
 	detectAndHandleHazards(player, hazardousObjects);
-
 	// update visual objects then UI
 	for(auto& obj : visualObjects)
 	{
@@ -458,6 +491,23 @@ void updateGame(std::shared_ptr<Player> player,
     for(auto& element : UIElements)
     {
         element->update();
+    }
+    auto otherEnd = std::chrono::high_resolution_clock::now();
+    float otherTime = std::chrono::duration_cast<std::chrono::microseconds>(otherEnd - otherStart).count() / 1000.0f;
+
+
+    auto totalEnd = std::chrono::high_resolution_clock::now();
+    float totalTime = std::chrono::duration_cast<std::chrono::microseconds>(totalEnd - totalStart).count() / 1000.0f;
+    if(totalTime > 20.0f) {
+        std::cout << "UPDATE BREAKDOWN (" << totalTime << "ms):" << std::endl;
+        std::cout << "  Grid: " << gridTime << "ms" << std::endl;
+        std::cout << "  Physics: " << physicsTime << "ms" << std::endl;
+        std::cout << "    - physicalUpdate(): " << totalUpdateTime << "ms" << std::endl;
+        std::cout << "    - Grid queries: " << totalGridQueryTime << "ms" << std::endl;
+        std::cout << "    - Collision checks: " << totalCollisionCheckTime << "ms" << std::endl;
+        std::cout << "    - Checks performed: " << collisionChecks << std::endl;
+        std::cout << "    - Actual collisions: " << actualCollisions << std::endl;
+        std::cout << "  Other: " << otherTime << "ms" << std::endl;
     }
 }
 
@@ -562,7 +612,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 	// hazardousObjects.push_back(h1);
 
 
-    int numEnemies = 1;
+    int numEnemies = 500;
 	for(int i = 0; i < numEnemies; i++)
 	{
         auto eR = std::make_shared<Enemy1>(Enemy1(sf::Vector2f(distX(rng), distY(rng)), player));
@@ -602,7 +652,8 @@ int main()
 	// window
 	sf::Vector2<uint> winSize(windowWidth, windowHeight);
 	sf::RenderWindow window(sf::VideoMode(winSize), "game");
-	window.setFramerateLimit(frameRateLimit);
+	// window.setFramerateLimit(frameRateLimit);
+    window.setVerticalSyncEnabled(true);
 	window.setPosition(windowPos);
 
 	// primary view
@@ -614,7 +665,7 @@ int main()
 	float timeAccumulator = 0.0f;
 
     // spacial grid for more efficient collision detection
-    SpatialHashGrid spacialGrid(200.0f);
+    SpatialHashGrid spacialGrid(100.0f);
 
 
     // timekeeping for debugging
@@ -674,7 +725,7 @@ int main()
         if(currentUpdate > maxUpdateTime) maxUpdateTime = currentUpdate;
         if(currentUpdate > 10.0f)
         {
-            std::cout << "!!! UPDATE SPIKE: " << currentUpdate << "ms !!!" << std::endl;
+            // std::cout << "!!! UPDATE SPIKE: " << currentUpdate << "ms !!!" << std::endl;
         }
 
 
@@ -690,7 +741,7 @@ int main()
         if(currentDraw > maxDrawTime) maxDrawTime = currentDraw;
         if(currentDraw > 10.0f)
         {
-            std::cout << "!!! UPDATE SPIKE: " << currentDraw << "ms !!!" << std::endl;
+            // std::cout << "!!! DRAW SPIKE: " << currentDraw << "ms !!!" << std::endl;
         }
 
         // frameCount++;

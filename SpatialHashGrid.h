@@ -45,9 +45,9 @@ class SpatialHashGrid
             m_grid[getKey(x, y)].push_back(obj);
         }
 
-        std::vector<std::shared_ptr<PhysicalObject>> getNearby(const std::shared_ptr<PhysicalObject> obj) const
+        void getNearby(const std::shared_ptr<PhysicalObject> obj, std::vector<std::shared_ptr<PhysicalObject>>& nearby) const
         {
-            std::vector<std::shared_ptr<PhysicalObject>> nearby;
+            nearby.clear();
             int centerX;
             int centerY;
             getGridCoords(obj->getPosition(), centerX, centerY);
@@ -61,11 +61,13 @@ class SpatialHashGrid
                     auto it = m_grid.find(key);
                     if(it != m_grid.end())
                     {
-                        nearby.insert(nearby.end(), it->second.begin(), it->second.end());
+                        for(const auto& physObj : it->second)
+                            nearby.push_back(physObj);
+
+                        // nearby.insert(nearby.end(), it->second.begin(), it->second.end());
                     }
                 }
             }
-            return nearby;
         }
 };
 

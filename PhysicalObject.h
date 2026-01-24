@@ -11,7 +11,6 @@
 extern float degreesToRadians(float degrees);
 extern void addDragForce(sf::Vector2f& currentVelocity, float mass, float deltaTime);
 extern void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, float direction, bool backward, float maximumVelocity, float mass, float deltaTime);
-extern void detectAndHandleCollision(std::shared_ptr<PhysicalObject>& object, std::vector<PhysicalObject>& physicalObjects);
 extern sf::Vector2f wrapPosition(sf::Vector2f position);
 
 class PhysicalObject : public BasicObject
