@@ -8,22 +8,21 @@ extern void addDragForce(sf::Vector2f& currentVelocity, float mass, float deltaT
 extern void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, float direction, bool backward, float maximumVelocity, float mass, float deltaTime);
 
 Player::Player()
-    : Entity(sf::Vector2f(900, 500), sf::Vector2i(24, 30), M_PI/2, RenderLayer::Main, "art/basicSpriteL.png", 10, 24/2.f, 
+    : Entity(sf::Vector2f(900, 500), sf::Vector2i(24, 30), M_PI/2, RenderLayer::Main, &playerTexture, 10, 24/2.f, 
             sf::Vector2f(0, 0), 5000, 0, 500, 100, 100)
 {
     m_angularAcceleration = degreesToRadians(4);
-
 	m_sprite.setOrigin({getSize().x / 2.f, getSize().y / 1.6f}); // roughtly the point of rotation I want with the current sprite in relation to the collision
-	std::cout << "Player constructed" << std::endl;
+	// std::cout << "Player constructed" << std::endl;
 }
-Player::Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, 
+Player::Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
         float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
         int hp, int maxHP, float angularAccleration)
-	: Entity(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, hp, maxHP)
+	: Entity(position, size, rotation, renderLayer, texture, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, hp, maxHP)
 	, m_angularAcceleration(angularAccleration)
 {
 	m_sprite.setOrigin({getSize().x / 2.f, getSize().y / 1.6f}); // roughtly the point of rotation I want with the current sprite in relation to the collision
-	std::cout << "Player constructed" << std::endl;
+	// std::cout << "Player constructed" << std::endl;
 }
 
 float Player::getAngularAcceleration()

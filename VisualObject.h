@@ -8,7 +8,7 @@ class VisualObject : public BasicObject
 protected:
 
 public:
-	VisualObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename);
+	VisualObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture);
 	VisualObject(const VisualObject& other); // copy constructor
 	VisualObject(VisualObject&& other) noexcept; // move constructor
 

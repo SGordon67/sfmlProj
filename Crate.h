@@ -12,10 +12,10 @@ protected:
 	float m_interactRadius;
 	bool m_used;
 public:
-	Crate(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, 
+	Crate(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
 		float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
 		float interactRadius, bool used)
-        : PhysicalObject(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity)
+        : PhysicalObject(position, size, rotation, renderLayer, texture, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity)
           , m_interactRadius(interactRadius)
           , m_used(used)
     {

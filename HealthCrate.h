@@ -9,7 +9,9 @@ class HealthCrate : public Crate
 protected:
     int m_health;
 public:
-	HealthCrate(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, 
+    HealthCrate();
+    HealthCrate(sf::Vector2f position);
+	HealthCrate(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
 		float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
 		float interactRadius, bool used, int value);
 	HealthCrate(const HealthCrate& other); // copy constructor

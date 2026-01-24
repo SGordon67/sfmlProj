@@ -10,8 +10,11 @@ protected:
 	int m_maxHP;
 public:
 
-	Entity(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, int hp, int maxHP)
-			: PhysicalObject(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity)
+	Entity(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
+            float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
+            int hp, int maxHP)
+			: PhysicalObject(position, size, rotation, renderLayer, texture, 
+                    mass, radius, velocity, acceleration, rotationVelocity, maxVelocity)
 			  , m_hp(hp)
 			  , m_maxHP(maxHP)
 	{

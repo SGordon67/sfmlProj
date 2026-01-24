@@ -1,6 +1,7 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
+#include "SFML/Graphics/Texture.hpp"
 #include "SFML/System/Angle.hpp"
 #include "SFML/System/Vector2.hpp"
 
@@ -16,10 +17,10 @@ private:
 	int m_damage;
     std::shared_ptr<Player> m_player;
 public:
-    Enemy(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, 
+    Enemy(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
             float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
             int hp, int maxHP, int damage, std::shared_ptr<Player> player)
-        : Entity(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, hp, maxHP)
+        : Entity(position, size, rotation, renderLayer, texture, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, hp, maxHP)
           , m_damage(damage)
           , m_player(player)
     {

@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "BasicObject.h"
+#include "SFML/Graphics/Texture.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "globals.h"
 
@@ -27,9 +28,9 @@ class PhysicalObject : public BasicObject
         float m_maxVelocity;
 
     public:
-        PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, 
+        PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
                 float mass, float radius, sf::Vector2f velocity, float acceleration, float angularVelocity, float maxVelocity)
-            : BasicObject(position, size, rotation, renderLayer, filename)
+            : BasicObject(position, size, rotation, renderLayer, texture)
               , m_mass(mass)
               , m_radius(radius)
               , m_velocity(velocity)

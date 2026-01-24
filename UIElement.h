@@ -15,17 +15,17 @@ class UIElement
         UIElement(std::shared_ptr<Player> player)
             : m_player(player)
         {
-            std::cout << "Regular constructor called for basic object" << std::endl;
+            // std::cout << "Regular constructor called for basic object" << std::endl;
         }
         UIElement(const UIElement& other) // copy constructor
             : m_player(other.m_player)
         {
-            std::cout << "Copy constructor called for basic object" << std::endl;
+            // std::cout << "Copy constructor called for basic object" << std::endl;
         }
         UIElement(UIElement&& other) noexcept // move constructor
             : m_player(std::move(other.m_player))
             {
-                std::cout << "Move constructor called for basic object" << std::endl;
+                // std::cout << "Move constructor called for basic object" << std::endl;
             }
 
         virtual void update() = 0;

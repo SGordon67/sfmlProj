@@ -5,12 +5,25 @@
 #include "BasicObject.h"
 #include "Player.h"
 #include "SFML/System/Vector2.hpp"
+#include "globals.h"
 
-HealthCrate::HealthCrate(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, 
-		float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
-		float interactRadius, bool used, int health)
-    : Crate(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, interactRadius, used)
-	, m_health(health)
+HealthCrate::HealthCrate()
+    : Crate(sf::Vector2f(0, 0), sf::Vector2i(17, 17), M_PI/2, RenderLayer::Main, &crateTexture, 
+            10, 8, sf::Vector2f(0, 0), 0, 0, 500, 50, false)
+      , m_health(10)
+{
+}
+HealthCrate::HealthCrate(sf::Vector2f position)
+    : Crate(position, sf::Vector2i(17, 17), M_PI/2, RenderLayer::Main, &crateTexture, 
+            10, 8, sf::Vector2f(0, 0), 0, 0, 500, 50, false)
+      , m_health(10)
+{
+}
+HealthCrate::HealthCrate(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
+        float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
+        float interactRadius, bool used, int health)
+    : Crate(position, size, rotation, renderLayer, texture, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, interactRadius, used)
+      , m_health(health)
 {
 }
 HealthCrate::HealthCrate(const HealthCrate& other) // copy constructor

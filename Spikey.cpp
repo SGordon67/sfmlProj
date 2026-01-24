@@ -1,11 +1,25 @@
 #include "Spikey.h"
 #include "PhysicalObject.h"
+#include "SFML/Graphics/Texture.hpp"
 #include "SFML/System/Vector2.hpp"
+#include "globals.h"
 
-Spikey::Spikey(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, 
+Spikey::Spikey()
+    : Entity(sf::Vector2f(0.1, 0.1), sf::Vector2i(20, 20), M_PI/2, RenderLayer::Main, &spikeyTexture, 
+            10, 8, sf::Vector2f(0, 0), 0, 0, 500,
+            100, 100)
+{
+}
+Spikey::Spikey(sf::Vector2f position)
+    : Entity(position, sf::Vector2i(20, 20), M_PI/2, RenderLayer::Main, &spikeyTexture, 
+            10, 8, sf::Vector2f(0, 0), 0, 0, 500,
+            100, 100)
+{
+}
+Spikey::Spikey(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
 	       float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
 	       int hp, int maxHP, int damage)
-	: Entity(position, size, rotation, renderLayer, filename, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, hp, maxHP)
+	: Entity(position, size, rotation, renderLayer, texture, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, hp, maxHP)
 	, m_damage(damage)
 {
 }

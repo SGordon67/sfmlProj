@@ -11,7 +11,7 @@ private:
     std::array<std::unique_ptr<Weapon>, 4> m_weapons;
 public:
     Player();
-	Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, 
+	Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
             float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
             int hp, int maxHP, float angularAccleration);
 

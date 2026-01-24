@@ -2,6 +2,7 @@
 #define GLOBALS_H
 
 #include "SFML/Graphics/Color.hpp"
+#include "SFML/Graphics/Texture.hpp"
 #include "SFML/System/Vector2.hpp"
 
 // debug
@@ -43,5 +44,15 @@ extern bool interactPressed;
 extern bool tabPressed;
 extern bool* buttons[numButtons];
 extern void initializeButtons();
+
+// textures
+extern sf::Texture farBackgroundTexture;
+extern sf::Texture closeBackgroundTexture;
+extern sf::Texture meteorTexture;
+extern sf::Texture crateTexture;
+extern sf::Texture spikeyTexture;
+extern sf::Texture playerTexture;
+extern sf::Texture enemyTexture;
+extern void initializeTextures();
 
 #endif

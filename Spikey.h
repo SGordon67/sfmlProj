@@ -11,7 +11,9 @@ class Spikey : public Entity, public Hazardous
 private:
 	int m_damage;
 public:
-	Spikey(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename, 
+    Spikey();
+    Spikey(sf::Vector2f position);
+	Spikey(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
 	       float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
 	       int hp, int maxHP, int damage);
 	Spikey(const Spikey& other); // copy constructor

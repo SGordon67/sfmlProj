@@ -29,22 +29,23 @@ protected:
 	float m_rotation;
 
 	RenderLayer m_renderLayer;
-	sf::Texture m_texture;
+	sf::Texture* m_texture;
 	sf::IntRect m_spriteRect;
 	sf::Sprite m_sprite;
 public:
 
-	BasicObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, std::string filename)
+	BasicObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture)
 			: m_objectID(++numObjects)
 			  , m_position(position)
 			  , m_size(size)
 			  , m_rotation(rotation)
 			  , m_renderLayer(renderLayer)
 			  , m_spriteRect(sf::Vector2i{0, 0}, size)
-			  , m_sprite(m_texture, m_spriteRect)
+			  , m_sprite(*texture, m_spriteRect)
 			  {
 				  std::cout << "Regular constructor called for basic object" << std::endl;
-				  loadTexture(filename);
+				  // loadTexture(filename);
+                  m_sprite.setTexture(*texture);
 				  m_sprite.setOrigin({size.x/2.f, size.y/2.f});
 				  m_sprite.setPosition(m_position);
 			  }
@@ -59,7 +60,7 @@ public:
 			  , m_sprite(other.m_sprite)
 	{
 		std::cout << "Copy constructor called for basic object" << std::endl;
-		m_sprite.setTexture(m_texture);
+		// m_sprite.setTexture(*m_texture);
 		m_sprite.setOrigin({m_size.x/2.f, m_size.y/2.f});
 		m_sprite.setPosition(m_position);
 	}
@@ -74,7 +75,7 @@ public:
 			, m_sprite(std::move(other.m_sprite))
 			{
 				std::cout << "Move constructor called for basic object" << std::endl;
-				m_sprite.setTexture(m_texture);
+				// m_sprite.setTexture(*m_texture);
 				m_sprite.setOrigin({m_size.x/2.f, m_size.y/2.f});
 				m_sprite.setPosition(m_position);
 			}
@@ -122,7 +123,7 @@ public:
 		m_renderLayer = layer;
 	}
 
-	sf::Texture getTexture() const
+	sf::Texture* getTexture() const
 	{
 		return m_texture;
 	}
@@ -137,16 +138,16 @@ public:
 		return m_sprite;
 	}
 
-	void loadTexture(const std::string& filename)
-	{
-		if(!m_texture.loadFromFile(filename))
-		{
-			std::cout << "Sprite not loaded :(" << std::endl;
-		}
-		m_texture.setRepeated(true);
-		m_sprite.setTexture(m_texture);
-		// std::cout << "Texture loaded from file :) " << std::endl;
-	}
+	// void loadTexture(const std::string& filename)
+	// {
+	// 	if(!m_texture.loadFromFile(filename))
+	// 	{
+	// 		std::cout << "Sprite not loaded :(" << std::endl;
+	// 	}
+	// 	m_texture.setRepeated(true);
+	// 	m_sprite.setTexture(m_texture);
+	// 	// std::cout << "Texture loaded from file :) " << std::endl;
+	// }
 
 	void rotate(const float rotation)
 	{

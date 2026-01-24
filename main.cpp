@@ -111,8 +111,6 @@ std::vector<sf::Vector2f> getDupPositions(sf::Vector2f position, sf::Vector2i si
 	return dupPositions;
 }
 
-// void handleCollision(PhysicalObject& mainObject, PhysicalObject& otherObject, float restitution)
-// {
 void handleCollision(std::shared_ptr<PhysicalObject>& mainObject, std::shared_ptr<PhysicalObject>& otherObject,
                      float restitution = 1.0f, float friction = 0.5f)
 {
@@ -505,6 +503,14 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
         std::vector<std::shared_ptr<Hazardous>>& hazardousObjects,
         std::shared_ptr<Player>& player)
 {
+	// player position (900, 500);
+
+    // random distrubution for any objects to use
+	std::random_device rd;
+	std::mt19937 rng(rd());
+	std::uniform_real_distribution<float> distX(0.f, (float)worldWidth);
+	std::uniform_real_distribution<float> distY(0.f, (float)worldHeight);
+
 	// VISUAL OBJECTS
 	// far background
 	sf::Vector2i bSize(1000 * worldWidth, 1000 * worldHeight);
@@ -512,11 +518,8 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 	float bRotation = M_PI / 2;
 	RenderLayer bRenderLayer = RenderLayer::FarBackground;
 	RenderLayer bRenderLayer2 = RenderLayer::CloseBackground;
-	std::string bgtFilename = "art/basicBackground.png";
-	std::string bstFilename = "art/basicStars.png";
-	VisualObject bg(bPosition, bSize, bRotation, bRenderLayer, bgtFilename);
-	VisualObject fg(bPosition, bSize, bRotation, bRenderLayer2, bstFilename);
-
+	VisualObject bg(bPosition, bSize, bRotation, bRenderLayer, &farBackgroundTexture);
+	VisualObject fg(bPosition, bSize, bRotation, bRenderLayer2, &closeBackgroundTexture);
 	visualObjects.push_back(std::make_unique<VisualObject>(bg));
 	visualObjects.push_back(std::make_unique<VisualObject>(fg));
 
@@ -525,114 +528,47 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 	// PHYSICAL OBJECTS
 
 	// testing meteor
-	sf::Vector2i objectSize(17, 17);
-	float objectRotation = M_PI / 2;
-	RenderLayer objectRenderLayer = RenderLayer::Main;
-	std::string objectFilename = "art/basicMeteor.png";
-	float objectMass = 10;
-	float objectRadius = 8;
-	sf::Vector2f objectVelocity = {0, 0};
-	float objectAcceleration = 0;
-	float objectAngularVelocity = 0;
-	float objectMaximumVelocity = 500; // equal to players for now
-
-	// custom objects
-	// player position (900, 500);
-	
+	float objectRadius = 8; // used for specific placement, not important
 	// two objects VERY close to eachother on opposite sides of the world
 	std::vector<sf::Vector2f*> mPositions[2];
-	physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(0.1, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, 
-				       objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity)));
-	physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(worldWidth - 2*objectRadius, 0.1), objectSize, objectRotation, objectRenderLayer, objectFilename, 
-				       objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity)));
+    physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(0.1, 0.1))));
+    physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(worldWidth - 2*objectRadius, 0.1))));
 
 	// two objects touching eachother near the middle of the board
-	physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(500, 200), objectSize, objectRotation, objectRenderLayer, objectFilename, 
-				       objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity)));
-	physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(500 + objectRadius, 200.5), objectSize, objectRotation, objectRenderLayer, objectFilename, 
-				       objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity)));
+    physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(500, 200))));
+    physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(500 + objectRadius, 200.5))));
 
 	// two objects near above player start to test collision rotation
-	physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f({900, 400}), objectSize, objectRotation, objectRenderLayer, objectFilename, 
-				       objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity)));
-	physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f({914, 340}), objectSize, objectRotation, objectRenderLayer, objectFilename, 
-				       objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity)));
+    physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(900, 400))));
+    physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(914, 340))));
 	
-	// create 10 objects randomely on the first screen
-	std::random_device rd;
-	std::mt19937 rng(rd());
-	std::uniform_real_distribution<float> distX(0.f, (float)worldWidth);
-	std::uniform_real_distribution<float> distY(0.f, (float)worldHeight);
 	for(int i = 0; i < 5; i++)
 	{
-		// random objects
-		physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(distX(rng), distY(rng)), objectSize, objectRotation, objectRenderLayer, objectFilename, 
-					       objectMass, objectRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity)));
+        physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(distX(rng), distY(rng)))));
 	}
 
 	// crates
-	sf::Vector2f cPosition({100, 100});
-	sf::Vector2i cSize(17, 17);
-	float cRotation = M_PI / 2;
-	RenderLayer cRenderLayer = RenderLayer::Main;
-	std::string cFilename = "art/basicCrate.png";
-	float cMass = 10;
-	float cRadius = 8;
-	sf::Vector2f cVelocity = {0, 0};
-	float cAcceleration = 0;
-	float cAngularVelocity = 0;
-	float cMaximumVelocity = 500; // equal to players for now
-    float cInteractRadius = 50;
-    bool cUsed = false;
-    int cValue = 10;
-    
-    auto c1 = std::make_shared<HealthCrate>(HealthCrate(cPosition, cSize, cRotation, cRenderLayer, cFilename, 
-                    cMass, cRadius, cVelocity, cAcceleration, cAngularVelocity, cMaximumVelocity, 
-                    cInteractRadius, cUsed, cValue));
+    auto c1 = std::make_shared<HealthCrate>(HealthCrate(sf::Vector2f(100, 100)));
 	physicalObjects.push_back(c1);
 	interactableObjects.push_back(c1);
 
 
     // Hazards
-	sf::Vector2i spikeySize(20, 20);
-    int spikeyHP = 100;
-    int spikeyMaxHP = 100;
-    int spikeyDamage = 10;
-	std::string spikeyFilename = "art/basicSpikey.png";
-	float spikeyRadius = 10;
-
 	// create hazards
-    auto h1 = std::make_shared<Spikey>(Spikey(sf::Vector2f(distX(rng), distY(rng)), spikeySize, objectRotation, objectRenderLayer, spikeyFilename, 
-                objectMass, spikeyRadius, objectVelocity, objectAcceleration, objectAngularVelocity, objectMaximumVelocity, spikeyHP, spikeyMaxHP, spikeyDamage));
+    auto h1 = std::make_shared<Spikey>(Spikey(sf::Vector2f(distX(rng), distY(rng))));
     physicalObjects.push_back(h1);
+
+    // no longer needed for physical hazards, will be needed for visual hazards (non-physical)
 	// hazardousObjects.push_back(h1);
 
-	sf::Vector2f ePosition({100, 190});
-	sf::Vector2i eSize(13, 11);
-	float eRotation = M_PI / 2;
-	RenderLayer eRenderLayer = RenderLayer::Main;
-	std::string eFilename = "art/basicEnemy.png";
-	float eMass = 10;
-	float eRadius = eSize.x / 2.f;
-	sf::Vector2f eVelocity = {0, 0};
-	float eAcceleration = 5000;
-	float eAngularVelocity = 0;
-	float eMaximumVelocity = 400; // players is 500 currently
-    int eHP = 100;
-    int eMHP = 100;
-    int eDamage = 10;
-    // hazardousObjects.push_back(enemy1);
 
-    // a bunch of randomely placed enemies
-    // NUMBER OF RANDOM ENEMIES TO START
-    int numEnemies = 300;
+    int numEnemies = 1;
 	for(int i = 0; i < numEnemies; i++)
 	{
-		// random objects
-
-        auto eR = std::make_shared<Enemy1>(Enemy1(sf::Vector2f(distX(rng), distY(rng)), eSize, eRotation, eRenderLayer, eFilename, 
-                    eMass, eRadius, eVelocity, eAcceleration, eAngularVelocity, eMaximumVelocity, eHP, eMHP, eDamage, player));
+        auto eR = std::make_shared<Enemy1>(Enemy1(sf::Vector2f(distX(rng), distY(rng)), player));
         physicalObjects.push_back(eR);
+
+        // no longer needed for physical hazards, will be needed for visual hazards (non-physical)
         // hazardousObjects.push_back(eR);
 	}
 }
@@ -646,10 +582,9 @@ void setupUI(std::vector<std::unique_ptr<UIElement>>& UIElements, std::shared_pt
 int main()
 {
     initializeButtons();
-
+    initializeTextures();
 
 	// setup game objects
-	
 	// player
     std::shared_ptr<Player> player = std::make_shared<Player>(Player());
 
@@ -659,10 +594,10 @@ int main()
     std::vector<std::shared_ptr<Hazardous>> hazardousObjects;
     physicalObjects.push_back(player);
 	setupGame(visualObjects, physicalObjects, interactableObjects, hazardousObjects, player);
+
+    // UI
     std::vector<std::unique_ptr<UIElement>> UIElements;
     setupUI(UIElements, player);
-
-
 
 	// window
 	sf::Vector2<uint> winSize(windowWidth, windowHeight);
@@ -670,7 +605,7 @@ int main()
 	window.setFramerateLimit(frameRateLimit);
 	window.setPosition(windowPos);
 
-	//view
+	// primary view
 	sf::View playerView(player->getPosition() + player->getSprite().getOrigin(), {(float)viewWidth, (float)viewHeight});
 	window.setView(playerView);
 
@@ -682,13 +617,8 @@ int main()
     SpatialHashGrid spacialGrid(200.0f);
 
 
-
-
-
-
-
-    // chrono for debugging
-    static int frameCount = 0;
+    // timekeeping for debugging
+    // static int frameCount = 0;
     static float totalUpdateTime = 0;
     static float totalDrawTime = 0;
     static float maxUpdateTime = 0;
@@ -763,15 +693,15 @@ int main()
             std::cout << "!!! UPDATE SPIKE: " << currentDraw << "ms !!!" << std::endl;
         }
 
-        frameCount++;
-        if(frameCount % 60)
-        {
-            std::cout << "Avg Update: " << totalUpdateTime / 60.0f << "ms, "
-                << "Avg Draw: " << totalDrawTime / 60.0f << "ms, "
-                << "Total: " << (totalUpdateTime + totalDrawTime) / 60.0f << "ms" << std::endl;
-            totalUpdateTime = 0;
-            totalDrawTime = 0;
-        }
+        // frameCount++;
+        // if(frameCount % 60)
+        // {
+        //     std::cout << "Avg Update: " << totalUpdateTime / 60.0f << "ms, "
+        //         << "Avg Draw: " << totalDrawTime / 60.0f << "ms, "
+        //         << "Total: " << (totalUpdateTime + totalDrawTime) / 60.0f << "ms" << std::endl;
+        //     totalUpdateTime = 0;
+        //     totalDrawTime = 0;
+        // }
 	}
 	return 0;
 }
