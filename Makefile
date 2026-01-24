@@ -4,13 +4,13 @@ LIBS = -lsfml-graphics -lsfml-window -lsfml-system
 LDFLAGS = -L/home/sgo/SFML-3.0.2/lib
 
 #Object files
-OBJS = main.o globals.o VisualObject.o HealthCrate.o Ball.o Player.o Spikey.o Enemy1.o CircleWeapon.o UIHealth.o
+OBJS = main.o globals.o VisualObject.o HealthCrate.o Ball.o Player.o Spikey.o Enemy1.o CircleWeapon.o UIHealth.o QuadTree.o
 all: main
 
 main: $(OBJS)
 	$(CXX) $(OBJS) -o main $(LDFLAGS) $(LIBS)
 
-main.o: main.cpp globals.h enums.h BasicObject.h VisualObject.h PhysicalObject.h Ball.h HealthCrate.h Entity.h Player.h Spikey.h Enemy.h Enemy1.h CircleWeapon.h UIElement.h UIHealth.h Interactable.h Hazardous.h
+main.o: main.cpp globals.h enums.h BasicObject.h VisualObject.h PhysicalObject.h Ball.h HealthCrate.h Entity.h Player.h Spikey.h Enemy.h Enemy1.h CircleWeapon.h UIElement.h UIHealth.h QuadTree.o Interactable.h Hazardous.h
 	$(CXX) $(CXXFLAGS) -c main.cpp
 
 globals.o: globals.cpp globals.h enums.h
@@ -39,6 +39,9 @@ CircleWeapon.o: CircleWeapon.cpp CircleWeapon.h Weapon.h globals.h enums.h
 
 UIHealth.o: UIHealth.cpp UIHealth.h UIElement.h Player.h globals.h enums.h
 	$(CXX) $(CXXFLAGS) -c UIHealth.cpp
+
+QuadTree.o: QuadTree.cpp QuadTree.h globals.h enums.h
+	$(CXX) $(CXXFLAGS) -c QuadTree.cpp
 
 clean:
 	rm -f *.o main

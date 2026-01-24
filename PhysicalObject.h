@@ -1,9 +1,9 @@
 #ifndef PHYSICALOBJECT_H
 #define PHYSICALOBJECT_H
 
-#include <iostream>
 
 #include "BasicObject.h"
+#include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Graphics/Texture.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "globals.h"
@@ -11,7 +11,6 @@
 extern float degreesToRadians(float degrees);
 extern void addDragForce(sf::Vector2f& currentVelocity, float mass, float deltaTime);
 extern void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, float direction, bool backward, float maximumVelocity, float mass, float deltaTime);
-extern sf::Vector2f wrapPosition(sf::Vector2f position);
 
 class PhysicalObject : public BasicObject
 {
@@ -151,27 +150,36 @@ class PhysicalObject : public BasicObject
 
         virtual void updatePosition(float deltaTime)
         {
-            setPosition(wrapPosition(getPosition() + (getVelocity() * deltaTime)));
+            setPosition(getPosition() + (getVelocity() * deltaTime));
         }
 
         virtual void physicalDraw(sf::RenderWindow& window)
         {
-            // main object
-            std::vector<sf::Vector2f> dupPositions;
-            dupPositions = basicDraw(window);
+            sf::View wView = window.getView();
+            sf::Vector2f viewCenter = wView.getCenter();
+            sf::Vector2f viewSize = wView.getSize();
 
-            // adding starting position for hitbox
-            dupPositions.push_back(getPosition());
-
-            // draw the shapes used for collision
-            if(showHitboxes)
+            auto isOnScreen = [&](const sf::Vector2f& pos)
             {
-                for(const auto& pos : dupPositions)
+                float dx = std::abs(pos.x - viewCenter.x);
+                float dy = std::abs(pos.y - viewCenter.y);
+                return (dx < viewSize.x * 0.6f && dy < viewSize.y * 0.6f);
+            };
+
+            sf::Vector2f myClosestPosition = getClosestWrapPosition(viewCenter, getPosition());
+            if(isOnScreen(myClosestPosition))
+            {
+                sf::Vector2f originalPosition = m_position;
+                setPosition(myClosestPosition);
+                window.draw(m_sprite);
+                setPosition(originalPosition);
+
+                if(showHitboxes)
                 {
                     sf::CircleShape circle(getRadius());
                     circle.setOrigin(sf::Vector2f(getRadius(), getRadius()));
                     circle.setFillColor(hitboxColor);
-                    circle.setPosition(pos);
+                    circle.setPosition(myClosestPosition);
                     window.draw(circle);
                 }
             }

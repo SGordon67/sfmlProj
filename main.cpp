@@ -1,4 +1,4 @@
-#include "HealthCrate.h"
+#include "QuadTree.h"
 #include "SFML/Graphics/CircleShape.hpp"
 #include "SFML/Graphics/Rect.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
@@ -12,67 +12,110 @@
 #include <cmath>
 #include <memory>
 #include <random>
-#include <ratio>
 #include <vector>
 
-#include "SpatialHashGrid.h"
 #include "UIElement.h"
 #include "UIHealth.h"
 #include "globals.h"
 #include "enums.h"
 #include "BasicObject.h"
 #include "VisualObject.h"
-#include "Crate.h"
 #include "PhysicalObject.h"
 #include "Ball.h"
 #include "Player.h"
 #include "Spikey.h"
-#include "Enemy.h"
 #include "Enemy1.h"
+#include "HealthCrate.h"
 
 float degreesToRadians(float degrees)
 {
-	return (degrees * (M_PI / 180));
+	return (degrees * (M_PI / 180.f));
 }
 
 float radiansToDegrees(float radians)
 {
-	return (radians * (180 / M_PI));
+	return (radians * (180.f / M_PI));
 }
 
-sf::Vector2f wrapPosition(sf::Vector2f position)
+void wrapPosition(sf::Vector2f& position)
 {
 	position.x = std::fmod(position.x, worldWidth);
 	position.y = std::fmod(position.y, worldHeight);
 
 	if(position.x < 0) position.x += worldWidth;
 	if(position.y < 0) position.y += worldHeight;
-
-	return position;
 }
 
-bool detectIntersection(sf::Vector2f pos1, float radius1, sf::Vector2f pos2, float radius2)
+sf::Vector2f getClosestWrapPosition(const sf::Vector2f& myPosition, const sf::Vector2f& otherPosition)
 {
 	// shortest distance with wrapping
-	sf::Vector2f delta = pos1 - pos2;
+    sf::Vector2f ClosestPosition = otherPosition;
+	sf::Vector2f delta = otherPosition - myPosition;
 	if(std::abs(delta.x) > worldWidth / 2.0f)
-	{
-		delta.x = delta.x > 0 ? delta.x - worldWidth : delta.x + worldWidth;
-	}
+        ClosestPosition.x = otherPosition.x + (delta.x > 0 ? (-worldWidth) : worldWidth);
 	if(std::abs(delta.y) > worldHeight / 2.0f)
-	{
-		delta.y = delta.y > 0 ? delta.y - worldHeight : delta.y + worldHeight;
-	}
+        ClosestPosition.y = otherPosition.y + (delta.y > 0 ? (-worldHeight) : worldHeight);
+    return ClosestPosition;
+}
 
+void initializeButtons()
+{
+    buttons[0] = &escPressed;
+    buttons[1] = &upPressed;
+    buttons[2] = &downPressed;
+    buttons[3] = &leftPressed;
+    buttons[4] = &rightPressed;
+    buttons[5] = &interactPressed;
+    buttons[6] = &tabPressed;
+}
+
+void initializeTextures()
+{
+    if(!farBackgroundTexture.loadFromFile("art/basicBackground.png"))
+    {
+        std::cout << "Sprite not loaded :(" << std::endl;
+    }
+    farBackgroundTexture.setRepeated(true);
+    if(!closeBackgroundTexture.loadFromFile("art/basicStars.png"))
+    {
+        std::cout << "Sprite not loaded :(" << std::endl;
+    }
+    closeBackgroundTexture.setRepeated(true);
+    if(!meteorTexture.loadFromFile("art/basicMeteor.png"))
+    {
+        std::cout << "Sprite not loaded :(" << std::endl;
+    }
+    if(!crateTexture.loadFromFile("art/basicCrate.png"))
+    {
+        std::cout << "Sprite not loaded :(" << std::endl;
+    }
+    if(!spikeyTexture.loadFromFile("art/basicSpikey.png"))
+    {
+        std::cout << "Sprite not loaded :(" << std::endl;
+    }
+    if(!playerTexture.loadFromFile("art/basicSpriteL.png"))
+    {
+        std::cout << "Sprite not loaded :(" << std::endl;
+    }
+    if(!enemyTexture.loadFromFile("art/basicEnemy.png"))
+    {
+        std::cout << "Sprite not loaded :(" << std::endl;
+    }
+}
+
+bool detectIntersection(const sf::Vector2f& pos1, float radius1, const sf::Vector2f& pos2, float radius2)
+{
+	// shortest distance with wrapping
+
+    sf::Vector2f closestPos = getClosestWrapPosition(pos1, pos2);
+	sf::Vector2f delta = pos1 - closestPos;
 	float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
 	if(distance <= (radius1 + radius2))
-	{
 		return true;
-	}
 	return false;
 }
 
-void detectAndHandleInteractions(std::shared_ptr<Player> player, std::vector<std::shared_ptr<Interactable>>& interactableObjects)
+void detectAndHandleInteractions(std::shared_ptr<Player> player, const std::vector<std::shared_ptr<Interactable>>& interactableObjects)
 {
 	for(auto& obj : interactableObjects)
 	{
@@ -85,7 +128,7 @@ void detectAndHandleInteractions(std::shared_ptr<Player> player, std::vector<std
 	}
 }
 
-std::vector<sf::Vector2f> getDupPositions(sf::Vector2f position, sf::Vector2i size)
+std::vector<sf::Vector2f> getDupPositions(const sf::Vector2f& position, const sf::Vector2i& size)
 {
 	std::vector<sf::Vector2f> dupPositions = {};
 
@@ -112,13 +155,24 @@ std::vector<sf::Vector2f> getDupPositions(sf::Vector2f position, sf::Vector2i si
 	return dupPositions;
 }
 
+void handleCollisionLite(const std::shared_ptr<PhysicalObject>& mainObject, const std::shared_ptr<PhysicalObject>& otherObject)
+{
+    // should collide with the closest version of the object including wrapped positions
+    sf::Vector2f otherClosestPosition = getClosestWrapPosition(mainObject->getPosition(),otherObject->getPosition());
+    sf::Vector2f dir = mainObject->getPosition() - otherClosestPosition;
+    float dist = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+    if(dist < mainObject->getRadius() + otherObject->getRadius() && dist > 0)
+    {
+        dir /= dist;
+        float separation = (mainObject->getRadius() + otherObject->getRadius() - dist) / 2.0f;
+        mainObject->setPosition(mainObject->getPosition() + dir * separation);
+        otherObject->setPosition(otherObject->getPosition() - dir * separation);
+    }
+}
+
 void handleCollision(std::shared_ptr<PhysicalObject>& mainObject, std::shared_ptr<PhysicalObject>& otherObject,
                      float restitution = 1.0f, float friction = 0.5f)
 {
-	// std::cout << "COLLISION -- " << mainObject.getObjectID() << " | " << otherObject.getObjectID() << std::endl;
-	// std::cout << "\tCollision occurred at position: (" << mainObject.getPosition().x << ", " << mainObject.getPosition().y 
-	//        << ") and (" << otherObject.getPosition().x << ", " << otherObject.getPosition().y << ")" << std::endl;
-
 	// varials to keep track of collision information
 	sf::Vector2f normal;
 	sf::Vector2f contact1;
@@ -128,14 +182,8 @@ void handleCollision(std::shared_ptr<PhysicalObject>& mainObject, std::shared_pt
 	float overlap;
 
 	// Calculate the collision normal
-	sf::Vector2f delta = otherObject->getPosition() - mainObject->getPosition();
-	// Use the shortest path (accounting for position wrap)
-	if (std::abs(delta.x) > worldWidth / 2.0f) {
-		delta.x = delta.x > 0 ? delta.x - worldWidth : delta.x + worldWidth;
-	}
-	if (std::abs(delta.y) > worldHeight / 2.0f) {
-		delta.y = delta.y > 0 ? delta.y - worldHeight : delta.y + worldHeight;
-	}
+    sf::Vector2f otherClosesetPosition = getClosestWrapPosition(mainObject->getPosition(), otherObject->getPosition());
+	sf::Vector2f delta = otherClosesetPosition - mainObject->getPosition();
 	float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
 	// Avoid 0 edge case
 	if (distance == 0.0f) {
@@ -146,17 +194,15 @@ void handleCollision(std::shared_ptr<PhysicalObject>& mainObject, std::shared_pt
 	normal = delta / distance;
 	// Calculate contact points
 	contact1 = mainObject->getPosition() + normal * mainObject->getRadius();
-	contact2 = otherObject->getPosition() - normal * otherObject->getRadius();
+	contact2 = otherClosesetPosition - normal * otherObject->getRadius();
 	// Radii from center of mass to contact points
 	r1 = contact1 - mainObject->getPosition();
-	r2 = contact2 - otherObject->getPosition();
+	r2 = contact2 - otherClosesetPosition;
 	// Calculate overlap
 	overlap = (mainObject->getRadius() + otherObject->getRadius()) - distance;
 
-
-
-	// Apply normal impulse (velocity response)
-	// Calculate velocity at contact points (including rotational velocity)
+	// Apply normal impulse
+	// Calculate velocity at contact points
 	sf::Vector2f v1 = mainObject->getVelocity() + 
 	                  sf::Vector2f(-mainObject->getAngularVelocity() * r1.y,
 	                               mainObject->getAngularVelocity() * r1.x);
@@ -183,18 +229,10 @@ void handleCollision(std::shared_ptr<PhysicalObject>& mainObject, std::shared_pt
 	sf::Vector2f impulse = normal * impulseScalar;
 	mainObject->setVelocity(mainObject->getVelocity() + impulse / mainObject->getMass());
 	otherObject->setVelocity(otherObject->getVelocity() - impulse / otherObject->getMass());
-	// Apply rotational impulse
-	float torque1 = r1.x * impulse.y - r1.y * impulse.x;
-	float angularImpulse1 = torque1 / I1;
-	mainObject->setAngularVelocity(mainObject->getAngularVelocity() + angularImpulse1);
-	float torque2 = r2.x * impulse.y - r2.y * impulse.x;
-	float angularImpulse2 = torque2 / I2;
-	otherObject->setAngularVelocity(otherObject->getAngularVelocity() + angularImpulse2);
 
 
-
-	// Apply friction impulse (creates rotation for circles)
-	// Calculate tangent (perpendicular to normal)
+	// Apply friction impulse for rotation
+	// Calculate tangent
 	sf::Vector2f tangent(-normal.y, normal.x);
 	
 	// Velocity at contact points
@@ -231,7 +269,6 @@ void handleCollision(std::shared_ptr<PhysicalObject>& mainObject, std::shared_pt
 	float frictionTorque1 = r1.x * frictionImpulse.y - r1.y * frictionImpulse.x;
 	float frictionAngularImpulse1 = frictionTorque1 / I1;
 	mainObject->setAngularVelocity(mainObject->getAngularVelocity() + frictionAngularImpulse1);
-
 	float frictionTorque2 = -(r2.x * frictionImpulse.y - r2.y * frictionImpulse.x);
 	float frictionAngularImpulse2 = frictionTorque2 / I2;
 	otherObject->setAngularVelocity(otherObject->getAngularVelocity() + frictionAngularImpulse2);
@@ -240,7 +277,6 @@ void handleCollision(std::shared_ptr<PhysicalObject>& mainObject, std::shared_pt
 
 	// Separate overlapping objects
 	if (overlap > 0.0f) {
-		// std::cout << "Separating overlapping hitboxes with overlap: " << overlap << std::endl;
 		// Mass-based separation (lighter object moves more)
 		float totalMass = mainObject->getMass() + otherObject->getMass();
 		float separation1 = overlap * (otherObject->getMass() / totalMass);
@@ -263,37 +299,6 @@ void detectAndHandleHazards(std::shared_ptr<Player> player,
         }
     }
 }
-
-// void detectAndHandleCollision(std::shared_ptr<PhysicalObject>& mainObject, 
-//         SpatialHashGrid& spatialGrid)
-// {
-//
-//     std::vector<std::shared_ptr<PhysicalObject>> nearbyObjects = spatialGrid.getNearby(mainObject);
-//
-// 	for(auto& obj : nearbyObjects)
-// 	{
-// 		if(mainObject->getObjectID() == obj->getObjectID()) continue;
-// 		bool overlap = detectIntersection(mainObject->getPosition(), mainObject->getRadius(), obj->getPosition(), obj->getRadius());
-// 		if(overlap)
-// 		{
-// 			handleCollision(mainObject, obj, restitution, friction);
-//
-//             auto player1 = std::dynamic_pointer_cast<Player>(mainObject);
-//             auto player2 = std::dynamic_pointer_cast<Player>(obj);
-//
-//             auto hazard1 = std::dynamic_pointer_cast<Hazardous>(mainObject);
-//             auto hazard2 = std::dynamic_pointer_cast<Hazardous>(obj);
-//
-//             if(player1 && hazard2)
-//             {
-//                 hazard2->dealDamage(player1);
-//             }else if(player2 && hazard1)
-//             {
-//                 hazard1->dealDamage(player2);
-//             }
-// 		}
-// 	}
-// }
 
 void addDragForce(sf::Vector2f& currentVelocity, float mass, float deltaTime)
 {
@@ -394,72 +399,59 @@ void updateGame(std::shared_ptr<Player> player,
         std::vector<std::shared_ptr<Interactable>>& interactableObjects, 
         std::vector<std::shared_ptr<Hazardous>>& hazardousObjects,
         std::vector<std::unique_ptr<UIElement>>& UIElements,
-        SpatialHashGrid& spatialGrid)
+        QuadTree& quadTree)
 {
-    auto totalStart = std::chrono::high_resolution_clock::now();
-
-    auto interactionStart = std::chrono::high_resolution_clock::now();
+    // get the buttons that the player is pushing first
+    // handle actions as needed
 	player->playerUpdate(buttons);
+    // interact
 	if(*buttons[5])
 	{
 		detectAndHandleInteractions(player, interactableObjects);
 	}
-    auto interactionEnd = std::chrono::high_resolution_clock::now();
-    float interactionTime = std::chrono::duration_cast<std::chrono::microseconds>(interactionEnd - interactionStart).count() / 1000.0f;
 
-    auto gridStart = std::chrono::high_resolution_clock::now();
-    spatialGrid.clear();
-    for(auto& obj : physicalObjects)
-        spatialGrid.insert(obj);
-    auto gridEnd = std::chrono::high_resolution_clock::now();
-    float gridTime = std::chrono::duration_cast<std::chrono::microseconds>(gridEnd - gridStart).count() / 1000.0f;
+    // setup the tree to handle collisions
+    // quadTree.clear();
+    // for(auto& obj : physicalObjects)
+    //     quadTree.insert(obj);
 
-    // pre-allocate reusable vector intead of creatin a bunch every frame
-    auto physicsStart = std::chrono::high_resolution_clock::now();
-    int collisionChecks = 0;
-    int actualCollisions = 0;
-    float totalUpdateTime = 0;
-    float totalGridQueryTime = 0;
-    float totalCollisionCheckTime = 0;
-
+    // pre-allocate reusable vector intead of creating a bunch every frame
     std::vector<std::shared_ptr<PhysicalObject>> nearbyCache;
-    nearbyCache.reserve(50);
+    nearbyCache.reserve(500);
     auto playerPtr = std::dynamic_pointer_cast<Player>(player);
     for(auto& obj : physicalObjects)
     {
-        auto updateStart = std::chrono::high_resolution_clock::now();
         obj->physicalUpdate();
-        auto updateEnd = std::chrono::high_resolution_clock::now();
-        totalUpdateTime += std::chrono::duration_cast<std::chrono::microseconds>(updateEnd - updateStart).count() / 1000.0f;
 
         // don't handle collisions of far away objects
-        float dx = obj->getPosition().x - player->getPosition().x;
-        float dy = obj->getPosition().y - player->getPosition().y;
-        float distSqr = dx * dx + dy * dy;
-        if(distSqr < 4000000.0f)
+        sf::Vector2f objClosesetPosition = getClosestWrapPosition(player->getPosition(), obj->getPosition());
+        float dx = objClosesetPosition.x - player->getPosition().x;
+        float dy = objClosesetPosition.y - player->getPosition().y;
+        if(std::sqrt(dx * dx + dy * dy) < 2000)
         {
-            auto gridQueryStart = std::chrono::high_resolution_clock::now();
-            nearbyCache.clear();
-            spatialGrid.getNearby(obj, nearbyCache);
-            auto gridQueryEnd = std::chrono::high_resolution_clock::now();
-            totalGridQueryTime += std::chrono::duration_cast<std::chrono::microseconds>(gridQueryEnd - gridQueryStart).count() / 1000.0f;
+            // nearbyCache.clear();
+            // quadTree.retrieve(nearbyCache, objClosesetPosition, obj->getRadius());
 
-            for(auto& other : nearbyCache)
+            // for(auto& other : nearbyCache)
+            for(auto& other : physicalObjects)
             {
                 if(obj->getObjectID() == other->getObjectID()) continue;
 
-                collisionChecks++;
-
-                auto collisionStart = std::chrono::high_resolution_clock::now();
+                // accounts for closest position
                 bool overlap = detectIntersection(obj->getPosition(), obj->getRadius(),
                         other->getPosition(), other->getRadius());
 
                 if(overlap)
                 {
-                    handleCollision(obj, other, restitution, friction);
 
                     bool objIsPlayer = (obj == player);
                     bool otherIsPlayer = (other == player);
+
+                    if(objIsPlayer || otherIsPlayer)
+                        handleCollision(obj, other, restitution, friction);
+                    else
+                        // less intensive collision handling for non player
+                        handleCollisionLite(obj, other);
 
                     if(objIsPlayer)
                     {
@@ -471,16 +463,10 @@ void updateGame(std::shared_ptr<Player> player,
                         if(hazard) hazard->dealDamage(playerPtr);
                     }
                 }
-                auto collisionEnd = std::chrono::high_resolution_clock::now();
-                totalCollisionCheckTime += std::chrono::duration_cast<std::chrono::microseconds>(collisionEnd - collisionStart).count() / 1000.0f;
             }
         }
     }
-    auto physicsEnd = std::chrono::high_resolution_clock::now();
-    float physicsTime = std::chrono::duration_cast<std::chrono::microseconds>(physicsEnd - physicsStart).count() / 1000.0f;
 
-
-    auto otherStart = std::chrono::high_resolution_clock::now();
     // non-physical hazards
 	detectAndHandleHazards(player, hazardousObjects);
 	// update visual objects then UI
@@ -491,23 +477,6 @@ void updateGame(std::shared_ptr<Player> player,
     for(auto& element : UIElements)
     {
         element->update();
-    }
-    auto otherEnd = std::chrono::high_resolution_clock::now();
-    float otherTime = std::chrono::duration_cast<std::chrono::microseconds>(otherEnd - otherStart).count() / 1000.0f;
-
-
-    auto totalEnd = std::chrono::high_resolution_clock::now();
-    float totalTime = std::chrono::duration_cast<std::chrono::microseconds>(totalEnd - totalStart).count() / 1000.0f;
-    if(totalTime > 20.0f) {
-        std::cout << "UPDATE BREAKDOWN (" << totalTime << "ms):" << std::endl;
-        std::cout << "  Grid: " << gridTime << "ms" << std::endl;
-        std::cout << "  Physics: " << physicsTime << "ms" << std::endl;
-        std::cout << "    - physicalUpdate(): " << totalUpdateTime << "ms" << std::endl;
-        std::cout << "    - Grid queries: " << totalGridQueryTime << "ms" << std::endl;
-        std::cout << "    - Collision checks: " << totalCollisionCheckTime << "ms" << std::endl;
-        std::cout << "    - Checks performed: " << collisionChecks << std::endl;
-        std::cout << "    - Actual collisions: " << actualCollisions << std::endl;
-        std::cout << "  Other: " << otherTime << "ms" << std::endl;
     }
 }
 
@@ -551,8 +520,11 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
         std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects, 
         std::vector<std::shared_ptr<Interactable>>& interactableObjects, 
         std::vector<std::shared_ptr<Hazardous>>& hazardousObjects,
-        std::shared_ptr<Player>& player)
+        const std::shared_ptr<Player>& player)
 {
+    // temporary
+    hazardousObjects.clear();
+
 	// player position (900, 500);
 
     // random distrubution for any objects to use
@@ -612,7 +584,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 	// hazardousObjects.push_back(h1);
 
 
-    int numEnemies = 500;
+    int numEnemies = 3;
 	for(int i = 0; i < numEnemies; i++)
 	{
         auto eR = std::make_shared<Enemy1>(Enemy1(sf::Vector2f(distX(rng), distY(rng)), player));
@@ -623,7 +595,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 	}
 }
 
-void setupUI(std::vector<std::unique_ptr<UIElement>>& UIElements, std::shared_ptr<Player> player)
+void setupUI(std::vector<std::unique_ptr<UIElement>>& UIElements, std::shared_ptr<Player>& player)
 {
     // health bar
     UIElements.push_back(std::make_unique<UIHealth>(UIHealth(player)));
@@ -665,7 +637,8 @@ int main()
 	float timeAccumulator = 0.0f;
 
     // spacial grid for more efficient collision detection
-    SpatialHashGrid spacialGrid(100.0f);
+    QuadTree quadTree(0, sf::FloatRect(sf::Vector2f(0, 0), sf::Vector2f(worldWidth, worldHeight)));
+    // SpatialHashGrid spacialGrid(100.0f);
 
 
     // timekeeping for debugging
@@ -709,7 +682,7 @@ int main()
         int updateCount = 0;
 		while(timeAccumulator >= FixedDeltaTime && updateCount < maxUpdates)
 		{
-			updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects, hazardousObjects, UIElements, spacialGrid);
+			updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects, hazardousObjects, UIElements, quadTree);
 			timeAccumulator -= FixedDeltaTime;
             updateCount++;
 		}

@@ -48,7 +48,7 @@ public:
 	{
 		m_hp += heal;
 		if(m_hp > m_maxHP) m_hp = m_maxHP;
-        // std::cout << "HEALED, NEW HP -- " << getHP() << std::endl;
+        std::cout << "HEALED, NEW HP -- " << getHP() << std::endl;
 	}
 };
 

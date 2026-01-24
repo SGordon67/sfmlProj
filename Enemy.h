@@ -80,6 +80,25 @@ public:
     {
         entity->reduceHealth(getDamage());
     }
+    virtual void updateVelocity(float accelerate, bool backward) override
+    {
+        // zero out the velocity if its small enough
+        if(getVelocity().x < 0.5 && getVelocity().x > -0.5) setVelocity({0, getVelocity().y});
+        if(getVelocity().y < 0.5 && getVelocity().y > -0.5) setVelocity({getVelocity().x, 0});
+
+        float direction = getRotation();
+        if(backward) direction += M_PI;
+
+        // manipulating the velocity directly, maybe bad practice?
+        addDragForce(m_velocity, getMass(), FixedDeltaTime);
+        addAccelerationForce(m_velocity, accelerate, direction, backward, getMaxVelocity(), getMass(), FixedDeltaTime);
+    }
+
+    virtual void updatePosition(float deltaTime) override
+    {
+        setPosition(getPosition() + (getVelocity() * deltaTime));
+    }
+
     virtual void physicalUpdate() override
     {
         float accel = getAcceleration();

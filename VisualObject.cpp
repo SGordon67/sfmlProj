@@ -16,5 +16,4 @@ VisualObject::VisualObject(VisualObject&& other) noexcept // move constructor
 void VisualObject::visualUpdate(float deltaTime, sf::Vector2f relationalVelocity)
 {
 	basicUpdate(deltaTime, relationalVelocity);
-
 }

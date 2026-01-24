@@ -13,12 +13,11 @@ constexpr int numButtons = 7;
 constexpr float FixedDeltaTime = 1.0f / 60.0f;
 
 // globals consts
-constexpr sf::Color hitboxColor = sf::Color(255, 0, 0, 150);
-
 constexpr float restitution = 1.f;
 constexpr float friction = 0.5f;
 constexpr float dragCoef = 4;
 constexpr float angularDrag = 0.99f;
+constexpr sf::Color hitboxColor = sf::Color(255, 0, 0, 150);
 
 // global variables
 extern int numObjects;
@@ -43,7 +42,6 @@ extern bool rightPressed;
 extern bool interactPressed;
 extern bool tabPressed;
 extern bool* buttons[numButtons];
-extern void initializeButtons();
 
 // textures
 extern sf::Texture farBackgroundTexture;
@@ -53,6 +51,5 @@ extern sf::Texture crateTexture;
 extern sf::Texture spikeyTexture;
 extern sf::Texture playerTexture;
 extern sf::Texture enemyTexture;
-extern void initializeTextures();
 
 #endif

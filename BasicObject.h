@@ -14,8 +14,10 @@
 #include "globals.h"
 #include "enums.h"
 
-extern std::vector<sf::Vector2f> getDupPositions(sf::Vector2f position, sf::Vector2i size);
+extern std::vector<sf::Vector2f> getDupPositions(const sf::Vector2f& position, const sf::Vector2i& size);
 extern float radiansToDegrees(float radians);
+extern void wrapPosition(sf::Vector2f& position);
+extern sf::Vector2f getClosestWrapPosition(const sf::Vector2f& myPosition, const sf::Vector2f& otherPosition);
 
 // forward declaration, this class will exist
 class PhysicalObject;
@@ -93,6 +95,7 @@ public:
 	{
 		m_position = position;
 		m_sprite.setPosition(position);
+        wrapPosition(m_position);   
 	}
 
 	sf::Vector2i getSize() const
@@ -181,12 +184,12 @@ public:
 
 	// this function draws the object on the window, and it's duplicates for edge wrapping
 	// it also returns the extra coords to the calling function if more is needed to be drawn in subclasses
-	std::vector<sf::Vector2f> basicDraw(sf::RenderWindow& window)
+	void basicDraw(sf::RenderWindow& window)
 	{
-		if(m_renderLayer == RenderLayer::FarBackground || m_renderLayer == RenderLayer::CloseBackground)
+        if(m_renderLayer != RenderLayer::Main)
         {
             window.draw(m_sprite);
-            return {};
+            return;
         }
 
         sf::View wView = window.getView();
@@ -200,31 +203,15 @@ public:
             return (dx < viewSize.x * 0.6f && dy < viewSize.y * 0.6f);
         };
 
-        // main object
-        if(isOnScreen(getPosition()))
+        sf::Vector2f myClosestPosition = getClosestWrapPosition(viewCenter, getPosition());
+
+        if(isOnScreen(myClosestPosition))
         {
+            sf::Vector2f originalPosition = m_position;
+            setPosition(myClosestPosition);
             window.draw(m_sprite);
+            setPosition(originalPosition);
         }
-
-
-		// vector of positions to return
-		std::vector<sf::Vector2f> dupPositions;
-		if(m_renderLayer != RenderLayer::Main) return dupPositions;
-
-		// get the duplicates needed for edge wrap
-		dupPositions = getDupPositions(m_position, m_size);
-		sf::Vector2f originalPosition = m_position;
-		for(const auto& pos : dupPositions)
-		{
-            if(isOnScreen(pos))
-            {
-                setPosition(pos);
-                window.draw(m_sprite);
-            }
-		}
-		setPosition(originalPosition);
-
-		return dupPositions;
 	}
 };
 
