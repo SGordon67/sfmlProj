@@ -427,7 +427,7 @@ void updateGame(std::shared_ptr<Player> player,
         sf::Vector2f objClosesetPosition = getClosestWrapPosition(player->getPosition(), obj->getPosition());
         float dx = objClosesetPosition.x - player->getPosition().x;
         float dy = objClosesetPosition.y - player->getPosition().y;
-        if(std::sqrt(dx * dx + dy * dy) < 2000)
+        if(std::sqrt(dx * dx + dy * dy) < (std::sqrt(viewWidth * viewWidth + viewHeight * viewHeight) / 2))
         {
             // nearbyCache.clear();
             // quadTree.retrieve(nearbyCache, objClosesetPosition, obj->getRadius());
@@ -448,10 +448,14 @@ void updateGame(std::shared_ptr<Player> player,
                     bool otherIsPlayer = (other == player);
 
                     if(objIsPlayer || otherIsPlayer)
+                    {
                         handleCollision(obj, other, restitution, friction);
+                    }
                     else
+                    {
                         // less intensive collision handling for non player
                         handleCollisionLite(obj, other);
+                    }
 
                     if(objIsPlayer)
                     {
@@ -584,7 +588,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 	// hazardousObjects.push_back(h1);
 
 
-    int numEnemies = 3;
+    int numEnemies = 300;
 	for(int i = 0; i < numEnemies; i++)
 	{
         auto eR = std::make_shared<Enemy1>(Enemy1(sf::Vector2f(distX(rng), distY(rng)), player));

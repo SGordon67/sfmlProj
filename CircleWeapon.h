@@ -6,6 +6,7 @@
 class CircleWeapon : public Weapon
 {
     protected:
+        float m_radius;
     public:
         CircleWeapon();
         CircleWeapon(const CircleWeapon& other); // copy constructor
