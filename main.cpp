@@ -1,3 +1,4 @@
+#include "Minimap.h"
 #include "QuadTree.h"
 #include "SFML/Graphics/CircleShape.hpp"
 #include "SFML/Graphics/Rect.hpp"
@@ -7,6 +8,7 @@
 #include "SFML/Window/Keyboard.hpp"
 #include "SFML/Graphics.hpp"
 #include "SFML/Window.hpp"
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <cmath>
@@ -399,6 +401,7 @@ void updateGame(std::shared_ptr<Player> player,
         std::vector<std::shared_ptr<Interactable>>& interactableObjects, 
         std::vector<std::shared_ptr<Hazardous>>& hazardousObjects,
         std::vector<std::unique_ptr<UIElement>>& UIElements,
+        Minimap minimap,
         QuadTree& quadTree)
 {
     // get the buttons that the player is pushing first
@@ -411,9 +414,9 @@ void updateGame(std::shared_ptr<Player> player,
 	}
 
     // setup the tree to handle collisions
-    // quadTree.clear();
-    // for(auto& obj : physicalObjects)
-    //     quadTree.insert(obj);
+    quadTree.clear();
+    for(auto& obj : physicalObjects)
+        quadTree.insert(obj);
 
     // pre-allocate reusable vector intead of creating a bunch every frame
     std::vector<std::shared_ptr<PhysicalObject>> nearbyCache;
@@ -429,11 +432,10 @@ void updateGame(std::shared_ptr<Player> player,
         float dy = objClosesetPosition.y - player->getPosition().y;
         if(std::sqrt(dx * dx + dy * dy) < (std::sqrt(viewWidth * viewWidth + viewHeight * viewHeight) / 2))
         {
-            // nearbyCache.clear();
-            // quadTree.retrieve(nearbyCache, objClosesetPosition, obj->getRadius());
-
-            // for(auto& other : nearbyCache)
-            for(auto& other : physicalObjects)
+            nearbyCache.clear();
+            quadTree.retrieveToroidal(nearbyCache, obj->getPosition(), obj->getRadius());
+            for(auto& other : nearbyCache)
+            // for(auto& other : physicalObjects)
             {
                 if(obj->getObjectID() == other->getObjectID()) continue;
 
@@ -482,9 +484,11 @@ void updateGame(std::shared_ptr<Player> player,
     {
         element->update();
     }
+
+    minimap.update();
 }
 
-void drawGame(sf::RenderWindow& window, sf::View& view, std::shared_ptr<Player> player, 
+void drawGame(sf::RenderWindow& window, sf::View& view, Minimap& minimap, std::shared_ptr<Player> player, 
         std::vector<std::unique_ptr<VisualObject>>& visualObjects, 
         std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects,
         std::vector<std::unique_ptr<UIElement>>& UIElements)
@@ -517,6 +521,9 @@ void drawGame(sf::RenderWindow& window, sf::View& view, std::shared_ptr<Player> 
         element->render(window);
     }
 
+    // draw the minimap
+    minimap.draw(window);
+    window.setView(view);
 	window.display();
 }
 
@@ -581,14 +588,23 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 
     // Hazards
 	// create hazards
-    auto h1 = std::make_shared<Spikey>(Spikey(sf::Vector2f(distX(rng), distY(rng))));
-    physicalObjects.push_back(h1);
+    // auto h0 = std::make_shared<Spikey>(Spikey(sf::Vector2f(distX(rng), distY(rng))));
+    // physicalObjects.push_back(h0);
 
+    // a spikey on the four courners
+    auto h1 = std::make_shared<Spikey>(Spikey({10, 10}));
+    auto h3 = std::make_shared<Spikey>(Spikey({worldWidth - 10, 10}));
+    auto h2 = std::make_shared<Spikey>(Spikey({10, worldHeight - 10}));
+    auto h4 = std::make_shared<Spikey>(Spikey({worldWidth - 10, worldHeight - 10}));
+    physicalObjects.push_back(h1);
+    physicalObjects.push_back(h2);
+    physicalObjects.push_back(h3);
+    physicalObjects.push_back(h4);
     // no longer needed for physical hazards, will be needed for visual hazards (non-physical)
 	// hazardousObjects.push_back(h1);
 
 
-    int numEnemies = 300;
+    int numEnemies = 30;
 	for(int i = 0; i < numEnemies; i++)
 	{
         auto eR = std::make_shared<Enemy1>(Enemy1(sf::Vector2f(distX(rng), distY(rng)), player));
@@ -634,7 +650,14 @@ int main()
 
 	// primary view
 	sf::View playerView(player->getPosition() + player->getSprite().getOrigin(), {(float)viewWidth, (float)viewHeight});
+    playerView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
 	window.setView(playerView);
+
+    // minimap view
+    std::shared_ptr<sf::View> minimapView = std::make_shared<sf::View>(sf::View(sf::Vector2f(0, 0), {worldWidth, worldHeight}));
+	minimapView->setCenter({worldWidth / 2.f, worldHeight / 2.f});
+    minimapView->setViewport(sf::FloatRect({0.755f, 0.01f}, {.23f, .23f}));
+    Minimap minimap(player, minimapView);
 
 	// time
 	sf::Clock clock;
@@ -642,15 +665,6 @@ int main()
 
     // spacial grid for more efficient collision detection
     QuadTree quadTree(0, sf::FloatRect(sf::Vector2f(0, 0), sf::Vector2f(worldWidth, worldHeight)));
-    // SpatialHashGrid spacialGrid(100.0f);
-
-
-    // timekeeping for debugging
-    // static int frameCount = 0;
-    static float totalUpdateTime = 0;
-    static float totalDrawTime = 0;
-    static float maxUpdateTime = 0;
-    static float maxDrawTime = 0;
 
 	while(window.isOpen())
 	{
@@ -679,14 +693,11 @@ int main()
             }
 		}
 
-        // start timing update
-        auto updateStart = std::chrono::high_resolution_clock::now();
-
         int maxUpdates = 3;
         int updateCount = 0;
 		while(timeAccumulator >= FixedDeltaTime && updateCount < maxUpdates)
 		{
-			updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects, hazardousObjects, UIElements, quadTree);
+			updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects, hazardousObjects, UIElements, minimap, quadTree);
 			timeAccumulator -= FixedDeltaTime;
             updateCount++;
 		}
@@ -695,41 +706,7 @@ int main()
             timeAccumulator = 0;
         }
 
-        auto updateEnd = std::chrono::high_resolution_clock::now();
-        auto updateDuration = std::chrono::duration_cast<std::chrono::microseconds>(updateEnd - updateStart);
-        float currentUpdate = updateDuration.count() / 1000.0f;
-        totalUpdateTime += currentUpdate;
-        if(currentUpdate > maxUpdateTime) maxUpdateTime = currentUpdate;
-        if(currentUpdate > 10.0f)
-        {
-            // std::cout << "!!! UPDATE SPIKE: " << currentUpdate << "ms !!!" << std::endl;
-        }
-
-
-        // start timing draw
-        auto drawStart = std::chrono::high_resolution_clock::now();
-
-		drawGame(window, playerView, player, visualObjects, physicalObjects, UIElements);
-
-        auto drawEnd = std::chrono::high_resolution_clock::now();
-        auto drawDuration = std::chrono::duration_cast<std::chrono::microseconds>(drawEnd - drawStart);
-        float currentDraw = drawDuration.count() / 1000.0f;
-        totalDrawTime += currentDraw;
-        if(currentDraw > maxDrawTime) maxDrawTime = currentDraw;
-        if(currentDraw > 10.0f)
-        {
-            // std::cout << "!!! DRAW SPIKE: " << currentDraw << "ms !!!" << std::endl;
-        }
-
-        // frameCount++;
-        // if(frameCount % 60)
-        // {
-        //     std::cout << "Avg Update: " << totalUpdateTime / 60.0f << "ms, "
-        //         << "Avg Draw: " << totalDrawTime / 60.0f << "ms, "
-        //         << "Total: " << (totalUpdateTime + totalDrawTime) / 60.0f << "ms" << std::endl;
-        //     totalUpdateTime = 0;
-        //     totalDrawTime = 0;
-        // }
+		drawGame(window, playerView, minimap, player, visualObjects, physicalObjects, UIElements);
 	}
 	return 0;
 }

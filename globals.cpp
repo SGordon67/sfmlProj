@@ -1,6 +1,5 @@
 #include "globals.h"
 #include "SFML/Graphics/Texture.hpp"
-#include <iostream>
 
 int numObjects = 0;
 

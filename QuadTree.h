@@ -1,7 +1,9 @@
 #ifndef QUADTREE_H
 #define QUADTREE_H
 
+#include "BasicObject.h"
 #include "SFML/System/Vector2.hpp"
+#include <unordered_set>
 #include <vector>
 #include <memory>
 #include <SFML/Graphics.hpp>
@@ -11,7 +13,7 @@ class PhysicalObject;
 class QuadTree {
 private:
     static constexpr int MAX_OBJECTS = 10;  // Max objects before subdividing
-    static constexpr int MAX_LEVELS = 5;    // Max subdivision depth
+    static constexpr int MAX_LEVELS = 7;    // Max subdivision depth
 
     int level;
     std::vector<std::shared_ptr<PhysicalObject>> objects;
@@ -24,10 +26,14 @@ private:
         float x = bounds.position.x;
         float y = bounds.position.y;
 
-        nodes[0] = std::make_unique<QuadTree>(level + 1, sf::FloatRect(bounds.position, bounds.size));
-        nodes[1] = std::make_unique<QuadTree>(level + 1, sf::FloatRect(sf::Vector2f(x + subWidth, y), bounds.size));
-        nodes[2] = std::make_unique<QuadTree>(level + 1, sf::FloatRect(sf::Vector2f(x, y + subHeight), bounds.size));
-        nodes[3] = std::make_unique<QuadTree>(level + 1, sf::FloatRect(sf::Vector2f(x + subWidth, y + subHeight), bounds.size));
+        nodes[0] = std::make_unique<QuadTree>(level + 1, 
+                sf::FloatRect(bounds.position, sf::Vector2f(subWidth, subHeight)));
+        nodes[1] = std::make_unique<QuadTree>(level + 1, 
+                sf::FloatRect(sf::Vector2f(x + subWidth, y), sf::Vector2f(subWidth, subHeight)));
+        nodes[2] = std::make_unique<QuadTree>(level + 1, 
+                sf::FloatRect(sf::Vector2f(x, y + subHeight), sf::Vector2f(subWidth, subHeight)));
+        nodes[3] = std::make_unique<QuadTree>(level + 1, 
+                sf::FloatRect(sf::Vector2f(x + subWidth, y + subHeight), sf::Vector2f(subWidth, subHeight)));
     }
 
     int getIndex(const sf::Vector2f& pos, float radius) const {
@@ -51,12 +57,44 @@ private:
 
 public:
     QuadTree(int level, const sf::FloatRect& bounds) 
-        : level(level), bounds(bounds) {}
+        : level(level), bounds(bounds) 
+    {
+    }
 
-    void clear() {
+    void retrieveToroidal(std::vector<std::shared_ptr<PhysicalObject>>& returnObjects,
+            const sf::Vector2f& pos, float radius)
+    {
+        std::unordered_set<std::shared_ptr<PhysicalObject>> uniqueObjects;
+        std::vector<std::shared_ptr<PhysicalObject>> tempResults;
+
+        retrieve(tempResults, pos, radius);
+        for(const auto& obj : tempResults)
+            uniqueObjects.insert(obj);
+
+        auto wrappedPositions = getDupPositions(pos, sf::Vector2i(radius, radius));
+        for(const auto& wrappedPos : wrappedPositions)
+        {
+            tempResults.clear();
+            retrieve(tempResults, wrappedPos, radius);
+            for(const auto& obj : tempResults)
+                uniqueObjects.insert(obj);
+        }
+
+        returnObjects.clear();
+        returnObjects.reserve(uniqueObjects.size());
+        for(const auto& obj : uniqueObjects)
+        {
+            returnObjects.push_back(obj);
+        }
+    }
+
+    void clear()
+    {
         objects.clear();
-        for (int i = 0; i < 4; i++) {
-            if (nodes[i]) {
+        for (int i = 0; i < 4; i++)
+        {
+            if (nodes[i])
+            {
                 nodes[i]->clear();
                 nodes[i].reset();
             }
