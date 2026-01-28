@@ -1,9 +1,10 @@
 #include "Minimap.h"
 #include "SFML/System/Vector2.hpp"
+#include "UIElement.h"
 #include "globals.h"
 
 Minimap::Minimap(std::shared_ptr<Player> player, std::shared_ptr<sf::View> view)
-    : m_player(player)
+    : UIElement(player)
     , m_view(view)
     , m_playerShape(sf::CircleShape(view->getSize().y / 50))
       , m_color(sf::Color::Red)
@@ -24,10 +25,10 @@ std::shared_ptr<sf::View> Minimap::getView() const
 
 void Minimap::update()
 {
-}
-void Minimap::draw(sf::RenderWindow& window)
-{
     m_playerShape.setPosition(m_player->getPosition());
+}
+void Minimap::render(sf::RenderWindow& window)
+{
     window.setView(*getView());
     window.draw(m_backgroundRect);
     window.draw(m_playerShape);

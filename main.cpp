@@ -401,7 +401,7 @@ void updateGame(std::shared_ptr<Player> player,
         std::vector<std::shared_ptr<Interactable>>& interactableObjects, 
         std::vector<std::shared_ptr<Hazardous>>& hazardousObjects,
         std::vector<std::unique_ptr<UIElement>>& UIElements,
-        Minimap minimap,
+        Minimap& minimap,
         QuadTree& quadTree)
 {
     // get the buttons that the player is pushing first
@@ -522,7 +522,7 @@ void drawGame(sf::RenderWindow& window, sf::View& view, Minimap& minimap, std::s
     }
 
     // draw the minimap
-    minimap.draw(window);
+    minimap.render(window);
     window.setView(view);
 	window.display();
 }

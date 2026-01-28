@@ -40,6 +40,9 @@ void UIHealth::update()
 }
 void UIHealth::render(sf::RenderWindow& window)
 {
+    float currentViewWidth = window.getView().getSize().x;
+    float currentViewHeight = window.getView().getSize().y;
+
     // std::cout << "Rendering healthbar..." << std::endl;
 
     // left side full health bar
@@ -50,7 +53,7 @@ void UIHealth::render(sf::RenderWindow& window)
     sf::Vector2f originalSize = m_rect.getSize();
 
     // right side full health bar
-    m_rect.setPosition(sf::Vector2f(windowWidth - (windowWidth * xMarginMultiplier) - m_rect.getSize().x, originalPosition.y));
+    m_rect.setPosition(sf::Vector2f(currentViewWidth - (currentViewWidth * xMarginMultiplier) - m_rect.getSize().x, originalPosition.y));
     window.draw(m_rect);
 
 
@@ -71,6 +74,6 @@ void UIHealth::render(sf::RenderWindow& window)
     }
 
     // reset the rectangle
-    m_rect.setSize(sf::Vector2f(windowWidth * barWidth, windowHeight * barHeight));
-    m_rect.setPosition(sf::Vector2f(windowWidth * xMarginMultiplier, windowHeight * yMarginMultiplier));
+    m_rect.setSize(sf::Vector2f(currentViewWidth * barWidth, currentViewHeight * barHeight));
+    m_rect.setPosition(sf::Vector2f(currentViewWidth * xMarginMultiplier, currentViewHeight * yMarginMultiplier));
 }

@@ -4,12 +4,12 @@
 #include "Player.h"
 #include "SFML/Graphics/CircleShape.hpp"
 #include "SFML/Graphics/RectangleShape.hpp"
+#include "UIElement.h"
 #include <memory>
 
-class Minimap
+class Minimap : public UIElement
 {
     protected:
-        std::shared_ptr<Player> m_player;
         std::shared_ptr<sf::View> m_view;
         sf::RectangleShape m_backgroundRect;
         sf::CircleShape m_playerShape;
@@ -17,8 +17,8 @@ class Minimap
     public:
         Minimap(std::shared_ptr<Player> player, std::shared_ptr<sf::View> view);
         std::shared_ptr<sf::View> getView() const;
-        void update();
-        void draw(sf::RenderWindow& window);
+        void update() override;
+        void render(sf::RenderWindow& window) override;
 };
 
 #endif
