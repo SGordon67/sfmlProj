@@ -18,62 +18,67 @@ sf::Color hpColor = sf::Color::Red;
 UIHealth::UIHealth(std::shared_ptr<Player> player)
 	: UIElement(player)
 {
-    m_rect = sf::RectangleShape();
-    m_rect.setSize(sf::Vector2f(windowWidth * barWidth, windowHeight * barHeight));
-    m_rect.setPosition(sf::Vector2f(windowWidth * xMarginMultiplier, windowHeight * yMarginMultiplier));
-    m_rect.setFillColor(bgColor);
+    m_fullRect = sf::RectangleShape();
+    m_fullRect.setSize(sf::Vector2f(windowWidth * barWidth, windowHeight * barHeight));
+    m_fullRect.setPosition(sf::Vector2f(windowWidth * xMarginMultiplier, windowHeight * yMarginMultiplier));
+    m_fullRect.setFillColor(bgColor);
+    m_partRect = m_fullRect;
+    
+    m_fullRect.setFillColor(bgColor);
+    m_partRect.setFillColor(hpColor);
 }
 UIHealth::UIHealth(const UIHealth& other) // copy constructor
 	: UIElement(other)
-      , m_rect(other.m_rect)
+      , m_fullRect(other.m_fullRect)
+      , m_partRect(other.m_partRect)
 {
 }
 UIHealth::UIHealth(UIHealth&& other) noexcept // move constructor
 	: UIElement(std::move(other))
-      , m_rect(other.m_rect)
+      , m_fullRect(other.m_fullRect)
+      , m_partRect(other.m_partRect)
 {
 }
 
 void UIHealth::update()
 {
-    // std::cout << "Updating healthbar..." << std::endl;
+    // get fraction of health
+    float healthPercentage = (float)m_player->getHP() / (float)m_player->getMaxHP();
+
+    m_partRect.setSize(sf::Vector2f(m_fullRect.getSize().x, m_fullRect.getSize().y * healthPercentage));
+    m_partRect.setPosition(sf::Vector2f(m_fullRect.getPosition().x, m_fullRect.getPosition().y + (m_fullRect.getSize().y * (1 - healthPercentage))));
 }
+
 void UIHealth::render(sf::RenderWindow& window)
 {
     float currentViewWidth = window.getView().getSize().x;
-    float currentViewHeight = window.getView().getSize().y;
-
-    // std::cout << "Rendering healthbar..." << std::endl;
 
     // left side full health bar
-    m_rect.setFillColor(bgColor);
-    window.draw(m_rect);
+    window.draw(m_fullRect);
 
-    sf::Vector2f originalPosition = m_rect.getPosition();
-    sf::Vector2f originalSize = m_rect.getSize();
+    sf::Vector2f originalPosition = m_fullRect.getPosition();
 
     // right side full health bar
-    m_rect.setPosition(sf::Vector2f(currentViewWidth - (currentViewWidth * xMarginMultiplier) - m_rect.getSize().x, originalPosition.y));
-    window.draw(m_rect);
+    m_fullRect.setPosition(sf::Vector2f(currentViewWidth - (currentViewWidth * xMarginMultiplier) - m_fullRect.getSize().x, originalPosition.y));
+    window.draw(m_fullRect);
+
+    // reset to left side
+    m_fullRect.setPosition(originalPosition);
 
 
     // get fraction of health
     float healthPercentage = (float)m_player->getHP() / (float)m_player->getMaxHP();
-    
+
     if(healthPercentage > 0)
     {
-        // right side fractional
-        m_rect.setSize(sf::Vector2f(m_rect.getSize().x, m_rect.getSize().y * healthPercentage));
-        m_rect.setPosition(sf::Vector2f(m_rect.getPosition().x, m_rect.getPosition().y + (originalSize.y * (1 - healthPercentage))));
-        m_rect.setFillColor(hpColor);
-        window.draw(m_rect);
+        // left side partial health
+        window.draw(m_partRect);
 
-        // left side fractional
-        m_rect.setPosition(sf::Vector2f(originalPosition.x, m_rect.getPosition().y));
-        window.draw(m_rect);
+        // right side partial health
+        m_partRect.setPosition(sf::Vector2f(currentViewWidth - (currentViewWidth * xMarginMultiplier) - m_fullRect.getSize().x, m_partRect.getPosition().y));
+        window.draw(m_partRect);
+
+        // reset to left side
+        m_partRect.setPosition(sf::Vector2f(m_fullRect.getPosition().x, m_partRect.getPosition().y));
     }
-
-    // reset the rectangle
-    m_rect.setSize(sf::Vector2f(currentViewWidth * barWidth, currentViewHeight * barHeight));
-    m_rect.setPosition(sf::Vector2f(currentViewWidth * xMarginMultiplier, currentViewHeight * yMarginMultiplier));
 }

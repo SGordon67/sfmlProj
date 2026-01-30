@@ -401,7 +401,6 @@ void updateGame(std::shared_ptr<Player> player,
         std::vector<std::shared_ptr<Interactable>>& interactableObjects, 
         std::vector<std::shared_ptr<Hazardous>>& hazardousObjects,
         std::vector<std::unique_ptr<UIElement>>& UIElements,
-        Minimap& minimap,
         QuadTree& quadTree)
 {
     // get the buttons that the player is pushing first
@@ -484,11 +483,9 @@ void updateGame(std::shared_ptr<Player> player,
     {
         element->update();
     }
-
-    minimap.update();
 }
 
-void drawGame(sf::RenderWindow& window, sf::View& view, Minimap& minimap, std::shared_ptr<Player> player, 
+void drawGame(sf::RenderWindow& window, sf::View& view, std::shared_ptr<Player> player, 
         std::vector<std::unique_ptr<VisualObject>>& visualObjects, 
         std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects,
         std::vector<std::unique_ptr<UIElement>>& UIElements)
@@ -521,8 +518,6 @@ void drawGame(sf::RenderWindow& window, sf::View& view, Minimap& minimap, std::s
         element->render(window);
     }
 
-    // draw the minimap
-    minimap.render(window);
     window.setView(view);
 	window.display();
 }
@@ -619,6 +614,14 @@ void setupUI(std::vector<std::unique_ptr<UIElement>>& UIElements, std::shared_pt
 {
     // health bar
     UIElements.push_back(std::make_unique<UIHealth>(UIHealth(player)));
+
+    // minimap should be the last thing
+    // minimap view
+    std::shared_ptr<sf::View> minimapView = std::make_shared<sf::View>(sf::View(sf::Vector2f(0, 0), {worldWidth, worldHeight}));
+	minimapView->setCenter({worldWidth / 2.f, worldHeight / 2.f});
+    minimapView->setViewport(sf::FloatRect({0.755f, 0.01f}, {.23f, .23f}));
+    // Minimap minimap(player, minimapView);
+    UIElements.push_back(std::make_unique<Minimap>(Minimap(player, minimapView)));
 }
 
 int main()
@@ -652,12 +655,6 @@ int main()
 	sf::View playerView(player->getPosition() + player->getSprite().getOrigin(), {(float)viewWidth, (float)viewHeight});
     playerView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
 	window.setView(playerView);
-
-    // minimap view
-    std::shared_ptr<sf::View> minimapView = std::make_shared<sf::View>(sf::View(sf::Vector2f(0, 0), {worldWidth, worldHeight}));
-	minimapView->setCenter({worldWidth / 2.f, worldHeight / 2.f});
-    minimapView->setViewport(sf::FloatRect({0.755f, 0.01f}, {.23f, .23f}));
-    Minimap minimap(player, minimapView);
 
 	// time
 	sf::Clock clock;
@@ -697,7 +694,7 @@ int main()
         int updateCount = 0;
 		while(timeAccumulator >= FixedDeltaTime && updateCount < maxUpdates)
 		{
-			updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects, hazardousObjects, UIElements, minimap, quadTree);
+			updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects, hazardousObjects, UIElements, quadTree);
 			timeAccumulator -= FixedDeltaTime;
             updateCount++;
 		}
@@ -706,7 +703,7 @@ int main()
             timeAccumulator = 0;
         }
 
-		drawGame(window, playerView, minimap, player, visualObjects, physicalObjects, UIElements);
+		drawGame(window, playerView, player, visualObjects, physicalObjects, UIElements);
 	}
 	return 0;
 }

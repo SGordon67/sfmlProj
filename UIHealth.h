@@ -8,18 +8,27 @@
 class UIHealth : public UIElement
 {
     protected:
-        sf::RectangleShape m_rect;
+        sf::RectangleShape m_fullRect;
+        sf::RectangleShape m_partRect;
     public:
         UIHealth(std::shared_ptr<Player> player);
         UIHealth(const UIHealth& other); // copy constructor
         UIHealth(UIHealth&& other) noexcept; // move constructor
-        sf::RectangleShape getRect()
+        sf::RectangleShape getFullRect()
         {
-            return m_rect;
+            return m_fullRect;
         }
-        void setRect(sf::RectangleShape shape)
+        void setFullRect(sf::RectangleShape shape)
         {
-            m_rect = shape;
+            m_fullRect = shape;
+        }
+        sf::RectangleShape getPartRect()
+        {
+            return m_partRect;
+        }
+        void setPartRect(sf::RectangleShape shape)
+        {
+            m_partRect = shape;
         }
 
         virtual void update() override;
