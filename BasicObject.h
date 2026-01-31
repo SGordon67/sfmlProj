@@ -14,7 +14,7 @@
 #include "globals.h"
 #include "enums.h"
 
-extern std::vector<sf::Vector2f> getDupPositions(const sf::Vector2f& position, const sf::Vector2i& size);
+extern std::vector<sf::Vector2f> getDupPositions(const sf::Vector2f& position, float radius);
 extern float radiansToDegrees(float radians);
 extern void wrapPosition(sf::Vector2f& position);
 extern sf::Vector2f getClosestWrapPosition(const sf::Vector2f& myPosition, const sf::Vector2f& otherPosition);

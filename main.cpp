@@ -130,12 +130,15 @@ void detectAndHandleInteractions(std::shared_ptr<Player> player, const std::vect
 	}
 }
 
-std::vector<sf::Vector2f> getDupPositions(const sf::Vector2f& position, const sf::Vector2i& size)
+// std::vector<sf::Vector2f> getDupPositions(const sf::Vector2f& position, const sf::Vector2f& size)
+std::vector<sf::Vector2f> getDupPositions(const sf::Vector2f& position, float radius)
 {
 	std::vector<sf::Vector2f> dupPositions = {};
 
-	float wrapXThreshold = (std::abs(worldWidth - (viewWidth / 2.f)) + size.x);
-	float wrapYThreshold = (std::abs(worldHeight - (viewHeight / 2.f)) + size.y);
+	// float wrapXThreshold = (std::abs(worldWidth - (viewWidth / 2.f)) + size.x);
+	// float wrapYThreshold = (std::abs(worldHeight - (viewHeight / 2.f)) + size.y);
+	float wrapXThreshold = radius;
+	float wrapYThreshold = radius;
 
 	// need to replicate near the boundaries
 	bool nearLeft = (position.x < wrapXThreshold);
@@ -599,7 +602,8 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 	// hazardousObjects.push_back(h1);
 
 
-    int numEnemies = 30;
+    // int numEnemies = 600; // approx max without lag (pre weapon addition)
+    int numEnemies = 10;
 	for(int i = 0; i < numEnemies; i++)
 	{
         auto eR = std::make_shared<Enemy1>(Enemy1(sf::Vector2f(distX(rng), distY(rng)), player));
