@@ -458,7 +458,7 @@ void updateGame(std::shared_ptr<Player> player,
                     else
                     {
                         // less intensive collision handling for non player
-                        handleCollisionLite(obj, other);
+                        handleCollision(obj, other);
                     }
 
                     if(objIsPlayer)
