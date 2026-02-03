@@ -33,6 +33,12 @@ extern sf::Vector2i windowPos;
 extern int viewWidth;
 extern int viewHeight;
 
+// minimap
+extern float minimapPositionXFraction;
+extern float minimapPositionYFraction;
+extern float minimapWidthFraction;
+extern float minimapHeightFraction;
+
 // keys
 extern bool escPressed;
 extern bool upPressed;

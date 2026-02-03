@@ -5,8 +5,8 @@
 
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -g -MMD -MP
-# SFML_DIR = /home/sgo/SFML-3.0.2
-SFML_DIR = /home/bomsai/SFML-3.0.2
+SFML_DIR = /home/sgo/SFML-3.0.2
+# SFML_DIR = /home/bomsai/SFML-3.0.2
 CXXFLAGS += -I$(SFML_DIR)/include
 LDFLAGS = -L$(SFML_DIR)/lib
 LIBS = -lsfml-graphics -lsfml-window -lsfml-system

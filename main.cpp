@@ -1,15 +1,12 @@
+// TODO aspect ratio
+
 #include "Minimap.h"
 #include "QuadTree.h"
-#include "SFML/Graphics/CircleShape.hpp"
 #include "SFML/Graphics/Rect.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Graphics/Texture.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "SFML/Window/Keyboard.hpp"
-#include "SFML/Graphics.hpp"
-#include "SFML/Window.hpp"
-#include <algorithm>
-#include <chrono>
 #include <iostream>
 #include <cmath>
 #include <memory>
@@ -482,22 +479,25 @@ void updateGame(std::shared_ptr<Player> player,
         obj->basicUpdate(FixedDeltaTime, player->getVelocity());
     }
 }
-void updateUI(std::vector<std::unique_ptr<UIElement>>& UIElements,
-              sf::RenderWindow& window)
+void updateUI(sf::RenderWindow& window, std::vector<std::unique_ptr<UIElement>>& UIElements)
 {
+    window.setView(window.getDefaultView());
     for(auto& element : UIElements)
     {
         element->update(window);
     }
 }
 
+void updateMinimap(sf::RenderWindow& window, Minimap& minimap)
+{
+    window.setView(*minimap.getView());
+    minimap.update(window);
+}
+
 void drawGame(sf::RenderWindow& window, sf::View& view, std::shared_ptr<Player> player, 
               std::vector<std::unique_ptr<VisualObject>>& visualObjects, 
-              std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects,
-              std::vector<std::unique_ptr<UIElement>>& UIElements)
+              std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects)
 {
-    // clear the window, then draw, then display
-    window.clear();
     // Get view in correct spot
     view.setCenter(player->getPosition());
     window.setView(view);
@@ -517,15 +517,21 @@ void drawGame(sf::RenderWindow& window, sf::View& view, std::shared_ptr<Player> 
     // draw the player
     player->physicalDraw(window);
 
-    // update the UI
+}
+
+void drawUI(sf::RenderWindow& window, std::vector<std::unique_ptr<UIElement>>& UIElements)
+{
     window.setView(window.getDefaultView());
     for(auto& element : UIElements)
     {
         element->render(window);
     }
+}
 
-    window.setView(view);
-    window.display();
+void drawMinimap(sf::RenderWindow& window, Minimap& minimap)
+{
+    window.setView(*minimap.getView());
+    minimap.render(window);
 }
 
 void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects, 
@@ -621,14 +627,6 @@ void setupUI(std::vector<std::unique_ptr<UIElement>>& UIElements, std::shared_pt
 {
     // health bar
     UIElements.push_back(std::make_unique<UIHealth>(UIHealth(player)));
-
-    // minimap should be the last thing
-    // minimap view
-    std::shared_ptr<sf::View> minimapView = std::make_shared<sf::View>(sf::View(sf::Vector2f(0, 0), {worldWidth, worldHeight}));
-    minimapView->setCenter({worldWidth / 2.f, worldHeight / 2.f});
-    minimapView->setViewport(sf::FloatRect({0.755f, 0.01f}, {.23f, .23f}));
-    // Minimap minimap(player, minimapView);
-    UIElements.push_back(std::make_unique<Minimap>(Minimap(player, minimapView)));
 }
 
 int main()
@@ -656,19 +654,18 @@ int main()
     sf::RenderWindow window(sf::VideoMode(winSize), "game");
     // window.setFramerateLimit(frameRateLimit);
     window.setVerticalSyncEnabled(true);
-    // window.setPosition(windowPos);
+    window.setPosition(windowPos);
 
     // primary view
     sf::View playerView(player->getPosition() + player->getSprite().getOrigin(), {(float)viewWidth, (float)viewHeight});
     playerView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
     window.setView(playerView);
 
-    // ensure the window/view are the correct size if automatic window size is a concern
-    windowWidth = window.getSize().x;
-    windowHeight = window.getSize().y;
-    viewWidth = windowWidth;
-    viewHeight = windowHeight;
-    playerView.setSize({(float)window.getSize().x, (float)window.getSize().y});
+    // minimap view
+    std::shared_ptr<sf::View> minimapView = std::make_shared<sf::View>(sf::View(sf::Vector2f(0, 0), {worldWidth, worldHeight}));
+    minimapView->setCenter({worldWidth / 2.f, worldHeight / 2.f});
+    minimapView->setViewport(sf::FloatRect({minimapPositionXFraction, minimapPositionYFraction}, {minimapWidthFraction, minimapHeightFraction}));
+    auto minimap = std::make_unique<Minimap>(Minimap(player, minimapView));
 
     // time
     sf::Clock clock;
@@ -702,9 +699,6 @@ int main()
 
                 std::cout << "New window width: " << resized->size.x << std::endl;
                 std::cout << "New window height: " << resized->size.y << std::endl;
-
-                // UIHealth* health = static_cast<UIHealth*>(UIElements[0].get());
-                // std::cout << "Vertical component to healthbar: " << health->getFullRect().getSize().y << std::endl;
             }
         }
 
@@ -713,7 +707,9 @@ int main()
         while(timeAccumulator >= FixedDeltaTime && updateCount < maxUpdates)
         {
             updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects, hazardousObjects, quadTree);
-            updateUI(UIElements, window);
+            updateUI(window, UIElements);
+            updateMinimap(window, *minimap);
+
             timeAccumulator -= FixedDeltaTime;
             updateCount++;
         }
@@ -722,7 +718,12 @@ int main()
             timeAccumulator = 0;
         }
 
-        drawGame(window, playerView, player, visualObjects, physicalObjects, UIElements);
+        // clear the window, then draw
+        window.clear();
+        drawGame(window, playerView, player, visualObjects, physicalObjects);
+        drawUI(window, UIElements);
+        drawMinimap(window, *minimap);
+        window.display();
     }
     return 0;
 }

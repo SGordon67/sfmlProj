@@ -15,6 +15,12 @@ sf::Vector2i windowPos = {1930, 10};
 int viewWidth = windowWidth;
 int viewHeight = windowHeight;
 
+// minimap
+float minimapPositionXFraction = 0.755f;
+float minimapPositionYFraction = 0.01f;
+float minimapWidthFraction = 0.23f;
+float minimapHeightFraction = 0.23f;
+
 // keys
 bool escPressed = false;
 bool upPressed = false;

@@ -45,6 +45,9 @@ void UIHealth::update(sf::RenderWindow& window)
     float currentViewWidth = window.getView().getSize().x;
     float currentViewHeight = window.getView().getSize().y;
 
+    // std::cout << "View size: " << currentViewWidth << ", " << currentViewHeight << std::endl;
+    // std::cout << "Window size: " << windowWidth << ", " << windowHeight << std::endl;
+
     // in case of window resize
     m_fullRect.setSize(sf::Vector2f(currentViewWidth * barWidthFraction, currentViewHeight * barHeightFraction));
     m_fullRect.setPosition(sf::Vector2f(currentViewWidth * xMarginFraction, currentViewHeight * yMarginFraction));
@@ -54,16 +57,11 @@ void UIHealth::update(sf::RenderWindow& window)
     float healthPercentage = (float)m_player->getHP() / (float)m_player->getMaxHP();
     m_partRect.setSize(sf::Vector2f(m_fullRect.getSize().x, m_fullRect.getSize().y * healthPercentage));
     m_partRect.setPosition(sf::Vector2f(m_fullRect.getPosition().x, m_fullRect.getPosition().y + (m_fullRect.getSize().y * (1 - healthPercentage))));
-
-
-    // std::cout << std::endl << std::endl;
-    // std::cout << "View size: " << currentViewWidth << ", " << currentViewHeight << std::endl << std::endl;
-    // std::cout << "healthbar size: " << m_fullRect.getSize().x << ", " << m_fullRect.getSize().y << std::endl;
-    // std::cout << "healthbar position: " << m_fullRect.getPosition().x << ", " << m_fullRect.getPosition().y << std::endl;
 }
 
 void UIHealth::render(sf::RenderWindow& window)
 {
+    // height not needed, just need width to render on both sides of the screen
     float currentViewWidth = window.getView().getSize().x;
 
     // left side full health bar
