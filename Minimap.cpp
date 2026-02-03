@@ -23,7 +23,7 @@ std::shared_ptr<sf::View> Minimap::getView() const
     return m_view;
 }
 
-void Minimap::update()
+void Minimap::update(sf::RenderWindow& window)
 {
     m_playerShape.setPosition(m_player->getPosition());
 }

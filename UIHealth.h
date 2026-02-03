@@ -31,7 +31,7 @@ class UIHealth : public UIElement
             m_partRect = shape;
         }
 
-        virtual void update() override;
+        virtual void update(sf::RenderWindow& window) override;
         virtual void render(sf::RenderWindow& window) override;
 };
 

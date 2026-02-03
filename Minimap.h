@@ -9,16 +9,16 @@
 
 class Minimap : public UIElement
 {
-    protected:
-        std::shared_ptr<sf::View> m_view;
-        sf::RectangleShape m_backgroundRect;
-        sf::CircleShape m_playerShape;
-        sf::Color m_color;
-    public:
-        Minimap(std::shared_ptr<Player> player, std::shared_ptr<sf::View> view);
-        std::shared_ptr<sf::View> getView() const;
-        void update() override;
-        void render(sf::RenderWindow& window) override;
+protected:
+    std::shared_ptr<sf::View> m_view;
+    sf::RectangleShape m_backgroundRect;
+    sf::CircleShape m_playerShape;
+    sf::Color m_color;
+public:
+    Minimap(std::shared_ptr<Player> player, std::shared_ptr<sf::View> view);
+    std::shared_ptr<sf::View> getView() const;
+    void update(sf::RenderWindow& window) override;
+    void render(sf::RenderWindow& window) override;
 };
 
 #endif

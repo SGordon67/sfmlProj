@@ -7,10 +7,10 @@
 #include "Player.h"
 #include <memory>
 
-float barWidth = 0.005;
-float barHeight = 0.98;
-float xMarginMultiplier = 0.005;
-float yMarginMultiplier = (1.0 - barHeight) / 2; // centered vertically
+float barWidthFraction = 0.005;
+float barHeightFraction = 0.98;
+float xMarginFraction = 0.005;
+float yMarginFraction = (1.0 - barHeightFraction) / 2; // centered vertically
 
 sf::Color bgColor = sf::Color::Cyan;
 sf::Color hpColor = sf::Color::Red;
@@ -19,8 +19,8 @@ UIHealth::UIHealth(std::shared_ptr<Player> player)
 	: UIElement(player)
 {
     m_fullRect = sf::RectangleShape();
-    m_fullRect.setSize(sf::Vector2f(windowWidth * barWidth, windowHeight * barHeight));
-    m_fullRect.setPosition(sf::Vector2f(windowWidth * xMarginMultiplier, windowHeight * yMarginMultiplier));
+    m_fullRect.setSize(sf::Vector2f(windowWidth * barWidthFraction, windowHeight * barHeightFraction));
+    m_fullRect.setPosition(sf::Vector2f(windowWidth * xMarginFraction, windowHeight * yMarginFraction));
     m_fullRect.setFillColor(bgColor);
     m_partRect = m_fullRect;
     
@@ -40,13 +40,26 @@ UIHealth::UIHealth(UIHealth&& other) noexcept // move constructor
 {
 }
 
-void UIHealth::update()
+void UIHealth::update(sf::RenderWindow& window)
 {
+    float currentViewWidth = window.getView().getSize().x;
+    float currentViewHeight = window.getView().getSize().y;
+
+    // in case of window resize
+    m_fullRect.setSize(sf::Vector2f(currentViewWidth * barWidthFraction, currentViewHeight * barHeightFraction));
+    m_fullRect.setPosition(sf::Vector2f(currentViewWidth * xMarginFraction, currentViewHeight * yMarginFraction));
+
+
     // get fraction of health
     float healthPercentage = (float)m_player->getHP() / (float)m_player->getMaxHP();
-
     m_partRect.setSize(sf::Vector2f(m_fullRect.getSize().x, m_fullRect.getSize().y * healthPercentage));
     m_partRect.setPosition(sf::Vector2f(m_fullRect.getPosition().x, m_fullRect.getPosition().y + (m_fullRect.getSize().y * (1 - healthPercentage))));
+
+
+    // std::cout << std::endl << std::endl;
+    // std::cout << "View size: " << currentViewWidth << ", " << currentViewHeight << std::endl << std::endl;
+    // std::cout << "healthbar size: " << m_fullRect.getSize().x << ", " << m_fullRect.getSize().y << std::endl;
+    // std::cout << "healthbar position: " << m_fullRect.getPosition().x << ", " << m_fullRect.getPosition().y << std::endl;
 }
 
 void UIHealth::render(sf::RenderWindow& window)
@@ -56,26 +69,22 @@ void UIHealth::render(sf::RenderWindow& window)
     // left side full health bar
     window.draw(m_fullRect);
 
-    sf::Vector2f originalPosition = m_fullRect.getPosition();
-
     // right side full health bar
-    m_fullRect.setPosition(sf::Vector2f(currentViewWidth - (currentViewWidth * xMarginMultiplier) - m_fullRect.getSize().x, originalPosition.y));
+    sf::Vector2f originalPosition = m_fullRect.getPosition();
+    m_fullRect.setPosition(sf::Vector2f(currentViewWidth - (currentViewWidth * xMarginFraction) - m_fullRect.getSize().x, originalPosition.y));
     window.draw(m_fullRect);
-
-    // reset to left side
     m_fullRect.setPosition(originalPosition);
 
 
     // get fraction of health
     float healthPercentage = (float)m_player->getHP() / (float)m_player->getMaxHP();
-
     if(healthPercentage > 0)
     {
         // left side partial health
         window.draw(m_partRect);
 
         // right side partial health
-        m_partRect.setPosition(sf::Vector2f(currentViewWidth - (currentViewWidth * xMarginMultiplier) - m_fullRect.getSize().x, m_partRect.getPosition().y));
+        m_partRect.setPosition(sf::Vector2f(currentViewWidth - (currentViewWidth * xMarginFraction) - m_fullRect.getSize().x, m_partRect.getPosition().y));
         window.draw(m_partRect);
 
         // reset to left side
