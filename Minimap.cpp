@@ -3,6 +3,11 @@
 #include "UIElement.h"
 #include "globals.h"
 
+float minimapPositionXFraction = 0.755f;
+float minimapPositionYFraction = 0.01f;
+float minimapWidthFraction = 0.23f;
+float minimapHeightFraction = 0.23f;
+
 Minimap::Minimap(std::shared_ptr<Player> player, std::shared_ptr<sf::View> view)
     : UIElement(player)
     , m_view(view)
@@ -23,13 +28,48 @@ std::shared_ptr<sf::View> Minimap::getView() const
     return m_view;
 }
 
+void Minimap::updateViewport() const
+{
+    // size the minimap based on window height, size width so it's square proportion
+    minimapHeightFraction = 0.23f;
+    minimapWidthFraction = ((0.23f * viewHeight) / viewWidth);
+
+    minimapPositionXFraction =  1 - minimapWidthFraction - 0.015;
+
+    // size based on larger axis
+    // if(viewHeight == viewWidth)
+    // {
+    //     minimapWidthFraction = 0.23f;
+    //     minimapHeightFraction = 0.23f;
+    //
+    //     minimapPositionXFraction = 0.755f;
+    // }
+    // else if(viewHeight > viewWidth)
+    // {
+    //     minimapHeightFraction = 0.23f;
+    //     minimapWidthFraction = ((0.23f * viewHeight) / viewWidth);
+    //
+    //     minimapPositionXFraction =  1 - minimapWidthFraction - 0.015;
+    // }
+    // else
+    // {
+    //     minimapWidthFraction = 0.23f;
+    //     minimapHeightFraction = ((0.23 * viewWidth) / viewHeight);
+    //
+    //     minimapPositionXFraction =  1 - minimapWidthFraction - 0.015;
+    // }
+
+
+    m_view->setViewport(sf::FloatRect({minimapPositionXFraction, minimapPositionYFraction}, {minimapWidthFraction, minimapHeightFraction}));
+}
+
 void Minimap::update(sf::RenderWindow& window)
 {
     float currentViewWidth = window.getView().getSize().x;
     float currentViewHeight = window.getView().getSize().y;
 
-    std::cout << "View size: " << currentViewWidth << ", " << currentViewHeight << std::endl;
-    std::cout << "Window size: " << windowWidth << ", " << windowHeight << std::endl;
+    // std::cout << "View size: " << currentViewWidth << ", " << currentViewHeight << std::endl;
+    // std::cout << "Window size: " << windowWidth << ", " << windowHeight << std::endl;
 
     // update player icon on the map
     m_playerShape = sf::CircleShape(((window.getView().getSize().y + window.getView().getSize().x) / 2) / 50);

@@ -3,9 +3,9 @@
 
 int numObjects = 0;
 
-// needs to be a multiple of the background size (1500 x 750) (I could alter it if I wasn't lazy)
-float worldWidth = 3000; // usually 3000
-float worldHeight = 1500; // usually 1500
+// changed bg image to (1000 x 1000) for both background are foreground
+float worldWidth = 3000;
+float worldHeight = 3000;
 
 int windowWidth = 1500;
 int windowHeight = 750;
@@ -14,12 +14,6 @@ sf::Vector2i windowPos = {1930, 10};
 
 int viewWidth = windowWidth;
 int viewHeight = windowHeight;
-
-// minimap
-float minimapPositionXFraction = 0.755f;
-float minimapPositionYFraction = 0.01f;
-float minimapWidthFraction = 0.23f;
-float minimapHeightFraction = 0.23f;
 
 // keys
 bool escPressed = false;

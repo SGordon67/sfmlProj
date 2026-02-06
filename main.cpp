@@ -490,6 +490,7 @@ void updateUI(sf::RenderWindow& window, std::vector<std::unique_ptr<UIElement>>&
 
 void updateMinimap(sf::RenderWindow& window, Minimap& minimap)
 {
+    minimap.updateViewport();
     window.setView(*minimap.getView());
     minimap.update(window);
 }
@@ -664,7 +665,7 @@ int main()
     // minimap view
     std::shared_ptr<sf::View> minimapView = std::make_shared<sf::View>(sf::View(sf::Vector2f(0, 0), {worldWidth, worldHeight}));
     minimapView->setCenter({worldWidth / 2.f, worldHeight / 2.f});
-    minimapView->setViewport(sf::FloatRect({minimapPositionXFraction, minimapPositionYFraction}, {minimapWidthFraction, minimapHeightFraction}));
+    minimapView->setViewport(sf::FloatRect({0,0},{0,0}));
     auto minimap = std::make_unique<Minimap>(Minimap(player, minimapView));
 
     // time
