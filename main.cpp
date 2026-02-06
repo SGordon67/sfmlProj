@@ -698,8 +698,8 @@ int main()
                 playerView.setSize({(float)windowWidth, (float)windowHeight});
                 // window.setView(playerView); // automatically updates with the view since it's a reference
 
-                std::cout << "New window width: " << resized->size.x << std::endl;
-                std::cout << "New window height: " << resized->size.y << std::endl;
+                // std::cout << "New window width: " << resized->size.x << std::endl;
+                // std::cout << "New window height: " << resized->size.y << std::endl;
             }
         }
 

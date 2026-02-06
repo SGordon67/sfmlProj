@@ -13,10 +13,10 @@ constexpr int numButtons = 7;
 constexpr float FixedDeltaTime = 1.0f / 60.0f;
 
 // globals consts
-constexpr float restitution = 1.f;
+constexpr float restitution = 0.9f;
 constexpr float friction = 0.5f;
 constexpr float dragCoef = 4;
-constexpr float angularDrag = 0.99f;
+constexpr float angularDrag = 0.98f;
 constexpr sf::Color hitboxColor = sf::Color(255, 0, 0, 150);
 
 // global variables

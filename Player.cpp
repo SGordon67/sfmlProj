@@ -2,23 +2,28 @@
 
 #include "Player.h"
 #include "SFML/System/Vector2.hpp"
+#include "enums.h"
+#include "globals.h"
 
 extern float degreesToRadians(float degrees);
 extern void addDragForce(sf::Vector2f& currentVelocity, float mass, float deltaTime);
 extern void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, float direction, bool backward, float maximumVelocity, float mass, float deltaTime);
 
 Player::Player()
-    : Entity(sf::Vector2f(900, 500), sf::Vector2i(24, 30), M_PI/2, RenderLayer::Main, &playerTexture, 10, 24/2.f, 
-            sf::Vector2f(0, 0), 5000, 0, 500, 100, 100)
+    : Entity(sf::Vector2f(900, 500), d_playerSize, M_PI/2, RenderLayer::Main, &playerTexture,
+            d_playerMass, d_playerRadius, d_playerVelocity, d_playerAcceleration, d_playerAngularVelocity, d_playerMaxVelocity, d_playerDrag,
+            d_playerHP, d_playerMaxHP)
+      , m_angularAcceleration(d_playerAngularAcceleration)
 {
-    m_angularAcceleration = degreesToRadians(4);
 	m_sprite.setOrigin({getSize().x / 2.f, getSize().y / 1.6f}); // roughtly the point of rotation I want with the current sprite in relation to the collision
 	// std::cout << "Player constructed" << std::endl;
 }
 Player::Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
-        float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
+        float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, float drag,
         int hp, int maxHP, float angularAccleration)
-	: Entity(position, size, rotation, renderLayer, texture, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, hp, maxHP)
+	: Entity(position, size, rotation, renderLayer, texture, 
+            mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, drag,
+            hp, maxHP)
 	, m_angularAcceleration(angularAccleration)
 {
 	m_sprite.setOrigin({getSize().x / 2.f, getSize().y / 1.6f}); // roughtly the point of rotation I want with the current sprite in relation to the collision

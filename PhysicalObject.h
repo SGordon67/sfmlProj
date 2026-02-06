@@ -25,9 +25,11 @@ class PhysicalObject : public BasicObject
 
         float m_maxVelocity;
 
+        float m_dragCoef;
+
     public:
         PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
-                float mass, float radius, sf::Vector2f velocity, float acceleration, float angularVelocity, float maxVelocity)
+                float mass, float radius, sf::Vector2f velocity, float acceleration, float angularVelocity, float maxVelocity, float drag)
             : BasicObject(position, size, rotation, renderLayer, texture)
               , m_mass(mass)
               , m_radius(radius)
@@ -35,6 +37,7 @@ class PhysicalObject : public BasicObject
               , m_acceleration(acceleration)
               , m_angularVelocity(angularVelocity)
               , m_maxVelocity(maxVelocity)
+              , m_dragCoef(drag)
     {
     }
         PhysicalObject(const PhysicalObject& other) // copy constructor
@@ -45,6 +48,7 @@ class PhysicalObject : public BasicObject
               , m_acceleration(other.m_acceleration)
               , m_angularVelocity(other.m_angularVelocity)
               , m_maxVelocity(other.m_maxVelocity)
+              , m_dragCoef(other.m_dragCoef)
     {
     }
         PhysicalObject(PhysicalObject&& other) noexcept // move constructor
@@ -55,6 +59,7 @@ class PhysicalObject : public BasicObject
             , m_acceleration(other.m_acceleration)
             , m_angularVelocity(other.m_angularVelocity)
             , m_maxVelocity(other.m_maxVelocity)
+            , m_dragCoef(other.m_dragCoef)
             {
             }
 
@@ -110,6 +115,15 @@ class PhysicalObject : public BasicObject
         void setAngularVelocity(float angularVelocity)
         {
             m_angularVelocity = angularVelocity;
+        }
+
+        float getDragCoef() const
+        {
+            return m_dragCoef;
+        }
+        void setDragCoef(float drag)
+        {
+            m_dragCoef = drag;
         }
 
         void rotate(const float rotation)

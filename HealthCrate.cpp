@@ -5,24 +5,29 @@
 #include "BasicObject.h"
 #include "Player.h"
 #include "SFML/System/Vector2.hpp"
+#include "enums.h"
 #include "globals.h"
 
+
 HealthCrate::HealthCrate()
-    : Crate(sf::Vector2f(0, 0), sf::Vector2i(17, 17), M_PI/2, RenderLayer::Main, &crateTexture, 
-            10, 8, sf::Vector2f(0, 0), 0, 0, 500, 50, false)
-      , m_health(10)
+    : Crate(sf::Vector2f(0, 0), d_crateSize, M_PI/2, RenderLayer::Main, &crateTexture,
+            d_crateMass, d_crateRadius, d_crateVelocity, d_crateAcceleration, d_crateAngularVelocity, d_crateMaxVelocity, d_crateDrag,
+            d_crateInteractRadius, false)
+      , m_health(d_healthCrateHealth)
 {
 }
 HealthCrate::HealthCrate(sf::Vector2f position)
-    : Crate(position, sf::Vector2i(17, 17), M_PI/2, RenderLayer::Main, &crateTexture, 
-            10, 8, sf::Vector2f(0, 0), 0, 0, 500, 50, false)
-      , m_health(10)
+    : Crate(position, d_crateSize, M_PI/2, RenderLayer::Main, &crateTexture,
+            d_crateMass, d_crateRadius, d_crateVelocity, d_crateAcceleration, d_crateAngularVelocity, d_crateMaxVelocity, d_crateDrag,
+            d_crateInteractRadius, false)
+      , m_health(d_healthCrateHealth)
 {
 }
 HealthCrate::HealthCrate(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
-        float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
+        float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, float drag,
         float interactRadius, bool used, int health)
-    : Crate(position, size, rotation, renderLayer, texture, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, interactRadius, used)
+    : Crate(position, size, rotation, renderLayer, texture, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, drag,
+            interactRadius, used)
       , m_health(health)
 {
 }

@@ -18,9 +18,11 @@ private:
     std::shared_ptr<Player> m_player;
 public:
     Enemy(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
-            float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
+            float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, float drag,
             int hp, int maxHP, int damage, std::shared_ptr<Player> player)
-        : Entity(position, size, rotation, renderLayer, texture, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, hp, maxHP)
+        : Entity(position, size, rotation, renderLayer, texture, 
+                mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, drag,
+                hp, maxHP)
           , m_damage(damage)
           , m_player(player)
     {

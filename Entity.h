@@ -11,10 +11,10 @@ protected:
 public:
 
 	Entity(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
-            float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, 
+            float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, float drag,
             int hp, int maxHP)
 			: PhysicalObject(position, size, rotation, renderLayer, texture, 
-                    mass, radius, velocity, acceleration, rotationVelocity, maxVelocity)
+                    mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, drag)
 			  , m_hp(hp)
 			  , m_maxHP(maxHP)
 	{

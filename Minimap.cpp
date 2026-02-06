@@ -65,12 +65,6 @@ void Minimap::updateViewport() const
 
 void Minimap::update(sf::RenderWindow& window)
 {
-    float currentViewWidth = window.getView().getSize().x;
-    float currentViewHeight = window.getView().getSize().y;
-
-    // std::cout << "View size: " << currentViewWidth << ", " << currentViewHeight << std::endl;
-    // std::cout << "Window size: " << windowWidth << ", " << windowHeight << std::endl;
-
     // update player icon on the map
     m_playerShape = sf::CircleShape(((window.getView().getSize().y + window.getView().getSize().x) / 2) / 50);
     m_playerShape.setOrigin({m_playerShape.getRadius(), m_playerShape.getRadius()});
