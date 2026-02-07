@@ -6,19 +6,6 @@
 #include "globals.h"
 #include "Enemy1.h"
 
-        static constexpr sf::Vector2i d_enemy1Size = {13, 11};
-        static constexpr int d_enemy1Mass = 10;
-        static constexpr float d_enemy1Radius = d_enemy1Size.x/2.f;
-        static constexpr sf::Vector2f d_enemy1Velocity = {0, 0};
-        static constexpr float d_enemy1Acceleration = 5000;
-        static constexpr float d_enemy1AngularVelocity = 0;
-        static constexpr float d_enemy1MaxVelocity = 400;
-        static constexpr float d_enemy1Drag = 4;
-
-        static constexpr int d_enemy1HP = 100;
-        static constexpr int d_enemy1MaxHP = 100;
-        static constexpr int d_enemy1Damage = 10;
-
 Enemy1::Enemy1(std::shared_ptr<Player> player)
     :Enemy(sf::Vector2f(0, 0), d_enemy1Size, M_PI/2, RenderLayer::Main, &enemyTexture,
             d_enemy1Mass, d_enemy1Radius, d_enemy1Velocity, d_enemy1Acceleration, d_enemy1AngularVelocity, d_enemy1MaxVelocity, d_enemy1Drag,

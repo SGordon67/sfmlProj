@@ -47,6 +47,26 @@ void Player::printInfo()
 	// std::cout << "Velocity: (" << getVelocity().x << ", " << getVelocity().y << ")" << std::endl;
 }
 
+void Player::updateWeapons(float deltaTime, QuadTree& quadTree)
+{
+    for(auto& weapon : m_weapons)
+    {
+        if(weapon)
+        {
+            weapon->update(deltaTime, *this, quadTree);
+        }
+    }
+}
+
+void Player::addWeapon(std::unique_ptr<Weapon> weapon, int slot)
+{
+    if(slot >= 0 && slot < 4)
+    {
+        m_weapons[slot] = std::move(weapon);
+    }
+}
+
+
 void Player::updateRotation()
 {
 	rotate(getAngularVelocity());
@@ -86,6 +106,7 @@ void Player::playerUpdate(bool* (&buttons)[numButtons])
 
 	// this->printInfo();
 }
-void Player::physicalUpdate()
+void Player::update()
 {
+    // playerUpdate();
 }

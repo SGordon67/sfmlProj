@@ -1,5 +1,3 @@
-// TODO aspect ratio
-
 #include "Minimap.h"
 #include "QuadTree.h"
 #include "SFML/Graphics/Rect.hpp"
@@ -414,24 +412,27 @@ void updateGame(std::shared_ptr<Player> player,
     // setup the tree to handle collisions
     quadTree.clear();
     for(auto& obj : physicalObjects)
-    quadTree.insert(obj);
+        quadTree.insert(obj);
 
     // pre-allocate reusable vector intead of creating a bunch every frame
     std::vector<std::shared_ptr<PhysicalObject>> nearbyCache;
     nearbyCache.reserve(500);
     auto playerPtr = std::dynamic_pointer_cast<Player>(player);
+
     for(auto& obj : physicalObjects)
     {
-        obj->physicalUpdate();
+        obj->update();
 
         // don't handle collisions of far away objects
         sf::Vector2f objClosesetPosition = getClosestWrapPosition(player->getPosition(), obj->getPosition());
         float dx = objClosesetPosition.x - player->getPosition().x;
         float dy = objClosesetPosition.y - player->getPosition().y;
+
         if(std::sqrt(dx * dx + dy * dy) < (std::sqrt(viewWidth * viewWidth + viewHeight * viewHeight) / 2))
         {
             nearbyCache.clear();
             quadTree.retrieveToroidal(nearbyCache, obj->getPosition(), obj->getRadius());
+
             for(auto& other : nearbyCache)
             // for(auto& other : physicalObjects)
             {
@@ -452,9 +453,10 @@ void updateGame(std::shared_ptr<Player> player,
                         handleCollision(obj, other, restitution, friction);
                     }
                     else
-                {
+                    {
                         // less intensive collision handling for non player
                         handleCollision(obj, other);
+                        // handleCollisionLite(obj, other);
                     }
 
                     if(objIsPlayer)
@@ -471,8 +473,12 @@ void updateGame(std::shared_ptr<Player> player,
         }
     }
 
+    // update the weapons
+    player->updateWeapons(FixedDeltaTime, quadTree);
+
     // non-physical hazards
     detectAndHandleHazards(player, hazardousObjects);
+
     // update visual objects then UI
     for(auto& obj : visualObjects)
     {
@@ -512,11 +518,11 @@ void drawGame(sf::RenderWindow& window, sf::View& view, std::shared_ptr<Player> 
     // draw physical objects
     for(auto& obj : physicalObjects)
     {
-        obj->physicalDraw(window);
+        obj->draw(window);
     }
 
     // draw the player
-    player->physicalDraw(window);
+    player->draw(window);
 
 }
 

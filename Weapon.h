@@ -1,6 +1,7 @@
 #ifndef WEAPON_H
 #define WEAPON_H
 
+#include "QuadTree.h"
 #include <iostream>
 
 class Player;
@@ -19,26 +20,52 @@ class Weapon
               , m_cooldown(1)
               , m_timeSinceLastFire(m_cooldown)
               , m_active(false)
-        {
-        }
+    {
+    }
+        Weapon(int damage, float cooldown, float timeSince, bool active)
+            : m_damage(damage)
+              , m_cooldown(cooldown)
+              , m_timeSinceLastFire(timeSince)
+              , m_active(active)
+    {
+    }
         Weapon(const Weapon& other) // copy constructor
             : m_damage(other.m_damage)
               , m_cooldown(other.m_cooldown)
               , m_timeSinceLastFire(other.m_timeSinceLastFire)
               , m_active(other.m_active)
-        {
-        }
+    {
+    }
         Weapon(Weapon&& other) noexcept // move constructor
             : m_damage(other.m_damage)
-              , m_cooldown(other.m_cooldown)
-              , m_timeSinceLastFire(other.m_timeSinceLastFire)
-              , m_active(other.m_active)
+            , m_cooldown(other.m_cooldown)
+            , m_timeSinceLastFire(other.m_timeSinceLastFire)
+            , m_active(other.m_active)
+            {
+            }
+
+        void setActivate(bool active)
         {
+            m_active = active;
+        }
+        bool isActive()
+        {
+            return m_active;
         }
 
-        virtual void update(float deltaTime)
+        virtual void activate(Player& player, QuadTree& quadtree) = 0;
+
+        virtual void update(float deltaTime, Player& player, QuadTree& quadTree)
         {
-            std::cout << "Hello world: " << deltaTime << std::endl;
+            if(!m_active) return;
+
+            m_timeSinceLastFire += deltaTime;
+
+            if(m_timeSinceLastFire >= m_cooldown)
+            {
+                activate(player, quadTree);
+                m_timeSinceLastFire = 0.0f;
+            }
         }
 };
 

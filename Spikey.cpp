@@ -63,5 +63,6 @@ void Spikey::dealDamage(std::shared_ptr<Entity> entity)
 }
 void Spikey::update()
 {
-    std::cout << "Updating Spikey: " << getObjectID() << std::endl;
+    PhysicalObject::update();
+    // std::cout << "Updating Spikey: " << getObjectID() << std::endl;
 }

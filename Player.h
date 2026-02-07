@@ -2,7 +2,9 @@
 #define PLAYER_H
 
 #include "Entity.h"
+#include "QuadTree.h"
 #include "Weapon.h"
+#include <algorithm>
 
 class Player : public Entity
 {
@@ -22,6 +24,7 @@ class Player : public Entity
         static constexpr float d_playerAngularAcceleration = (4.f * (M_PI / 180.f));
 
         float m_angularAcceleration;
+        bool* m_buttons[numButtons];
         std::array<std::unique_ptr<Weapon>, 4> m_weapons;
     public:
         Player();
@@ -32,10 +35,14 @@ class Player : public Entity
         float getAngularAcceleration();
         void setAngularAcceleration(float angularAcceleration);
 
+        void updateWeapons(float deltaTime, QuadTree& quadTree);
+
+        void addWeapon(std::unique_ptr<Weapon> weapon, int slot);
+
         void updateRotation() override;
         void printInfo();
         void playerUpdate(bool* (&buttons)[numButtons]);
-        virtual void physicalUpdate() override;
+        virtual void update() override;
 };
 
 #endif

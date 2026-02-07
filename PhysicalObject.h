@@ -15,17 +15,13 @@ extern void addAccelerationForce(sf::Vector2f& currentVelocity, float accelerati
 class PhysicalObject : public BasicObject
 {
     protected:
-        float m_mass;
-        float m_radius; // for collisions
-
-        sf::Vector2f m_velocity;
-        float m_acceleration;
-
-        float m_angularVelocity;
-
-        float m_maxVelocity;
-
-        float m_dragCoef;
+        float m_mass = 10;
+        float m_radius = 10; // for collisions
+        sf::Vector2f m_velocity = {0, 0};
+        float m_acceleration = 5000;
+        float m_angularVelocity = 0;
+        float m_maxVelocity = 500;
+        float m_dragCoef = 4;
 
     public:
         PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
@@ -167,7 +163,7 @@ class PhysicalObject : public BasicObject
             setPosition(getPosition() + (getVelocity() * deltaTime));
         }
 
-        virtual void physicalDraw(sf::RenderWindow& window)
+        virtual void draw(sf::RenderWindow& window)
         {
             sf::View wView = window.getView();
             sf::Vector2f viewCenter = wView.getCenter();
@@ -199,12 +195,12 @@ class PhysicalObject : public BasicObject
             }
         }
 
-        virtual void physicalUpdate()
+        virtual void update()
         {
-            float accel = 0;
+            // float accel = 0;
             bool backward = false;
             updateRotation();
-            updateVelocity(accel, backward);
+            updateVelocity(getAcceleration(), backward);
             updatePosition(FixedDeltaTime);
         }
 };
