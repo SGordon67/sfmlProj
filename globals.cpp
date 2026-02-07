@@ -15,16 +15,6 @@ sf::Vector2i windowPos = {1930, 10};
 int viewWidth = windowWidth;
 int viewHeight = windowHeight;
 
-// keys
-bool escPressed = false;
-bool upPressed = false;
-bool downPressed = false;
-bool leftPressed = false;
-bool rightPressed = false;
-bool interactPressed = false;
-bool tabPressed = false;
-bool* buttons[numButtons];
-
 sf::Texture farBackgroundTexture;
 sf::Texture closeBackgroundTexture;
 sf::Texture meteorTexture;

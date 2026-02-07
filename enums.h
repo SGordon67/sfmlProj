@@ -15,4 +15,16 @@ enum class ShapeType
 	Rectangle
 };
 
+enum class Button
+{
+    Escape,
+    Up,
+    Down,
+    Left,
+    Right,
+    Interact,
+    Tab,
+    Count
+};
+
 #endif

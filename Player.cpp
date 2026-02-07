@@ -2,6 +2,7 @@
 
 #include "Player.h"
 #include "SFML/System/Vector2.hpp"
+#include "SFML/Window/Keyboard.hpp"
 #include "enums.h"
 #include "globals.h"
 
@@ -47,6 +48,43 @@ void Player::printInfo()
 	// std::cout << "Velocity: (" << getVelocity().x << ", " << getVelocity().y << ")" << std::endl;
 }
 
+void Player::updateButtonPresses()
+{
+    m_buttons[(size_t)Button::Escape] = 
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape);
+
+    m_buttons[(size_t)Button::Up] = 
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) || 
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up);
+
+    m_buttons[(size_t)Button::Down] = 
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) || 
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down);
+
+    m_buttons[(size_t)Button::Left] = 
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A) || 
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left);
+
+    m_buttons[(size_t)Button::Right] = 
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D) || 
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right);
+
+    m_buttons[(size_t)Button::Interact] = 
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E) || 
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space);
+
+    m_buttons[(size_t)Button::Tab] = 
+       sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Tab);
+}
+bool Player::isPressed(Button button) const
+{
+    return m_buttons[(size_t)button];
+}
+void Player::setPressed(Button button, bool value)
+{
+    m_buttons[(size_t)button] = value;
+}
+
 void Player::updateWeapons(float deltaTime, QuadTree& quadTree)
 {
     for(auto& weapon : m_weapons)
@@ -72,16 +110,18 @@ void Player::updateRotation()
 	rotate(getAngularVelocity());
 }
 
-void Player::playerUpdate(bool* (&buttons)[numButtons])
+void Player::playerUpdate()
 {
 	// handle rotation
 	float potentialRotation = 0;
-	if(*buttons[3]) // left
+	if(m_buttons[(size_t)Button::Left]) // left
 	{
+        std::cout << "Turning Left" << std::endl;
 		potentialRotation -= getAngularAcceleration();
 	}
-	if(*buttons[4]) // right
+	if(m_buttons[(size_t)Button::Right]) // right
 	{
+        std::cout << "Turning Right" << std::endl;
 		potentialRotation += getAngularAcceleration();
 	}
 	if(potentialRotation != 0) 
@@ -93,10 +133,10 @@ void Player::playerUpdate(bool* (&buttons)[numButtons])
 	// handle acceleration
 	int accel = 0;
 	bool backward = false;
-	if(*buttons[1] && !*buttons[2])
+	if((m_buttons[(size_t)Button::Up]) && !(m_buttons[(size_t)Button::Down]))
 	{
 		accel = getAcceleration();
-	} else if(!*buttons[1] && *buttons[2])
+    } else if(!(m_buttons[(size_t)Button::Up]) && (m_buttons[(size_t)Button::Down]))
 	{
 		backward = true;
 		accel = -getAcceleration();

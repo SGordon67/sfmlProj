@@ -55,17 +55,6 @@ sf::Vector2f getClosestWrapPosition(const sf::Vector2f& myPosition, const sf::Ve
     return ClosestPosition;
 }
 
-void initializeButtons()
-{
-    buttons[0] = &escPressed;
-    buttons[1] = &upPressed;
-    buttons[2] = &downPressed;
-    buttons[3] = &leftPressed;
-    buttons[4] = &rightPressed;
-    buttons[5] = &interactPressed;
-    buttons[6] = &tabPressed;
-}
-
 void initializeTextures()
 {
     if(!farBackgroundTexture.loadFromFile("art/basicBackground.png"))
@@ -332,68 +321,7 @@ void addAccelerationForce(sf::Vector2f& currentVelocity, float acceleration, flo
         currentVelocity.y = newVelocity.y;
 }
 
-void updateButtonPresses()
-{
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape))
-    {
-        // std::cout << "Key Pressed: Escape" << std::endl;
-        *buttons[0] = true;
-    }else
-{
-        *buttons[0] = false;
-    }
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
-    {
-        // std::cout << "Key Pressed: W/Up" << std::endl;
-        *buttons[1] = true;
-    }else
-{
-        *buttons[1] = false;
-    }
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
-    {
-        // std::cout << "Key Pressed: S/Down" << std::endl;
-        *buttons[2] = true;
-    }else 
-{
-        *buttons[2] = false;
-    }
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
-    {
-        // std::cout << "Key Pressed: A/Left" << std::endl;
-        *buttons[3] = true;
-    }else
-{
-        *buttons[3] = false;
-    }
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
-    {
-        // std::cout << "Key Pressed: D/Right" << std::endl;
-        *buttons[4] = true;
-    }else
-{
-        *buttons[4] = false;
-    }
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space))
-    {
-        // std::cout << "E or Space Pressed" << std::endl;
-        *buttons[5] = true;
-    }else
-{
-        *buttons[5] = false;
-    }
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Tab))
-    {
-        // std::cout << "E or Space Pressed" << std::endl;
-        *buttons[6] = true;
-    }else
-{
-        *buttons[6] = false;
-    }
-}
-
 void updateGame(std::shared_ptr<Player> player, 
-                bool* (&buttons)[numButtons], 
                 std::vector<std::unique_ptr<VisualObject>>& visualObjects, 
                 std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects, 
                 std::vector<std::shared_ptr<Interactable>>& interactableObjects, 
@@ -402,9 +330,9 @@ void updateGame(std::shared_ptr<Player> player,
 {
     // get the buttons that the player is pushing first
     // handle actions as needed
-    player->playerUpdate(buttons);
+    player->playerUpdate();
     // interact
-    if(*buttons[5])
+    if(player->isPressed(Button::Interact))
     {
         detectAndHandleInteractions(player, interactableObjects);
     }
@@ -638,7 +566,6 @@ void setupUI(std::vector<std::unique_ptr<UIElement>>& UIElements, std::shared_pt
 
 int main()
 {
-    initializeButtons();
     initializeTextures();
 
     // setup game objects
@@ -688,10 +615,10 @@ int main()
             frameTime = 0.25;
         timeAccumulator += frameTime;
 
-        updateButtonPresses();
+        player->updateButtonPresses();
         while(const std::optional event = window.pollEvent())
         {
-            if(event->is<sf::Event::Closed>() || escPressed)
+            if(event->is<sf::Event::Closed>() || player->isPressed(Button::Escape))
             {
                 window.close();
             }else if(const auto* resized = event->getIf<sf::Event::Resized>())
@@ -713,7 +640,7 @@ int main()
         int updateCount = 0;
         while(timeAccumulator >= FixedDeltaTime && updateCount < maxUpdates)
         {
-            updateGame(player, buttons, visualObjects, physicalObjects, interactableObjects, hazardousObjects, quadTree);
+            updateGame(player, visualObjects, physicalObjects, interactableObjects, hazardousObjects, quadTree);
             updateUI(window, UIElements);
             updateMinimap(window, *minimap);
 

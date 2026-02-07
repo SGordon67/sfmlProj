@@ -9,7 +9,6 @@
 constexpr bool showHitboxes = true;
 
 // structural values
-constexpr int numButtons = 7;
 constexpr float FixedDeltaTime = 1.0f / 60.0f;
 
 // globals consts
@@ -38,16 +37,6 @@ extern float minimapPositionXFraction;
 extern float minimapPositionYFraction;
 extern float minimapWidthFraction;
 extern float minimapHeightFraction;
-
-// keys
-extern bool escPressed;
-extern bool upPressed;
-extern bool downPressed;
-extern bool leftPressed;
-extern bool rightPressed;
-extern bool interactPressed;
-extern bool tabPressed;
-extern bool* buttons[numButtons];
 
 // textures
 extern sf::Texture farBackgroundTexture;
