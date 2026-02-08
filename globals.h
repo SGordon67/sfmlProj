@@ -6,7 +6,7 @@
 #include "SFML/System/Vector2.hpp"
 
 // debug
-constexpr bool showHitboxes = true;
+constexpr bool showHitboxes = false;
 
 // structural values
 constexpr float FixedDeltaTime = 1.0f / 60.0f;

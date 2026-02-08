@@ -44,8 +44,13 @@ void Player::printInfo()
 {
 	std::cout << std::endl << "Player Info: " << std::endl;
     std::cout << "Health: (" << getHP() << ")" << std::endl;
-	// std::cout << "Position: (" << getPosition().x << ", " << getPosition().y << ")" << std::endl;
-	// std::cout << "Velocity: (" << getVelocity().x << ", " << getVelocity().y << ")" << std::endl;
+    for(long unsigned int i = 0; i < m_weapons.size(); i++)
+    {
+        if(m_weapons[i])
+        {
+            std::cout << "Weapon '" << i << "' (" << m_weapons[i]->getName() << ")" << std::endl;
+        }
+    }
 }
 
 void Player::updateButtonPresses()
@@ -91,16 +96,25 @@ void Player::updateWeapons(float deltaTime, QuadTree& quadTree)
     {
         if(weapon)
         {
+            // std::cout << "Updating weapon" << std::endl;
             weapon->update(deltaTime, *this, quadTree);
         }
     }
 }
-
 void Player::addWeapon(std::unique_ptr<Weapon> weapon, int slot)
 {
     if(slot >= 0 && slot < 4)
-    {
         m_weapons[slot] = std::move(weapon);
+}
+void Player::renderWeapons(sf::RenderWindow& window)
+{
+    for(auto& weapon : m_weapons)
+    {
+        if(weapon)
+        {
+            // std::cout << "Rendering weapon" << std::endl;
+            weapon->render(window);
+        }
     }
 }
 
@@ -116,12 +130,10 @@ void Player::playerUpdate()
 	float potentialRotation = 0;
 	if(m_buttons[(size_t)Button::Left]) // left
 	{
-        std::cout << "Turning Left" << std::endl;
 		potentialRotation -= getAngularAcceleration();
 	}
 	if(m_buttons[(size_t)Button::Right]) // right
 	{
-        std::cout << "Turning Right" << std::endl;
 		potentialRotation += getAngularAcceleration();
 	}
 	if(potentialRotation != 0) 

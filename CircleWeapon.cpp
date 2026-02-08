@@ -1,51 +1,83 @@
 #include "CircleWeapon.h"
 #include "Entity.h"
 #include "Player.h"
-#include <algorithm>
-#include <memory>
 
 CircleWeapon::CircleWeapon()
     : Weapon(10, 0.25, 0, false)
       , m_radius(100)
+      , m_visualTimer(0.f)
+      , m_visualDuration(0.25f)
 {
+    Weapon::setName("CircleWeapon");
+    m_visualEffect.setRadius(m_radius);
+    m_visualEffect.setFillColor(sf::Color(255, 100, 100, 80));
+    m_visualEffect.setOutlineThickness(3);
+    m_visualEffect.setOutlineColor(sf::Color::Red);
+    m_visualEffect.setOrigin({m_radius, m_radius});
 }
 CircleWeapon::CircleWeapon(int damage, float cooldown, float radius)
     : Weapon(damage, cooldown, 0, false)
       , m_radius(radius)
 {
+    Weapon::setName("CircleWeapon");
+    m_visualEffect.setRadius(radius);
+    m_visualEffect.setFillColor(sf::Color(255, 100, 100, 255));
+    m_visualEffect.setOutlineThickness(3);
+    m_visualEffect.setOutlineColor(sf::Color::Red);
+    m_visualEffect.setOrigin({m_radius, m_radius});
 }
 CircleWeapon::CircleWeapon(const CircleWeapon& other) // copy constructor
 	: Weapon(other)
       , m_radius(other.m_radius)
 {
+    Weapon::setName("CircleWeapon");
 }
 CircleWeapon::CircleWeapon(CircleWeapon&& other) noexcept // move constructor
     : Weapon(std::move(other))
       , m_radius(other.m_radius)
 {
+    Weapon::setName("CircleWeapon");
 }
 
 
 
 void CircleWeapon::activate(Player& player, QuadTree& quadTree)
 {
-    std::vector<std::shared_ptr<PhysicalObject>> nearby;
-    quadTree.retrieveToroidal(nearby, player.getPosition(), m_radius);
+    // visuals
+    m_visualTimer = m_visualDuration;
 
-    for(auto& obj : nearby)
+    // get nearby enemies to damage
+    std::vector<Entity*> nearbyEntities;
+    quadTree.retrieveEntities(nearbyEntities, player.getPosition(), m_radius);
+
+    for(auto& entity : nearbyEntities)
     {
-        if(obj.get() == &player) continue;
+        if(entity == &player) continue;
 
-        sf::Vector2f diff = obj->getPosition() - player.getPosition();
+        sf::Vector2f diff = entity->getPosition() - player.getPosition();
         float distSqr = diff.x * diff.x + diff.y * diff.y;
 
         if(distSqr <= m_radius * m_radius)
         {
-            auto entity = std::dynamic_pointer_cast<Entity>(obj);
-            if(entity)
-            {
-                entity->reduceHealth(m_damage);
-            }
+            entity->reduceHealth(m_damage);
         }
     }
 }
+
+void CircleWeapon::update(float deltaTime, Player& player, QuadTree& quadTree)
+{
+    Weapon::update(deltaTime, player, quadTree);
+    m_visualEffect.setPosition(player.getPosition());
+    if(m_visualTimer > 0)
+    {
+        m_visualTimer -= deltaTime;
+    }
+}
+
+void CircleWeapon::render(sf::RenderWindow& window)
+{
+    // std::cout << "Rendering weapon, timer: " << m_visualTimer << std::endl;
+    if(m_visualTimer > 0)
+        window.draw(m_visualEffect);
+}
+

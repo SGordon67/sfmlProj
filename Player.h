@@ -39,7 +39,7 @@ class Player : public Entity
         void setPressed(Button button, bool value);
 
         void updateWeapons(float deltaTime, QuadTree& quadTree);
-
+        void renderWeapons(sf::RenderWindow& window);
         void addWeapon(std::unique_ptr<Weapon> weapon, int slot);
 
         void updateRotation() override;

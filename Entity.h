@@ -41,7 +41,7 @@ public:
 	void reduceHealth(int damage)
 	{
         setHP(getHP() - damage);
-        // std::cout << "DAMAGED, NEW HP -- " << getHP() << std::endl;
+        std::cout << "DAMAGED, NEW HP -- " << getHP() << std::endl;
 	}
 
 	void increaseHealth(int heal)

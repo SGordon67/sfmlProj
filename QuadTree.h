@@ -2,6 +2,7 @@
 #define QUADTREE_H
 
 #include "BasicObject.h"
+#include "Entity.h"
 #include "SFML/System/Vector2.hpp"
 #include <unordered_set>
 #include <vector>
@@ -27,9 +28,6 @@ private:
 public:
     QuadTree(int level, const sf::FloatRect& bounds);
 
-    void retrieveToroidal(std::vector<std::shared_ptr<PhysicalObject>>& returnObjects,
-            const sf::Vector2f& pos, float radius);
-
     void clear();
 
     int getTotalNodes() const;
@@ -40,6 +38,26 @@ public:
 
     void retrieve(std::vector<std::shared_ptr<PhysicalObject>>& returnObjects, 
                   const sf::Vector2f& pos, float radius);
+
+    void retrieveToroidal(std::vector<std::shared_ptr<PhysicalObject>>& returnObjects,
+            const sf::Vector2f& pos, float radius);
+
+    void retrieveEntities(std::vector<Entity*>& entities,
+            const sf::Vector2f& pos, float radius)
+    {
+        std::vector<std::shared_ptr<PhysicalObject>> allObjects;
+        retrieveToroidal(allObjects, pos, radius);
+
+        entities.clear();
+        for(auto& obj : allObjects)
+        {
+            auto entity = std::dynamic_pointer_cast<Entity>(obj);
+            if(entity)
+            {
+                entities.push_back(entity.get());
+            }
+        }
+    }
 };
 
 #endif

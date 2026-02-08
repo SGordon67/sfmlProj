@@ -1,3 +1,4 @@
+#include "CircleWeapon.h"
 #include "Minimap.h"
 #include "QuadTree.h"
 #include "SFML/Graphics/Rect.hpp"
@@ -325,12 +326,14 @@ void updateGame(std::shared_ptr<Player> player,
                 std::vector<std::unique_ptr<VisualObject>>& visualObjects, 
                 std::vector<std::shared_ptr<PhysicalObject>>& physicalObjects, 
                 std::vector<std::shared_ptr<Interactable>>& interactableObjects, 
-                std::vector<std::shared_ptr<Hazardous>>& hazardousObjects,
+                std::vector<std::shared_ptr<Hazardous>>& nonPhysicalHazards,
                 QuadTree& quadTree)
 {
     // get the buttons that the player is pushing first
     // handle actions as needed
     player->playerUpdate();
+    player->updateWeapons(FixedDeltaTime, quadTree);
+
     // interact
     if(player->isPressed(Button::Interact))
     {
@@ -401,11 +404,8 @@ void updateGame(std::shared_ptr<Player> player,
         }
     }
 
-    // update the weapons
-    player->updateWeapons(FixedDeltaTime, quadTree);
-
     // non-physical hazards
-    detectAndHandleHazards(player, hazardousObjects);
+    detectAndHandleHazards(player, nonPhysicalHazards);
 
     // update visual objects then UI
     for(auto& obj : visualObjects)
@@ -451,7 +451,7 @@ void drawGame(sf::RenderWindow& window, sf::View& view, std::shared_ptr<Player> 
 
     // draw the player
     player->draw(window);
-
+    player->renderWeapons(window);
 }
 
 void drawUI(sf::RenderWindow& window, std::vector<std::unique_ptr<UIElement>>& UIElements)
@@ -571,6 +571,8 @@ int main()
     // setup game objects
     // player
     std::shared_ptr<Player> player = std::make_shared<Player>(Player());
+    //add weapons for testing
+    player->addWeapon(std::make_unique<CircleWeapon>(), 0);
 
     std::vector<std::unique_ptr<VisualObject>> visualObjects;
     std::vector<std::shared_ptr<PhysicalObject>> physicalObjects;
