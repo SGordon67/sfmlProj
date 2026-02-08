@@ -8,12 +8,14 @@ Spikey::Spikey()
     : Entity(sf::Vector2f(0.1, 0.1), d_spikeySize, M_PI/2, RenderLayer::Main, &spikeyTexture,
             d_spikeyMass, d_spikeyRadius, d_spikeyVelocity, d_spikeyAcceleration, d_spikeyAngularVelocity, d_spikeyMaxVelocity, d_spikeyDrag,
             d_spikeyHP, d_spikeyMaxHP)
+      , m_damage(10)
 {
 }
 Spikey::Spikey(sf::Vector2f position)
     : Entity(position, d_spikeySize, M_PI/2, RenderLayer::Main, &spikeyTexture,
             d_spikeyMass, d_spikeyRadius, d_spikeyVelocity, d_spikeyAcceleration, d_spikeyAngularVelocity, d_spikeyMaxVelocity, d_spikeyDrag,
             d_spikeyHP, d_spikeyMaxHP)
+      , m_damage(10)
 {
 }
 Spikey::Spikey(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 

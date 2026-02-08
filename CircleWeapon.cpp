@@ -2,6 +2,8 @@
 #include "Entity.h"
 #include "Player.h"
 
+extern bool detectIntersection(const sf::Vector2f& pos1, float radius1, const sf::Vector2f& pos2, float radius2);
+
 CircleWeapon::CircleWeapon()
     : Weapon(10, 0.25, 0, false)
       , m_radius(100)
@@ -39,7 +41,14 @@ CircleWeapon::CircleWeapon(CircleWeapon&& other) noexcept // move constructor
     Weapon::setName("CircleWeapon");
 }
 
-
+float CircleWeapon::getRadius()
+{
+    return m_radius;
+}
+void CircleWeapon::setRadius(float radius)
+{
+    m_radius = radius;
+}
 
 void CircleWeapon::activate(Player& player, QuadTree& quadTree)
 {
@@ -54,10 +63,10 @@ void CircleWeapon::activate(Player& player, QuadTree& quadTree)
     {
         if(entity == &player) continue;
 
-        sf::Vector2f diff = entity->getPosition() - player.getPosition();
-        float distSqr = diff.x * diff.x + diff.y * diff.y;
+        bool overlap = detectIntersection(entity->getPosition(), entity->getRadius(),
+                player.getPosition(), getRadius());
 
-        if(distSqr <= m_radius * m_radius)
+        if(overlap)
         {
             entity->reduceHealth(m_damage);
         }

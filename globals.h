@@ -6,17 +6,19 @@
 #include "SFML/System/Vector2.hpp"
 
 // debug
-constexpr bool showHitboxes = false;
+static constexpr bool showHitboxes = false;
 
 // structural values
-constexpr float FixedDeltaTime = 1.0f / 60.0f;
+static constexpr float FixedDeltaTime = 1.0f / 60.0f;
 
 // globals consts
-constexpr float restitution = 0.9f;
-constexpr float friction = 0.5f;
-constexpr float dragCoef = 4;
-constexpr float angularDrag = 0.98f;
-constexpr sf::Color hitboxColor = sf::Color(255, 0, 0, 150);
+static constexpr float restitution = 0.9f;
+static constexpr float friction = 0.5f;
+static constexpr float dragCoef = 4;
+static constexpr float angularDrag = 0.98f;
+static constexpr sf::Color hitboxColor = sf::Color(255, 0, 0, 150);
+
+static int killCount = 0;
 
 // global variables
 extern int numObjects;

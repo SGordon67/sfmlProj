@@ -79,6 +79,23 @@ void QuadTree::retrieveToroidal(std::vector<std::shared_ptr<PhysicalObject>>& re
     }
 }
 
+void QuadTree::retrieveEntities(std::vector<Entity*>& entities,
+        const sf::Vector2f& pos, float radius)
+{
+    std::vector<std::shared_ptr<PhysicalObject>> allObjects;
+    retrieveToroidal(allObjects, pos, radius);
+
+    entities.clear();
+    for(auto& obj : allObjects)
+    {
+        auto entity = std::dynamic_pointer_cast<Entity>(obj);
+        if(entity)
+        {
+            entities.push_back(entity.get());
+        }
+    }
+}
+
 void QuadTree::clear()
 {
     objects.clear();
@@ -161,6 +178,7 @@ void QuadTree::insert(std::shared_ptr<PhysicalObject> obj) {
     }
 }
 
+// TODO inbetween four quads implemented, need to add wrapping
 void QuadTree::retrieve(std::vector<std::shared_ptr<PhysicalObject>>& returnObjects,
         const sf::Vector2f& pos, float radius)
 {

@@ -43,21 +43,7 @@ public:
             const sf::Vector2f& pos, float radius);
 
     void retrieveEntities(std::vector<Entity*>& entities,
-            const sf::Vector2f& pos, float radius)
-    {
-        std::vector<std::shared_ptr<PhysicalObject>> allObjects;
-        retrieveToroidal(allObjects, pos, radius);
-
-        entities.clear();
-        for(auto& obj : allObjects)
-        {
-            auto entity = std::dynamic_pointer_cast<Entity>(obj);
-            if(entity)
-            {
-                entities.push_back(entity.get());
-            }
-        }
-    }
+            const sf::Vector2f& pos, float radius);
 };
 
 #endif

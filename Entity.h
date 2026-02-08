@@ -2,12 +2,14 @@
 #define ENTITY_H
 
 #include "PhysicalObject.h"
+#include <string>
 
 class Entity : public PhysicalObject
 {
 protected:
 	int m_hp;
 	int m_maxHP;
+    bool m_markedForDeath;
 public:
 
 	Entity(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
@@ -17,6 +19,7 @@ public:
                     mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, drag)
 			  , m_hp(hp)
 			  , m_maxHP(maxHP)
+              , m_markedForDeath(false)
 	{
 	}
 
@@ -37,11 +40,27 @@ public:
     {
         m_maxHP = hp;
     }
+    void markForDeath()
+    {
+        m_markedForDeath = true;
+    }
+    bool isMarkedForDeath()
+    {
+        return m_markedForDeath;
+    }
 
 	void reduceHealth(int damage)
 	{
+        std::string output = "Entity (" + std::to_string(getObjectID()) + ") damaged, (" + std::to_string(getHP()) + " -> ";
         setHP(getHP() - damage);
-        std::cout << "DAMAGED, NEW HP -- " << getHP() << std::endl;
+        if(getHP() <= 0)
+        {
+            m_hp = 0;
+            markForDeath();
+        }
+        output += std::to_string(getHP()) + ")";
+
+        std::cout << output << std::endl;
 	}
 
 	void increaseHealth(int heal)

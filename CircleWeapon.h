@@ -23,6 +23,9 @@ class CircleWeapon : public Weapon
         CircleWeapon(const CircleWeapon& other); // copy constructor
         CircleWeapon(CircleWeapon&& other) noexcept; // move constructor
 
+        float getRadius();
+        void setRadius(float radius);
+
         void activate(Player& player, QuadTree& quadTree) override;
         void update(float deltaTime, Player& player, QuadTree& quadTree) override;
         void render(sf::RenderWindow& window) override;

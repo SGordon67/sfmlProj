@@ -6,6 +6,7 @@
 #include "SFML/Graphics/Texture.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "SFML/Window/Keyboard.hpp"
+#include <algorithm>
 #include <iostream>
 #include <cmath>
 #include <memory>
@@ -412,6 +413,26 @@ void updateGame(std::shared_ptr<Player> player,
     {
         obj->basicUpdate(FixedDeltaTime, player->getVelocity());
     }
+
+    physicalObjects.erase(
+        std::remove_if(physicalObjects.begin(), physicalObjects.end(),
+            [&player](const auto& obj)
+            {
+                if(obj == player) return false;
+
+                auto* entity = dynamic_cast<Entity*>(obj.get());
+                if(entity && entity->isMarkedForDeath())
+                {
+                    killCount++;
+                    std::cout << "Kill Count: " << killCount << std::endl;
+                }
+                return entity && entity->isMarkedForDeath();
+            }
+        ),
+        physicalObjects.end()
+    );
+
+
 }
 void updateUI(sf::RenderWindow& window, std::vector<std::unique_ptr<UIElement>>& UIElements)
 {
@@ -503,19 +524,19 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
     // PHYSICAL OBJECTS
 
     // testing meteor
-    float objectRadius = 8; // used for specific placement, not important
-    // two objects VERY close to eachother on opposite sides of the world
-    std::vector<sf::Vector2f*> mPositions[2];
-    physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(0.1, 0.1))));
-    physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(worldWidth - 2*objectRadius, 0.1))));
-
-    // two objects touching eachother near the middle of the board
-    physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(500, 200))));
-    physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(500 + objectRadius, 200.5))));
-
-    // two objects near above player start to test collision rotation
-    physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(900, 400))));
-    physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(914, 340))));
+    // float objectRadius = 8; // used for specific placement, not important
+    // // two objects VERY close to eachother on opposite sides of the world
+    // std::vector<sf::Vector2f*> mPositions[2];
+    // physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(0.1, 0.1))));
+    // physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(worldWidth - 2*objectRadius, 0.1))));
+    //
+    // // two objects touching eachother near the middle of the board
+    // physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(500, 200))));
+    // physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(500 + objectRadius, 200.5))));
+    //
+    // // two objects near above player start to test collision rotation
+    // physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(900, 400))));
+    // physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(914, 340))));
 
     for(int i = 0; i < 5; i++)
     {
@@ -547,7 +568,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 
 
     // int numEnemies = 600; // approx max without lag (pre weapon addition)
-    int numEnemies = 10;
+    int numEnemies = 0;
     for(int i = 0; i < numEnemies; i++)
     {
         auto eR = std::make_shared<Enemy1>(Enemy1(sf::Vector2f(distX(rng), distY(rng)), player));
