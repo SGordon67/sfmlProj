@@ -7,14 +7,6 @@
 #include "Player.h"
 #include <memory>
 
-float barWidthFraction = 0.005;
-float barHeightFraction = 0.98;
-float xMarginFraction = 0.005;
-float yMarginFraction = (1.0 - barHeightFraction) / 2; // centered vertically
-
-sf::Color bgColor = sf::Color::Cyan;
-sf::Color hpColor = sf::Color::Red;
-
 UIHealth::UIHealth(std::shared_ptr<Player> player)
 	: UIElement(player)
 {

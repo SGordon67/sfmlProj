@@ -13,13 +13,13 @@ LIBS = -lsfml-graphics -lsfml-window -lsfml-system
 
 #Object files
 
-OBJS = main.o globals.o VisualObject.o HealthCrate.o Ball.o Player.o Spikey.o Enemy1.o CircleWeapon.o Minimap.o UIHealth.o QuadTree.o
+OBJS = main.o globals.o VisualObject.o HealthCrate.o Ball.o Player.o Spikey.o Enemy1.o CircleWeapon.o Minimap.o UIHealth.o UIKillCount.o QuadTree.o
 all: main
 
 main: $(OBJS)
 	$(CXX) $(OBJS) -o main $(LDFLAGS) $(LIBS)
 
-main.o: main.cpp globals.h enums.h BasicObject.h VisualObject.h PhysicalObject.h Ball.h HealthCrate.h Entity.h Player.h Spikey.h Enemy.h Enemy1.h CircleWeapon.h Minimap.h UIElement.h UIHealth.h QuadTree.h Interactable.h Hazardous.h
+main.o: main.cpp globals.h enums.h BasicObject.h VisualObject.h PhysicalObject.h Ball.h HealthCrate.h Entity.h Player.h Spikey.h Enemy.h Enemy1.h CircleWeapon.h Minimap.h UIElement.h UIHealth.h UIKillCount.h QuadTree.h Interactable.h Hazardous.h
 	$(CXX) $(CXXFLAGS) -c main.cpp
 
 globals.o: globals.cpp globals.h enums.h
@@ -51,6 +51,9 @@ Minimap.o: Minimap.cpp Minimap.h UIElement.h globals.h enums.h
 
 UIHealth.o: UIHealth.cpp UIHealth.h UIElement.h Player.h globals.h enums.h
 	$(CXX) $(CXXFLAGS) -c UIHealth.cpp
+
+UIKillCount.o: UIKillCount.cpp UIKillCount.h UIElement.h globals.h enums.h
+	$(CXX) $(CXXFLAGS) -c UIKillCount.cpp
 
 QuadTree.o: QuadTree.cpp QuadTree.h globals.h enums.h
 	$(CXX) $(CXXFLAGS) -c QuadTree.cpp

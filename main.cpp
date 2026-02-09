@@ -15,6 +15,7 @@
 
 #include "UIElement.h"
 #include "UIHealth.h"
+#include "UIKillCount.h"
 #include "globals.h"
 #include "enums.h"
 #include "BasicObject.h"
@@ -88,6 +89,11 @@ void initializeTextures()
     if(!enemyTexture.loadFromFile("art/basicEnemy.png"))
     {
         std::cout << "Sprite not loaded :(" << std::endl;
+    }
+
+    if(!font.openFromFile("Fonts/Nasa21-l23X.ttf"))
+    {
+        std::cout << "Font not loaded :(" << std::endl;
     }
 }
 
@@ -568,7 +574,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>>& visualObjects,
 
 
     // int numEnemies = 600; // approx max without lag (pre weapon addition)
-    int numEnemies = 0;
+    int numEnemies = 10;
     for(int i = 0; i < numEnemies; i++)
     {
         auto eR = std::make_shared<Enemy1>(Enemy1(sf::Vector2f(distX(rng), distY(rng)), player));
@@ -583,6 +589,7 @@ void setupUI(std::vector<std::unique_ptr<UIElement>>& UIElements, std::shared_pt
 {
     // health bar
     UIElements.push_back(std::make_unique<UIHealth>(UIHealth(player)));
+    UIElements.push_back(std::make_unique<UIKillCount>(UIKillCount(player)));
 }
 
 int main()

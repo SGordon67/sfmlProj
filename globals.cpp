@@ -1,6 +1,7 @@
 #include "globals.h"
 #include "SFML/Graphics/Texture.hpp"
 
+int killCount = 0;
 int numObjects = 0;
 
 // changed bg image to (1000 x 1000) for both background are foreground
@@ -22,3 +23,5 @@ sf::Texture crateTexture;
 sf::Texture spikeyTexture;
 sf::Texture playerTexture;
 sf::Texture enemyTexture;
+
+sf::Font font;

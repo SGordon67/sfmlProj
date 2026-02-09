@@ -2,6 +2,7 @@
 #define GLOBALS_H
 
 #include "SFML/Graphics/Color.hpp"
+#include "SFML/Graphics/Font.hpp"
 #include "SFML/Graphics/Texture.hpp"
 #include "SFML/System/Vector2.hpp"
 
@@ -18,9 +19,9 @@ static constexpr float dragCoef = 4;
 static constexpr float angularDrag = 0.98f;
 static constexpr sf::Color hitboxColor = sf::Color(255, 0, 0, 150);
 
-static int killCount = 0;
 
 // global variables
+extern int killCount;
 extern int numObjects;
 
 extern float worldWidth;
@@ -48,5 +49,8 @@ extern sf::Texture crateTexture;
 extern sf::Texture spikeyTexture;
 extern sf::Texture playerTexture;
 extern sf::Texture enemyTexture;
+
+// fonts
+extern sf::Font font;
 
 #endif

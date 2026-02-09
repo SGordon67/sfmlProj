@@ -3,11 +3,6 @@
 #include "UIElement.h"
 #include "globals.h"
 
-float minimapPositionXFraction = 0.755f;
-float minimapPositionYFraction = 0.01f;
-float minimapWidthFraction = 0.23f;
-float minimapHeightFraction = 0.23f;
-
 Minimap::Minimap(std::shared_ptr<Player> player, std::shared_ptr<sf::View> view)
     : UIElement(player)
     , m_view(view)
@@ -28,7 +23,7 @@ std::shared_ptr<sf::View> Minimap::getView() const
     return m_view;
 }
 
-void Minimap::updateViewport() const
+void Minimap::updateViewport()
 {
     // size the minimap based on window height, size width so it's square proportion
     minimapHeightFraction = 0.23f;
