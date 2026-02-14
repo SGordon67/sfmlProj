@@ -1,4 +1,5 @@
 #include "CircleWeapon.h"
+#include "MainMenu.h"
 #include "Minimap.h"
 #include "QuadTree.h"
 #include "SFML/Graphics/Rect.hpp"
@@ -13,6 +14,7 @@
 #include <random>
 #include <vector>
 
+#include "SFML/Window/Mouse.hpp"
 #include "UIElement.h"
 #include "UIHealth.h"
 #include "UIKillCount.h"
@@ -26,6 +28,7 @@
 #include "Spikey.h"
 #include "Enemy1.h"
 #include "HealthCrate.h"
+#include "GameOverScreen.h"
 
 float degreesToRadians(float degrees)
 {
@@ -638,6 +641,33 @@ int main()
     // spacial grid for more efficient collision detection
     QuadTree quadTree(0, sf::FloatRect(sf::Vector2f(0, 0), sf::Vector2f(worldWidth, worldHeight)));
 
+
+    GameState currentState = GameState::MainMenu;
+
+    // Main menu
+    MainMenu mainMenu;
+    GameOverScreen gameOverScreen;
+    mainMenu.updateLayout(window.getSize());
+    gameOverScreen.updateLayout(window.getSize());
+
+    auto resetGame = [&]()
+    {
+        visualObjects.clear();
+        physicalObjects.clear();
+        interactableObjects.clear();
+        hazardousObjects.clear();
+        UIElements.clear();
+
+        player = std::make_shared<Player>();
+        player->addWeapon(std::make_unique<CircleWeapon>(), 0);
+        physicalObjects.push_back(player);
+
+        setupGame(visualObjects, physicalObjects, interactableObjects, hazardousObjects, player);
+        setupUI(UIElements, player);
+
+        killCount = 0;
+    };
+
     while(window.isOpen())
     {
         float frameTime = clock.restart().asSeconds();
@@ -648,6 +678,32 @@ int main()
         player->updateButtonPresses();
         while(const std::optional event = window.pollEvent())
         {
+            if(const auto* mouseButton = event->getIf<sf::Event::MouseButtonPressed>())
+            {
+                if(mouseButton->button == sf::Mouse::Button::Left)
+                {
+                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+
+                    if(currentState == GameState::MainMenu)
+                    {
+                        if(mainMenu.isStartButtonClicked(mousePos))
+                        {
+                            resetGame();
+                            currentState = GameState::Playing;
+                        }
+                    } else if(currentState == GameState::GameOver)
+                    {
+                        if(gameOverScreen.isRestartButtonClicked(mousePos))
+                        {
+                            resetGame();
+                            currentState = GameState::Playing;
+                        } else if(gameOverScreen.isMenuButtonClicked(mousePos))
+                        {
+                            currentState = GameState::MainMenu;
+                        }
+                    }
+                }
+            }
             if(event->is<sf::Event::Closed>() || player->isPressed(Button::Escape))
             {
                 window.close();
@@ -666,27 +722,58 @@ int main()
             }
         }
 
-        int maxUpdates = 3;
-        int updateCount = 0;
-        while(timeAccumulator >= FixedDeltaTime && updateCount < maxUpdates)
-        {
-            updateGame(player, visualObjects, physicalObjects, interactableObjects, hazardousObjects, quadTree);
-            updateUI(window, UIElements);
-            updateMinimap(window, *minimap);
 
-            timeAccumulator -= FixedDeltaTime;
-            updateCount++;
-        }
-        if(updateCount >= maxUpdates)
+        // update based on current state
+        if(currentState == GameState::Playing)
         {
-            timeAccumulator = 0;
+            if(player->getHP() == 0) currentState = GameState::GameOver;
+
+            int maxUpdates = 3;
+            int updateCount = 0;
+            while(timeAccumulator >= FixedDeltaTime && updateCount < maxUpdates)
+            {
+                updateGame(player, visualObjects, physicalObjects, interactableObjects, hazardousObjects, quadTree);
+                updateUI(window, UIElements);
+                updateMinimap(window, *minimap);
+
+                timeAccumulator -= FixedDeltaTime;
+                updateCount++;
+            }
+            if(updateCount >= maxUpdates)
+            {
+                timeAccumulator = 0;
+            }
+        } else if(currentState == GameState::MainMenu)
+        {
+            mainMenu.handleHover(sf::Mouse::getPosition(window));
+        } else if(currentState == GameState::GameOver)
+        {
+            gameOverScreen.handleHover(sf::Mouse::getPosition(window));
         }
 
-        // clear the window, then draw
+        // render based on state
         window.clear();
-        drawGame(window, playerView, player, visualObjects, physicalObjects);
-        drawUI(window, UIElements);
-        drawMinimap(window, *minimap);
+
+        // update based on current state
+        if(currentState == GameState::Playing)
+        {
+            drawGame(window, playerView, player, visualObjects, physicalObjects);
+            drawUI(window, UIElements);
+            drawMinimap(window, *minimap);
+        } else if(currentState == GameState::MainMenu)
+        {
+            mainMenu.render(window);
+        } else if(currentState == GameState::GameOver)
+        {
+            drawGame(window, playerView, player, visualObjects, physicalObjects);
+
+            sf::RectangleShape overlay({(float)windowWidth, (float)windowHeight});
+            overlay.setFillColor(sf::Color(0, 0, 0, 150));
+            window.draw(overlay);
+
+            gameOverScreen.render(window);
+
+        }
         window.display();
     }
     return 0;
