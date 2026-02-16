@@ -693,6 +693,7 @@ int main() {
         setupGame(visualObjects, physicalObjects, interactableObjects,
                 hazardousObjects, player);
         setupUI(UIElements, player);
+        minimap = std::make_unique<Minimap>(Minimap(player, minimapView));
 
         killCount = 0;
     };
