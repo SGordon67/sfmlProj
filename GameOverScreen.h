@@ -55,13 +55,13 @@ class GameOverScreen
             m_menuButton.setPosition({windowSize.x / 2.f - 80.f, windowSize.y / 2.f + 90.f});
         }
 
-        bool isRestartButtonClicked(sf::Vector2i mousePos) const
+        bool isRestartButtonHovered(sf::Vector2i mousePos) const
         {
-            return m_restartButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos));
+            return m_restartBg.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos));
         }
-        bool isMenuButtonClicked(sf::Vector2i mousePos) const
+        bool isMenuButtonHovered(sf::Vector2i mousePos) const
         {
-            return m_menuButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos));
+            return m_menuBg.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos));
         }
 
         void render(sf::RenderWindow& window)
@@ -76,7 +76,7 @@ class GameOverScreen
 
         void handleHover(sf::Vector2i mousePos)
         {
-            if(isMenuButtonClicked(mousePos))
+            if(isMenuButtonHovered(mousePos))
             {
                 m_menuBg.setFillColor(sf::Color::Blue);
             }
@@ -85,7 +85,7 @@ class GameOverScreen
                 m_menuBg.setFillColor(sf::Color::Green);
             }
 
-            if(isRestartButtonClicked(mousePos))
+            if(isRestartButtonHovered(mousePos))
             {
                 m_restartBg.setFillColor(sf::Color::Blue);
             }

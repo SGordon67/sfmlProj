@@ -18,8 +18,8 @@ class Player : public Entity
         static constexpr float d_playerMaxVelocity = 500;
         static constexpr float d_playerDrag = 4;
 
-        static constexpr int d_playerHP = 100;
-        static constexpr int d_playerMaxHP = 100;
+        static constexpr int d_playerHP = 10;
+        static constexpr int d_playerMaxHP = 10;
         static constexpr float d_playerAngularAcceleration = (4.f * (M_PI / 180.f));
 
         float m_angularAcceleration;

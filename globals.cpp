@@ -8,8 +8,8 @@ int numObjects = 0;
 float worldWidth = 3000;
 float worldHeight = 3000;
 
-int windowWidth = 1500;
-int windowHeight = 750;
+int windowWidth = 900;
+int windowHeight = 900;
 int frameRateLimit = 60;
 sf::Vector2i windowPos = {1930, 10};
 

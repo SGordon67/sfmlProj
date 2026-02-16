@@ -1,9 +1,11 @@
 #ifndef ENUMS_H
 #define ENUMS_H
 
+#include <string>
 enum class GameState
 {
     MainMenu,
+    Settings,
     Playing,
     Paused,
     GameOver

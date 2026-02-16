@@ -45,7 +45,7 @@ public:
 			  , m_spriteRect(sf::Vector2i{0, 0}, size)
 			  , m_sprite(*texture, m_spriteRect)
 			  {
-				  std::cout << "Regular constructor called for basic object" << std::endl;
+				  // std::cout << "Regular constructor called for basic object" << std::endl;
 				  // loadTexture(filename);
                   m_sprite.setTexture(*texture);
 				  m_sprite.setOrigin({size.x/2.f, size.y/2.f});
@@ -61,7 +61,7 @@ public:
 			  , m_spriteRect(other.m_spriteRect)
 			  , m_sprite(other.m_sprite)
 	{
-		std::cout << "Copy constructor called for basic object" << std::endl;
+		// std::cout << "Copy constructor called for basic object" << std::endl;
 		// m_sprite.setTexture(*m_texture);
 		m_sprite.setOrigin({m_size.x/2.f, m_size.y/2.f});
 		m_sprite.setPosition(m_position);
@@ -76,7 +76,7 @@ public:
 			, m_spriteRect(other.m_spriteRect)
 			, m_sprite(std::move(other.m_sprite))
 			{
-				std::cout << "Move constructor called for basic object" << std::endl;
+				// std::cout << "Move constructor called for basic object" << std::endl;
 				// m_sprite.setTexture(*m_texture);
 				m_sprite.setOrigin({m_size.x/2.f, m_size.y/2.f});
 				m_sprite.setPosition(m_position);
