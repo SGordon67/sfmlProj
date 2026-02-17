@@ -21,12 +21,11 @@ class SettingsScreen {
         ResolutionManager &m_resolutionManager;
         size_t m_hoveredOption;
 
-        const float titleHeight = 0.2f;
+        const float titleHeight = 0.15f;
         const float titlePosition = 0.1f;
 
-        const float categoryHeight = 0.1f;
-        const float resoPosX = 0.2f;
-        const float resoPosY = 0.15f;
+        const float categoryHeight = 0.05f;
+        const float resoPosX = 0.1f;
 
         const float buttonHeight = 0.04f;
         const float buttonWidth = 0.2f;
@@ -82,8 +81,10 @@ class SettingsScreen {
             }
         }
 
-        void updateLaout(sf::Vector2u windowSize)
+        void updateLayout(sf::Vector2u windowSize)
         {
+            // std::cout << "Current window size: (" << windowSize.x << ", " << windowSize.y << ")" << std::endl;
+
             // Title
             m_title.setCharacterSize(windowSize.y * titleHeight);
             sf::FloatRect titleBounds = m_title.getLocalBounds();
@@ -91,7 +92,8 @@ class SettingsScreen {
 
             // Resolution label
             m_resolutionText.setCharacterSize(windowSize.y * categoryHeight);
-            m_resolutionText.setPosition({windowSize.x * resoPosX, windowSize.y * resoPosY});
+            m_resolutionText.setPosition({windowSize.x * resoPosX, (windowSize.y * optionStartPosY)
+                    - (m_resolutionText.getCharacterSize()) - ((windowSize.y * buttonHeight) * buttonMarginY)});
 
             // Resolution options
             float startY = windowSize.y * optionStartPosY;
@@ -157,6 +159,8 @@ class SettingsScreen {
 
         void render(sf::RenderWindow &window)
         {
+            window.setView(window.getDefaultView());
+
             window.draw(m_title);
             window.draw(m_resolutionText);
 

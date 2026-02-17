@@ -674,7 +674,7 @@ int main() {
     SettingsScreen settingsScreen(resolutionManager);
     GameOverScreen gameOverScreen;
     mainMenu.updateLayout(window.getSize());
-    settingsScreen.updateLaout(window.getSize());
+    settingsScreen.updateLayout(window.getSize());
     gameOverScreen.updateLayout(window.getSize());
     GameState currentState = GameState::MainMenu;
 
@@ -715,6 +715,7 @@ int main() {
                 if (mouseButton->button == sf::Mouse::Button::Left)
                 {
                     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                    std::cout << "Mouse clicked: (" << mousePos.x << ", " << mousePos.y << ")" << std::endl;
 
                     switch(currentState)
                     {
@@ -744,13 +745,6 @@ int main() {
                                 if(resIndex >= 0)
                                 {
                                     resolutionManager.setResolution(resIndex);
-                                    const auto& res = resolutionManager.getCurrentResolution();
-
-                                    window.setSize({res.width, res.height});
-                                    playerView.setSize({(float)windowWidth, (float)windowHeight});
-                                    mainMenu.updateLayout(window.getSize());
-                                    settingsScreen.updateLaout(window.getSize());
-                                    gameOverScreen.updateLayout(window.getSize());
                                 }
                                 break;
                             }
@@ -777,18 +771,6 @@ int main() {
             {
                 window.close();
             }
-            // } else if (const auto *resized = event->getIf<sf::Event::Resized>())
-            // {
-            //     // theoretically is obsolete now, but keeping code here just in case of resize event.
-            //     windowWidth = resized->size.x;
-            //     windowHeight = resized->size.y;
-            //     viewWidth = windowWidth;
-            //     viewHeight = windowHeight;
-            //     playerView.setSize({(float)windowWidth, (float)windowHeight});
-            //     mainMenu.updateLayout(window.getSize());
-            //     settingsScreen.updateLaout(window.getSize());
-            //     gameOverScreen.updateLayout(window.getSize());
-            // }
         }
 
         // update the game
@@ -825,6 +807,14 @@ int main() {
             case(GameState::Settings):
                 {
                     settingsScreen.handleHover(sf::Mouse::getPosition(window));
+
+                    const auto& res = resolutionManager.getCurrentResolution();
+
+                    window.setSize({res.width, res.height});
+                    playerView.setSize({(float)windowWidth, (float)windowHeight});
+                    mainMenu.updateLayout(window.getSize());
+                    settingsScreen.updateLayout(window.getSize());
+                    gameOverScreen.updateLayout(window.getSize());
                     break;
                 }
             case(GameState::Paused):

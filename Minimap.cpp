@@ -31,30 +31,6 @@ void Minimap::updateViewport()
 
     minimapPositionXFraction =  1 - minimapWidthFraction - 0.015;
 
-    // size based on larger axis
-    // if(viewHeight == viewWidth)
-    // {
-    //     minimapWidthFraction = 0.23f;
-    //     minimapHeightFraction = 0.23f;
-    //
-    //     minimapPositionXFraction = 0.755f;
-    // }
-    // else if(viewHeight > viewWidth)
-    // {
-    //     minimapHeightFraction = 0.23f;
-    //     minimapWidthFraction = ((0.23f * viewHeight) / viewWidth);
-    //
-    //     minimapPositionXFraction =  1 - minimapWidthFraction - 0.015;
-    // }
-    // else
-    // {
-    //     minimapWidthFraction = 0.23f;
-    //     minimapHeightFraction = ((0.23 * viewWidth) / viewHeight);
-    //
-    //     minimapPositionXFraction =  1 - minimapWidthFraction - 0.015;
-    // }
-
-
     m_view->setViewport(sf::FloatRect({minimapPositionXFraction, minimapPositionYFraction}, {minimapWidthFraction, minimapHeightFraction}));
 }
 

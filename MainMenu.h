@@ -15,8 +15,13 @@ class MainMenu {
         sf::Text m_settingsButtonText;
         sf::RectangleShape m_settingsButtonBg;
 
-        const float buttonMarginX = 1.2f;
-        const float buttonMarginY = 1.5f;
+        const float buttonFirstPosY = 0.5f;
+        const float buttonMargin = 0.01f;
+
+        const float buttonMarginX = 0.01f; // relative
+        const float buttonMarginY = 0.05f; // relative
+        const float buttonWidth = 0.35f;
+        const float buttonHeight = 0.04f;
 
     public:
         MainMenu() 
@@ -54,19 +59,21 @@ class MainMenu {
             m_title.setPosition({((windowSize.x / 2.f) - (titleBounds.size.x / 2.f)), 
                     ((windowSize.y / 3.f) - (titleBounds.size.y / 2.f))});
 
-            m_startButtonText.setPosition({((windowSize.x / 2.f) - (m_startButtonText.getLocalBounds().size.x / 2.f)), 
-                    (((windowSize.y / 3.f) * 2.f) - (m_startButtonText.getLocalBounds().size.y / 2.f))});
-            sf::FloatRect startTextBounds = m_startButtonText.getGlobalBounds();
-            m_startButtonBg.setSize({startTextBounds.size.x * buttonMarginX, startTextBounds.size.y * buttonMarginY});
-            m_startButtonBg.setPosition({startTextBounds.position.x - startTextBounds.size.x * ((buttonMarginX - 1) / 2.f), 
-                    startTextBounds.position.y - startTextBounds.size.y * ((buttonMarginY - 1) / 2.f)});
+            m_startButtonBg.setSize({(windowSize.x * buttonWidth), (windowSize.y * buttonHeight)});
+            m_startButtonBg.setPosition({(windowSize.x / 2.f) - (m_startButtonBg.getSize().x / 2.f), 
+                    (windowSize.y * buttonFirstPosY)});
+            sf::FloatRect startButtonBounds = m_startButtonBg.getGlobalBounds();
+            m_startButtonText.setCharacterSize(startButtonBounds.size.y * (1 - buttonMarginY));
+            m_startButtonText.setPosition({(windowSize.x / 2.f) - (m_startButtonText.getLocalBounds().size.x / 2.f), 
+                    (startButtonBounds.position.y - (m_startButtonBg.getSize().y * buttonMarginY))});
 
-            m_settingsButtonText.setPosition({m_startButtonText.getPosition().x, 
-                    m_startButtonBg.getPosition().y + m_startButtonBg.getSize().y + 2 * buttonMarginY});
-            sf::FloatRect settingsTextBounds = m_settingsButtonText.getGlobalBounds();
-            m_settingsButtonBg.setSize({settingsTextBounds.size.x * buttonMarginX, settingsTextBounds.size.y * buttonMarginY});
-            m_settingsButtonBg.setPosition({settingsTextBounds.position.x - settingsTextBounds.size.x * ((buttonMarginX - 1) / 2.f), 
-                    settingsTextBounds.position.y - settingsTextBounds.size.y * ((buttonMarginY - 1) / 2.f)});
+            m_settingsButtonBg.setSize({(windowSize.x * buttonWidth), (windowSize.y * buttonHeight)});
+            m_settingsButtonBg.setPosition({(windowSize.x / 2.f) - (m_settingsButtonBg.getSize().x / 2.f), 
+                    (windowSize.y * buttonFirstPosY + (1 * ((windowSize.y * buttonHeight) + (windowSize.y * buttonMargin))))}); // 1 for adding one button position
+            sf::FloatRect settingsButtonBounds = m_settingsButtonBg.getGlobalBounds();
+            m_settingsButtonText.setCharacterSize(settingsButtonBounds.size.y * (1 - buttonMarginY));
+            m_settingsButtonText.setPosition({(windowSize.x / 2.f) - (m_settingsButtonText.getLocalBounds().size.x / 2.f), 
+                    (settingsButtonBounds.position.y - (m_settingsButtonBg.getSize().y * buttonMarginY))});
         }
 
         bool isStartButtonHovered(sf::Vector2i mousePos) const
