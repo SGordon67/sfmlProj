@@ -83,7 +83,10 @@ class SettingsScreen {
 
         void updateLayout(sf::Vector2u windowSize)
         {
-            // std::cout << "Current window size: (" << windowSize.x << ", " << windowSize.y << ")" << std::endl;
+        // void updateLayout(sf::RenderWindow& window)
+        // {
+            // sf::Vector2u windowSize = {static_cast<unsigned int>(window.getView().getSize().x), static_cast<unsigned int>(window.getView().getSize().x)};
+            std::cout << "Current window size: (" << windowSize.x << ", " << windowSize.y << ")" << std::endl;
 
             // Title
             m_title.setCharacterSize(windowSize.y * titleHeight);
@@ -128,6 +131,16 @@ class SettingsScreen {
 
         bool isBackHovered(sf::Vector2i mousePos) const
         {
+            if(mousePos.x >= m_backButtonBg.getPosition().x && mousePos.x <= m_backButtonBg.getPosition().x + m_backButtonBg.getSize().x)
+            {
+                if(mousePos.y >= m_backButtonBg.getPosition().y && mousePos.y <= m_backButtonBg.getPosition().y + m_backButtonBg.getSize().y)
+                {
+                    return true;
+                }
+            }
+            return false;
+
+
             return m_backButtonBg.getGlobalBounds().contains(
                     static_cast<sf::Vector2f>(mousePos));
         }

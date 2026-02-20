@@ -642,8 +642,8 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(
                 {resolutionManager.getCurrentResolution().width, 
                 resolutionManager.getCurrentResolution().height}), 
-            "game",
-            sf::Style::Titlebar | sf::Style::Close);
+            "game");
+            // sf::Style::Titlebar | sf::Style::Close);
     window.setVerticalSyncEnabled(true);
     window.setPosition(windowPos);
 
@@ -675,6 +675,7 @@ int main() {
     GameOverScreen gameOverScreen;
     mainMenu.updateLayout(window.getSize());
     settingsScreen.updateLayout(window.getSize());
+    // settingsScreen.updateLayout(window);
     gameOverScreen.updateLayout(window.getSize());
     GameState currentState = GameState::MainMenu;
 
@@ -771,6 +772,18 @@ int main() {
             {
                 window.close();
             }
+            else if(const auto *resized = event->getIf<sf::Event::Resized>())
+            {
+                // theoretically is obsolete now, but keeping code here just in case of resize event.
+                windowWidth = resized->size.x;
+                windowHeight = resized->size.y;
+                viewWidth = windowWidth;
+                viewHeight = windowHeight;
+                playerView.setSize({(float)windowWidth, (float)windowHeight});
+                mainMenu.updateLayout(window.getSize());
+                settingsScreen.updateLayout(window.getSize());
+                gameOverScreen.updateLayout(window.getSize());
+            }
         }
 
         // update the game
@@ -814,6 +827,7 @@ int main() {
                     playerView.setSize({(float)windowWidth, (float)windowHeight});
                     mainMenu.updateLayout(window.getSize());
                     settingsScreen.updateLayout(window.getSize());
+                    // settingsScreen.updateLayout(window);
                     gameOverScreen.updateLayout(window.getSize());
                     break;
                 }

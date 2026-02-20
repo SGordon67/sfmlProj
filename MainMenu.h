@@ -47,18 +47,22 @@ class MainMenu {
             m_settingsButtonBg.setOutlineColor(sf::Color::White);
         }
 
-        void updateLayout(sf::Vector2u windowSize) {
+        void updateLayout(sf::Vector2u windowSize)
+        {
+            // in case of window resize
+            // m_fullRect.setSize(sf::Vector2f(currentViewWidth * barWidthFraction, currentViewHeight * barHeightFraction));
+            // m_fullRect.setPosition(sf::Vector2f(currentViewWidth * xMarginFraction, currentViewHeight * yMarginFraction));
 
-            // text sizes
-            m_title.setCharacterSize(windowSize.y / 5);
+            m_title.setCharacterSize(windowSize.y * 0.1f);
+            m_title.setPosition({static_cast<float>(windowSize.x * 0.1), static_cast<float>(windowSize.y * 0.1)});
+
+
+
+            // m_title.setCharacterSize(windowSize.y / 5);
+            // m_title.setPosition({((windowSize.x / 2.f) - (m_title.getGlobalBounds().size.length() / 2.f)), 
+            //         ((windowSize.y / 3.f) - (m_title.getCharacterSize() / 2.f))});
+
             m_startButtonText.setCharacterSize(windowSize.y / 10);
-            m_settingsButtonText.setCharacterSize(windowSize.y / 10);
-
-            // text position and bg size/position
-            sf::FloatRect titleBounds = m_title.getLocalBounds();
-            m_title.setPosition({((windowSize.x / 2.f) - (titleBounds.size.x / 2.f)), 
-                    ((windowSize.y / 3.f) - (titleBounds.size.y / 2.f))});
-
             m_startButtonBg.setSize({(windowSize.x * buttonWidth), (windowSize.y * buttonHeight)});
             m_startButtonBg.setPosition({(windowSize.x / 2.f) - (m_startButtonBg.getSize().x / 2.f), 
                     (windowSize.y * buttonFirstPosY)});
@@ -67,6 +71,7 @@ class MainMenu {
             m_startButtonText.setPosition({(windowSize.x / 2.f) - (m_startButtonText.getLocalBounds().size.x / 2.f), 
                     (startButtonBounds.position.y - (m_startButtonBg.getSize().y * buttonMarginY))});
 
+            m_settingsButtonText.setCharacterSize(windowSize.y / 10);
             m_settingsButtonBg.setSize({(windowSize.x * buttonWidth), (windowSize.y * buttonHeight)});
             m_settingsButtonBg.setPosition({(windowSize.x / 2.f) - (m_settingsButtonBg.getSize().x / 2.f), 
                     (windowSize.y * buttonFirstPosY + (1 * ((windowSize.y * buttonHeight) + (windowSize.y * buttonMargin))))}); // 1 for adding one button position
