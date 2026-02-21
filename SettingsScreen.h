@@ -86,7 +86,7 @@ class SettingsScreen {
         // void updateLayout(sf::RenderWindow& window)
         // {
             // sf::Vector2u windowSize = {static_cast<unsigned int>(window.getView().getSize().x), static_cast<unsigned int>(window.getView().getSize().x)};
-            std::cout << "Current window size: (" << windowSize.x << ", " << windowSize.y << ")" << std::endl;
+            // std::cout << "Current window size: (" << windowSize.x << ", " << windowSize.y << ")" << std::endl;
 
             // Title
             m_title.setCharacterSize(windowSize.y * titleHeight);
@@ -172,8 +172,6 @@ class SettingsScreen {
 
         void render(sf::RenderWindow &window)
         {
-            window.setView(window.getDefaultView());
-
             window.draw(m_title);
             window.draw(m_resolutionText);
 

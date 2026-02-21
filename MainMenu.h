@@ -49,18 +49,21 @@ class MainMenu {
 
         void updateLayout(sf::Vector2u windowSize)
         {
-            // in case of window resize
-            // m_fullRect.setSize(sf::Vector2f(currentViewWidth * barWidthFraction, currentViewHeight * barHeightFraction));
-            // m_fullRect.setPosition(sf::Vector2f(currentViewWidth * xMarginFraction, currentViewHeight * yMarginFraction));
+            // Title
+            m_title.setCharacterSize(windowSize.y / 5);
+            sf::FloatRect titleBounds = m_title.getLocalBounds();
+            m_title.setOrigin({titleBounds.position.x + titleBounds.size.x / 2.f,
+                    titleBounds.position.y + titleBounds.size.y / 2.f});
+            m_title.setPosition({windowSize.x / 2.f, windowSize.y / 3.f});
 
-            m_title.setCharacterSize(windowSize.y * 0.1f);
-            m_title.setPosition({static_cast<float>(windowSize.x * 0.1), static_cast<float>(windowSize.y * 0.1)});
 
-
-
+            // // in case of window resize
             // m_title.setCharacterSize(windowSize.y / 5);
-            // m_title.setPosition({((windowSize.x / 2.f) - (m_title.getGlobalBounds().size.length() / 2.f)), 
-            //         ((windowSize.y / 3.f) - (m_title.getCharacterSize() / 2.f))});
+            // sf::FloatRect titleBounds = m_title.getGlobalBounds();
+            // m_title.setPosition({((windowSize.x / 2.f) - (m_title.getLocalBounds().size.x)), 
+            // ((windowSize.y / 3.f) - (m_title.getCharacterSize() / 2.f))});
+
+
 
             m_startButtonText.setCharacterSize(windowSize.y / 10);
             m_startButtonBg.setSize({(windowSize.x * buttonWidth), (windowSize.y * buttonHeight)});
@@ -91,7 +94,6 @@ class MainMenu {
         }
 
         void render(sf::RenderWindow &window) {
-            window.setView(window.getDefaultView());
             window.draw(m_title);
             window.draw(m_startButtonBg);
             window.draw(m_startButtonText);

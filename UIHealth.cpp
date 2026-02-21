@@ -53,6 +53,13 @@ void UIHealth::update(sf::RenderWindow& window)
 
 void UIHealth::render(sf::RenderWindow& window)
 {
+// void Minimap::update(sf::RenderWindow& window)
+// {
+//     // update player icon on the map
+//     m_playerShape = sf::CircleShape(((window.getView().getSize().y + window.getView().getSize().x) / 2) / 50);
+//     m_playerShape.setOrigin({m_playerShape.getRadius(), m_playerShape.getRadius()});
+//     m_playerShape.setPosition(m_player->getPosition());
+// }
     // height not needed, just need width to render on both sides of the screen
     float currentViewWidth = window.getView().getSize().x;
 

@@ -37,7 +37,8 @@ float degreesToRadians(float degrees) { return (degrees * (M_PI / 180.f)); }
 
 float radiansToDegrees(float radians) { return (radians * (180.f / M_PI)); }
 
-void wrapPosition(sf::Vector2f &position) {
+void wrapPosition(sf::Vector2f &position)
+{
     position.x = std::fmod(position.x, worldWidth);
     position.y = std::fmod(position.y, worldHeight);
 
@@ -48,7 +49,8 @@ void wrapPosition(sf::Vector2f &position) {
 }
 
 sf::Vector2f getClosestWrapPosition(const sf::Vector2f &myPosition,
-        const sf::Vector2f &otherPosition) {
+        const sf::Vector2f &otherPosition)
+{
     // shortest distance with wrapping
     sf::Vector2f ClosestPosition = otherPosition;
     sf::Vector2f delta = otherPosition - myPosition;
@@ -61,7 +63,8 @@ sf::Vector2f getClosestWrapPosition(const sf::Vector2f &myPosition,
     return ClosestPosition;
 }
 
-void initializeTextures() {
+void initializeTextures()
+{
     if (!farBackgroundTexture.loadFromFile("art/basicBackground.png")) {
         std::cout << "Sprite not loaded :(" << std::endl;
     }
@@ -92,9 +95,9 @@ void initializeTextures() {
 }
 
 bool detectIntersection(const sf::Vector2f &pos1, float radius1,
-        const sf::Vector2f &pos2, float radius2) {
+        const sf::Vector2f &pos2, float radius2)
+{
     // shortest distance with wrapping
-
     sf::Vector2f closestPos = getClosestWrapPosition(pos1, pos2);
     sf::Vector2f delta = pos1 - closestPos;
     float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
@@ -105,12 +108,15 @@ bool detectIntersection(const sf::Vector2f &pos1, float radius1,
 
 void detectAndHandleInteractions(
         std::shared_ptr<Player> player,
-        const std::vector<std::shared_ptr<Interactable>> &interactableObjects) {
-    for (auto &obj : interactableObjects) {
+        const std::vector<std::shared_ptr<Interactable>> &interactableObjects)
+{
+    for (auto &obj : interactableObjects)
+    {
         bool overlap =
             detectIntersection(player->getPosition(), player->getRadius(),
                     obj->getPosition(), obj->getInteractionRadius());
-        if (overlap) {
+        if (overlap)
+        {
             obj->interact(player);
             // std::cout << "Interacting with overlapping object: " <<
             // player.getObjectID() << ", " << obj->canInteract() << std::endl;
@@ -121,7 +127,8 @@ void detectAndHandleInteractions(
 // std::vector<sf::Vector2f> getDupPositions(const sf::Vector2f& position, const
 // sf::Vector2f& size)
 std::vector<sf::Vector2f> getDupPositions(const sf::Vector2f &position,
-        float radius) {
+        float radius)
+{
     std::vector<sf::Vector2f> dupPositions = {};
 
     // float wrapXThreshold = (std::abs(worldWidth - (viewWidth / 2.f)) + size.x);
@@ -171,14 +178,16 @@ std::vector<sf::Vector2f> getDupPositions(const sf::Vector2f &position,
 }
 
 void handleCollisionLite(const std::shared_ptr<PhysicalObject> &mainObject,
-        const std::shared_ptr<PhysicalObject> &otherObject) {
+        const std::shared_ptr<PhysicalObject> &otherObject)
+{
     // should collide with the closest version of the object including wrapped
     // positions
     sf::Vector2f otherClosestPosition = getClosestWrapPosition(
             mainObject->getPosition(), otherObject->getPosition());
     sf::Vector2f dir = mainObject->getPosition() - otherClosestPosition;
     float dist = std::sqrt(dir.x * dir.x + dir.y * dir.y);
-    if (dist < mainObject->getRadius() + otherObject->getRadius() && dist > 0) {
+    if (dist < mainObject->getRadius() + otherObject->getRadius() && dist > 0)
+    {
         dir /= dist;
         float separation =
             (mainObject->getRadius() + otherObject->getRadius() - dist) / 2.0f;
@@ -189,7 +198,8 @@ void handleCollisionLite(const std::shared_ptr<PhysicalObject> &mainObject,
 
 void handleCollision(std::shared_ptr<PhysicalObject> &mainObject,
         std::shared_ptr<PhysicalObject> &otherObject,
-        float restitution = 1.0f, float friction = 0.5f) {
+        float restitution = 1.0f, float friction = 0.5f)
+{
     // varials to keep track of collision information
     sf::Vector2f normal;
     sf::Vector2f contact1;
@@ -305,7 +315,8 @@ void handleCollision(std::shared_ptr<PhysicalObject> &mainObject,
             frictionAngularImpulse2);
 
     // Separate overlapping objects
-    if (overlap > 0.0f) {
+    if (overlap > 0.0f)
+    {
         // Mass-based separation (lighter object moves more)
         float totalMass = mainObject->getMass() + otherObject->getMass();
         float separation1 = overlap * (otherObject->getMass() / totalMass);
@@ -318,31 +329,37 @@ void handleCollision(std::shared_ptr<PhysicalObject> &mainObject,
 
 void detectAndHandleHazards(
         std::shared_ptr<Player> player,
-        std::vector<std::shared_ptr<Hazardous>> &hazardousObjects) {
-    for (auto &hazard : hazardousObjects) {
+        std::vector<std::shared_ptr<Hazardous>> &hazardousObjects)
+{
+    for (auto &hazard : hazardousObjects)
+    {
         bool overlap =
             detectIntersection(player->getPosition(), player->getRadius(),
                     hazard->getPosition(), hazard->getRadius());
-        if (overlap) {
+        if (overlap)
+        {
             hazard->dealDamage(player);
         }
     }
 }
 
-void addDragForce(sf::Vector2f &currentVelocity, float mass, float deltaTime) {
+void addDragForce(sf::Vector2f &currentVelocity, float mass, float deltaTime)
+{
     currentVelocity.x = currentVelocity.x * (1.f - dragCoef * deltaTime / mass);
     currentVelocity.y = currentVelocity.y * (1.f - dragCoef * deltaTime / mass);
 }
 
 void addAccelerationForce(sf::Vector2f &currentVelocity, float acceleration,
         float direction, bool backward, float maximumVelocity,
-        float mass, float deltaTime) {
+        float mass, float deltaTime)
+{
     // get the maximum components
     float maxXVelocity = maximumVelocity * std::abs(std::cos(direction));
     float maxYVelocity = maximumVelocity * std::abs(std::sin(direction));
 
     sf::Vector2f fAccel = {0, 0};
-    if (acceleration != 0) {
+    if (acceleration != 0)
+    {
         fAccel.x = (-acceleration / mass) * std::cos(direction) * deltaTime;
         fAccel.y = (-acceleration / mass) * std::sin(direction) * deltaTime;
         if (backward) // reverse direction
@@ -366,14 +383,16 @@ void updateGame(std::shared_ptr<Player> player,
         std::vector<std::shared_ptr<PhysicalObject>> &physicalObjects,
         std::vector<std::shared_ptr<Interactable>> &interactableObjects,
         std::vector<std::shared_ptr<Hazardous>> &nonPhysicalHazards,
-        QuadTree &quadTree) {
+        QuadTree &quadTree)
+{
     // get the buttons that the player is pushing first
     // handle actions as needed
     player->playerUpdate();
     player->updateWeapons(FixedDeltaTime, quadTree);
 
     // interact
-    if (player->isPressed(Button::Interact)) {
+    if (player->isPressed(Button::Interact))
+    {
         detectAndHandleInteractions(player, interactableObjects);
     }
 
@@ -387,7 +406,8 @@ void updateGame(std::shared_ptr<Player> player,
     nearbyCache.reserve(500);
     auto playerPtr = std::dynamic_pointer_cast<Player>(player);
 
-    for (auto &obj : physicalObjects) {
+    for (auto &obj : physicalObjects)
+    {
         obj->update();
 
         // don't handle collisions of far away objects
@@ -397,7 +417,8 @@ void updateGame(std::shared_ptr<Player> player,
         float dy = objClosesetPosition.y - player->getPosition().y;
 
         if (std::sqrt(dx * dx + dy * dy) <
-                (std::sqrt(viewWidth * viewWidth + viewHeight * viewHeight) / 2)) {
+                (std::sqrt(viewWidth * viewWidth + viewHeight * viewHeight) / 2))
+        {
             nearbyCache.clear();
             quadTree.retrieveToroidal(nearbyCache, obj->getPosition(),
                     obj->getRadius());
@@ -413,12 +434,14 @@ void updateGame(std::shared_ptr<Player> player,
                     detectIntersection(obj->getPosition(), obj->getRadius(),
                             other->getPosition(), other->getRadius());
 
-                if (overlap) {
+                if (overlap)
+                {
 
                     bool objIsPlayer = (obj == player);
                     bool otherIsPlayer = (other == player);
 
-                    if (objIsPlayer || otherIsPlayer) {
+                    if (objIsPlayer || otherIsPlayer)
+                    {
                         handleCollision(obj, other, restitution, friction);
                     } else {
                         // less intensive collision handling for non player
@@ -426,11 +449,13 @@ void updateGame(std::shared_ptr<Player> player,
                         // handleCollisionLite(obj, other);
                     }
 
-                    if (objIsPlayer) {
+                    if (objIsPlayer)
+                    {
                         auto hazard = std::dynamic_pointer_cast<Hazardous>(other);
                         if (hazard)
                             hazard->dealDamage(playerPtr);
-                    } else if (otherIsPlayer) {
+                    } else if (otherIsPlayer)
+                    {
                         auto hazard = std::dynamic_pointer_cast<Hazardous>(obj);
                         if (hazard)
                             hazard->dealDamage(playerPtr);
@@ -444,18 +469,20 @@ void updateGame(std::shared_ptr<Player> player,
     detectAndHandleHazards(player, nonPhysicalHazards);
 
     // update visual objects then UI
-    for (auto &obj : visualObjects) {
+    for (auto &obj : visualObjects)
+    {
         obj->basicUpdate(FixedDeltaTime, player->getVelocity());
     }
 
-    physicalObjects.erase(
-            std::remove_if(physicalObjects.begin(), physicalObjects.end(),
-                [&player](const auto &obj) {
+    physicalObjects.erase( std::remove_if(physicalObjects.begin(), physicalObjects.end(), 
+                [&player](const auto &obj)
+                {
                 if (obj == player)
                 return false;
 
                 auto *entity = dynamic_cast<Entity *>(obj.get());
-                if (entity && entity->isMarkedForDeath()) {
+                if (entity && entity->isMarkedForDeath())
+                {
                 killCount++;
                 std::cout << "Kill Count: " << killCount << std::endl;
                 }
@@ -463,28 +490,28 @@ void updateGame(std::shared_ptr<Player> player,
                 }),
             physicalObjects.end());
 }
-void updateUI(sf::RenderWindow &window,
-        std::vector<std::unique_ptr<UIElement>> &UIElements) {
-    window.setView(window.getDefaultView());
+
+void updateUI(sf::RenderWindow &window, sf::View uiView, std::vector<std::unique_ptr<UIElement>> &UIElements)
+{
+    uiView.setViewport(sf::FloatRect({0, 0}, {1, 1}));
+    window.setView(uiView);
     for (auto &element : UIElements) {
         element->update(window);
     }
 }
 
-void updateMinimap(sf::RenderWindow &window, Minimap &minimap) {
+void updateMinimap(sf::RenderWindow &window, Minimap &minimap)
+{
     minimap.updateViewport();
     window.setView(*minimap.getView());
     minimap.update(window);
 }
 
-void drawGame(sf::RenderWindow &window, sf::View &view,
+void drawGame(sf::RenderWindow &window,
         std::shared_ptr<Player> player,
         std::vector<std::unique_ptr<VisualObject>> &visualObjects,
-        std::vector<std::shared_ptr<PhysicalObject>> &physicalObjects) {
-    // Get view in correct spot
-    view.setCenter(player->getPosition());
-    window.setView(view);
-
+        std::vector<std::shared_ptr<PhysicalObject>> &physicalObjects)
+{
     // draw visual objects
     for (auto &obj : visualObjects) {
         obj->basicDraw(window);
@@ -500,15 +527,15 @@ void drawGame(sf::RenderWindow &window, sf::View &view,
     player->renderWeapons(window);
 }
 
-void drawUI(sf::RenderWindow &window,
-        std::vector<std::unique_ptr<UIElement>> &UIElements) {
-    window.setView(window.getDefaultView());
+void drawUI(sf::RenderWindow &window, std::vector<std::unique_ptr<UIElement>> &UIElements)
+{
     for (auto &element : UIElements) {
         element->render(window);
     }
 }
 
-void drawMinimap(sf::RenderWindow &window, Minimap &minimap) {
+void drawMinimap(sf::RenderWindow &window, Minimap &minimap)
+{
     window.setView(*minimap.getView());
     minimap.render(window);
 }
@@ -517,7 +544,8 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>> &visualObjects,
         std::vector<std::shared_ptr<PhysicalObject>> &physicalObjects,
         std::vector<std::shared_ptr<Interactable>> &interactableObjects,
         std::vector<std::shared_ptr<Hazardous>> &hazardousObjects,
-        const std::shared_ptr<Player> &player) {
+        const std::shared_ptr<Player> &player)
+{
     // temporary
     hazardousObjects.clear();
 
@@ -566,7 +594,8 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>> &visualObjects,
     // physicalObjects.push_back(std::make_shared<Ball>(Ball(sf::Vector2f(914,
     // 340))));
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; i++)
+    {
         physicalObjects.push_back(
                 std::make_shared<Ball>(Ball(sf::Vector2f(distX(rng), distY(rng)))));
     }
@@ -596,7 +625,8 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>> &visualObjects,
 
     // int numEnemies = 600; // approx max without lag (pre weapon addition)
     int numEnemies = 10;
-    for (int i = 0; i < numEnemies; i++) {
+    for (int i = 0; i < numEnemies; i++)
+    {
         auto eR = std::make_shared<Enemy1>(
                 Enemy1(sf::Vector2f(distX(rng), distY(rng)), player));
         physicalObjects.push_back(eR);
@@ -606,14 +636,30 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>> &visualObjects,
     }
 }
 
-void setupUI(std::vector<std::unique_ptr<UIElement>> &UIElements,
-        std::shared_ptr<Player> &player) {
-    // health bar
+void setupUI(std::vector<std::unique_ptr<UIElement>> &UIElements, std::shared_ptr<Player> &player)
+{
     UIElements.push_back(std::make_unique<UIHealth>(UIHealth(player)));
     UIElements.push_back(std::make_unique<UIKillCount>(UIKillCount(player)));
 }
 
-int main() {
+void updateViews(float width, float height, std::shared_ptr<Player> &player,
+        sf::View& playerView, sf::View& uiView)
+{
+    windowWidth = width;
+    windowHeight = height;
+    viewWidth = windowWidth;
+    viewHeight = windowHeight;
+
+    playerView.setSize({(float)windowWidth, (float)windowHeight});
+    uiView.setSize({(float)windowWidth, (float)windowHeight});
+    playerView.setCenter(player->getPosition());
+
+    uiView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
+    playerView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
+}
+
+int main()
+{
     initializeTextures();
 
     // setup game objects
@@ -627,8 +673,7 @@ int main() {
     std::vector<std::shared_ptr<Interactable>> interactableObjects;
     std::vector<std::shared_ptr<Hazardous>> hazardousObjects;
     physicalObjects.push_back(player);
-    setupGame(visualObjects, physicalObjects, interactableObjects,
-            hazardousObjects, player);
+    setupGame(visualObjects, physicalObjects, interactableObjects, hazardousObjects, player);
 
     // Resolution Manager
     ResolutionManager resolutionManager;
@@ -647,18 +692,23 @@ int main() {
     window.setVerticalSyncEnabled(true);
     window.setPosition(windowPos);
 
-    // primary view
+    // UI View
+    sf::View uiView({static_cast<float>(resolutionManager.getCurrentResolution().width) / 2.f, static_cast<float>(resolutionManager.getCurrentResolution().height) / 2.f},
+            {static_cast<float>(resolutionManager.getCurrentResolution().width), static_cast<float>(resolutionManager.getCurrentResolution().height)});
+    uiView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
+    window.setView(uiView);
+
+    // gaming view
     sf::View playerView(player->getPosition() + player->getSprite().getOrigin(),
             {(float)viewWidth, (float)viewHeight});
     playerView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
-    window.setView(playerView);
 
     // minimap view
     std::shared_ptr<sf::View> minimapView = std::make_shared<sf::View>(
             sf::View(sf::Vector2f(0, 0), {worldWidth, worldHeight}));
     minimapView->setCenter({worldWidth / 2.f, worldHeight / 2.f});
     minimapView->setViewport(sf::FloatRect({0, 0}, {0, 0}));
-    auto minimap = std::make_unique<Minimap>(Minimap(player, minimapView));
+    std::unique_ptr<Minimap> minimap = std::make_unique<Minimap>(Minimap(player, minimapView));
 
     // time
     sf::Clock clock;
@@ -668,14 +718,12 @@ int main() {
     QuadTree quadTree(0, sf::FloatRect(sf::Vector2f(0, 0),
                 sf::Vector2f(worldWidth, worldHeight)));
 
-
     // Main menu
     MainMenu mainMenu;
     SettingsScreen settingsScreen(resolutionManager);
     GameOverScreen gameOverScreen;
     mainMenu.updateLayout(window.getSize());
     settingsScreen.updateLayout(window.getSize());
-    // settingsScreen.updateLayout(window);
     gameOverScreen.updateLayout(window.getSize());
     GameState currentState = GameState::MainMenu;
 
@@ -774,12 +822,9 @@ int main() {
             }
             else if(const auto *resized = event->getIf<sf::Event::Resized>())
             {
-                // theoretically is obsolete now, but keeping code here just in case of resize event.
-                windowWidth = resized->size.x;
-                windowHeight = resized->size.y;
-                viewWidth = windowWidth;
-                viewHeight = windowHeight;
-                playerView.setSize({(float)windowWidth, (float)windowHeight});
+                updateViews(resized->size.x, resized->size.y, player, playerView, uiView);
+
+                updateUI(window, uiView, UIElements);
                 mainMenu.updateLayout(window.getSize());
                 settingsScreen.updateLayout(window.getSize());
                 gameOverScreen.updateLayout(window.getSize());
@@ -800,7 +845,7 @@ int main() {
                     {
                         updateGame(player, visualObjects, physicalObjects, interactableObjects,
                                 hazardousObjects, quadTree);
-                        updateUI(window, UIElements);
+                        updateUI(window, uiView, UIElements);
                         updateMinimap(window, *minimap);
 
                         timeAccumulator -= FixedDeltaTime;
@@ -810,11 +855,13 @@ int main() {
                     {
                         timeAccumulator = 0;
                     }
+                    playerView.setCenter(player->getPosition());
                     break;
                 }
             case(GameState::MainMenu):
                 {
                     mainMenu.handleHover(sf::Mouse::getPosition(window));
+                    updateViews(windowWidth, windowHeight, player, playerView, uiView);
                     break;
                 }
             case(GameState::Settings):
@@ -823,11 +870,13 @@ int main() {
 
                     const auto& res = resolutionManager.getCurrentResolution();
 
+                    updateViews(windowWidth, windowHeight, player, playerView, uiView);
+
                     window.setSize({res.width, res.height});
-                    playerView.setSize({(float)windowWidth, (float)windowHeight});
+
+                    updateViews(res.width, res.height, player, playerView, uiView);
                     mainMenu.updateLayout(window.getSize());
                     settingsScreen.updateLayout(window.getSize());
-                    // settingsScreen.updateLayout(window);
                     gameOverScreen.updateLayout(window.getSize());
                     break;
                 }
@@ -850,18 +899,30 @@ int main() {
         {
             case(GameState::Playing):
                 {
-                    drawGame(window, playerView, player, visualObjects, physicalObjects);
+                    window.setView(playerView);
+                    drawGame(window, player, visualObjects, physicalObjects);
+
+                    window.setView(uiView);
                     drawUI(window, UIElements);
+
                     drawMinimap(window, *minimap);
                     break;
                 }
             case(GameState::MainMenu):
                 {
+                    uiView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
+                    uiView.setSize({static_cast<float>(windowWidth), static_cast<float>(windowHeight)});
+                    uiView.setCenter({windowWidth / 2.f, windowHeight / 2.f});
+                    window.setView(uiView);
                     mainMenu.render(window);
                     break;
                 }
             case(GameState::Settings):
                 {
+                    uiView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
+                    uiView.setSize({static_cast<float>(windowWidth), static_cast<float>(windowHeight)});
+                    uiView.setCenter({windowWidth / 2.f, windowHeight / 2.f});
+                    window.setView(uiView);
                     settingsScreen.render(window);
                     break;
                 }
@@ -871,7 +932,8 @@ int main() {
                 }
             case(GameState::GameOver):
                 {
-                    drawGame(window, playerView, player, visualObjects, physicalObjects);
+                    window.setView(uiView);
+                    drawGame(window, player, visualObjects, physicalObjects);
 
                     sf::RectangleShape overlay({(float)windowWidth, (float)windowHeight});
                     overlay.setFillColor(sf::Color(0, 0, 0, 150));
