@@ -523,8 +523,8 @@ void drawGame(sf::RenderWindow &window,
     }
 
     // draw the player
-    player->draw(window);
     player->renderWeapons(window);
+    player->draw(window);
 }
 
 void drawUI(sf::RenderWindow &window, std::vector<std::unique_ptr<UIElement>> &UIElements)
@@ -932,8 +932,13 @@ int main()
                 }
             case(GameState::GameOver):
                 {
-                    window.setView(uiView);
+                    window.setView(playerView);
                     drawGame(window, player, visualObjects, physicalObjects);
+
+                    uiView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
+                    uiView.setSize({static_cast<float>(windowWidth), static_cast<float>(windowHeight)});
+                    uiView.setCenter({windowWidth / 2.f, windowHeight / 2.f});
+                    window.setView(uiView);
 
                     sf::RectangleShape overlay({(float)windowWidth, (float)windowHeight});
                     overlay.setFillColor(sf::Color(0, 0, 0, 150));

@@ -66,7 +66,6 @@ class GameOverScreen
 
         void render(sf::RenderWindow& window)
         {
-            window.setView(window.getDefaultView());
             window.draw(m_gameOverText);
             window.draw(m_restartBg);
             window.draw(m_restartButton);
