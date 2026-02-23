@@ -13,20 +13,23 @@ LIBS = -lsfml-graphics -lsfml-window -lsfml-system
 
 #Object files
 
-OBJS = main.o globals.o VisualObject.o HealthCrate.o Ball.o Player.o Spikey.o Enemy1.o CircleWeapon.o Minimap.o UIHealth.o UIKillCount.o QuadTree.o
+OBJS = main.o globals.o Image.o DamageNum.o HealthCrate.o Ball.o Player.o Spikey.o Enemy1.o CircleWeapon.o Minimap.o UIHealth.o UIKillCount.o QuadTree.o
 all: main
 
 main: $(OBJS)
 	$(CXX) $(OBJS) -o main $(LDFLAGS) $(LIBS)
 
-main.o: main.cpp globals.h enums.h MainMenu.h SettingsScreen.h GameOverScreen.h Resolution.h BasicObject.h VisualObject.h PhysicalObject.h Ball.h HealthCrate.h Entity.h Player.h Spikey.h Enemy.h Enemy1.h CircleWeapon.h Minimap.h UIElement.h UIHealth.h UIKillCount.h QuadTree.h Interactable.h Hazardous.h
+main.o: main.cpp globals.h enums.h MainMenu.h SettingsScreen.h GameOverScreen.h Resolution.h BasicObject.h VisualObject.h Image.h DamageNum.h PhysicalObject.h Ball.h HealthCrate.h Entity.h Player.h Spikey.h Enemy.h Enemy1.h CircleWeapon.h Minimap.h UIElement.h UIHealth.h UIKillCount.h QuadTree.h Interactable.h Hazardous.h
 	$(CXX) $(CXXFLAGS) -c main.cpp
 
 globals.o: globals.cpp globals.h enums.h
 	$(CXX) $(CXXFLAGS) -c globals.cpp
 
-VisualObject.o: VisualObject.cpp VisualObject.h BasicObject.h globals.h enums.h
-	$(CXX) $(CXXFLAGS) -c VisualObject.cpp
+Image.o: Image.cpp Image.h VisualObject.h globals.h enums.h
+	$(CXX) $(CXXFLAGS) -c Image.cpp
+
+DamageNum.o: DamageNum.cpp DamageNum.h VisualObject.h globals.h enums.h
+	$(CXX) $(CXXFLAGS) -c DamageNum.cpp
 
 HealthCrate.o: HealthCrate.cpp HealthCrate.h Crate.h VisualObject.h Interactable.h globals.h enums.h
 	$(CXX) $(CXXFLAGS) -c HealthCrate.cpp

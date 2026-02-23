@@ -8,11 +8,28 @@ class VisualObject : public BasicObject
 protected:
 
 public:
-	VisualObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture);
-	VisualObject(const VisualObject& other); // copy constructor
-	VisualObject(VisualObject&& other) noexcept; // move constructor
+	VisualObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture)
+        : BasicObject(position, size, rotation, renderLayer, texture)
+    {
+    }
+	VisualObject(const VisualObject& other)
+        : BasicObject(other)
+    {
+    }
+    VisualObject(VisualObject&& other) noexcept
+        : BasicObject(std::move(other))
+        {
+        }
 
-	virtual void visualUpdate(float deltaTime, sf::Vector2f relationalVelocity);
+	virtual void visualUpdate(float deltaTime, sf::Vector2f relationalVelocity)
+    {
+        VisualObject::basicUpdate(deltaTime, relationalVelocity);
+    }
+    virtual void draw(sf::RenderWindow& window)
+    {
+        VisualObject::basicDraw(window);
+    }
+
 };
 
 #endif

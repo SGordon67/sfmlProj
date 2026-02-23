@@ -1,4 +1,5 @@
 #include "CircleWeapon.h"
+#include "Image.h"
 #include "MainMenu.h"
 #include "Minimap.h"
 #include "QuadTree.h"
@@ -471,7 +472,7 @@ void updateGame(std::shared_ptr<Player> player,
     // update visual objects then UI
     for (auto &obj : visualObjects)
     {
-        obj->basicUpdate(FixedDeltaTime, player->getVelocity());
+        obj->visualUpdate(FixedDeltaTime, player->getVelocity());
     }
 
     physicalObjects.erase( std::remove_if(physicalObjects.begin(), physicalObjects.end(), 
@@ -514,7 +515,7 @@ void drawGame(sf::RenderWindow &window,
 {
     // draw visual objects
     for (auto &obj : visualObjects) {
-        obj->basicDraw(window);
+        obj->draw(window);
     }
 
     // draw physical objects
@@ -564,9 +565,9 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>> &visualObjects,
     float bRotation = M_PI / 2;
     RenderLayer bRenderLayer = RenderLayer::FarBackground;
     RenderLayer bRenderLayer2 = RenderLayer::CloseBackground;
-    VisualObject bg(bPosition, bSize, bRotation, bRenderLayer,
+    Image bg(bPosition, bSize, bRotation, bRenderLayer,
             &farBackgroundTexture);
-    VisualObject fg(bPosition, bSize, bRotation, bRenderLayer2,
+    Image fg(bPosition, bSize, bRotation, bRenderLayer2,
             &closeBackgroundTexture);
     visualObjects.push_back(std::make_unique<VisualObject>(bg));
     visualObjects.push_back(std::make_unique<VisualObject>(fg));
