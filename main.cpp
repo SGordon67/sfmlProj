@@ -661,6 +661,7 @@ void updateViews(float width, float height, std::shared_ptr<Player> &player,
 
 int main()
 {
+    srand(static_cast<unsigned>(time(0)));
     initializeTextures();
 
     // setup game objects
