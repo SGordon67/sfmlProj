@@ -500,18 +500,18 @@ void updateGame(std::shared_ptr<Player> player,
 
 void updateUI(sf::RenderWindow &window, sf::View uiView, std::vector<std::unique_ptr<UIElement>> &UIElements)
 {
-    uiView.setViewport(sf::FloatRect({0, 0}, {1, 1}));
+    uiView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
     window.setView(uiView);
     for (auto &element : UIElements) {
         element->update(window);
     }
 }
 
-void updateMinimap(sf::RenderWindow &window, Minimap &minimap)
+void updateMinimap(sf::RenderWindow &window, Minimap &minimap, sf::Vector2f playerViewSize)
 {
     minimap.updateViewport();
     window.setView(*minimap.getView());
-    minimap.update(window);
+    minimap.update(window, playerViewSize);
 }
 
 void drawGame(sf::RenderWindow &window,
@@ -658,11 +658,12 @@ void updateViews(float width, float height, std::shared_ptr<Player> &player,
     viewHeight = windowHeight;
 
     playerView.setSize({(float)windowWidth, (float)windowHeight});
-    uiView.setSize({(float)windowWidth, (float)windowHeight});
     playerView.setCenter(player->getPosition());
-
-    uiView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
     playerView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
+
+    uiView.setSize({static_cast<float>(windowWidth), static_cast<float>(windowHeight)});
+    uiView.setCenter({windowWidth / 2.f, windowHeight / 2.f});
+    uiView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
 }
 
 int main()
@@ -823,7 +824,11 @@ int main()
                     }
                 }
             }
-            if (event->is<sf::Event::Closed>() || player->isPressed(Button::Escape))
+            if (event->is<sf::Event::Closed>())
+            {
+                window.close();
+            }
+            if (player->isPressed(Button::Escape))
             {
                 switch(currentState)
                 {
@@ -859,12 +864,18 @@ int main()
             }
             else if(const auto *resized = event->getIf<sf::Event::Resized>())
             {
-                updateViews(resized->size.x, resized->size.y, player, playerView, uiView);
+                windowWidth = resized->size.x;
+                windowHeight = resized->size.y;
+                viewWidth = windowWidth;
+                viewHeight = windowHeight;
+
+                updateViews(windowWidth, windowHeight, player, playerView, uiView);
 
                 updateUI(window, uiView, UIElements);
                 mainMenu.updateLayout(window.getSize());
                 settingsScreen.updateLayout(window.getSize());
                 gameOverScreen.updateLayout(window.getSize());
+
             }
         }
 
@@ -883,7 +894,7 @@ int main()
                         updateGame(player, visualObjects, physicalObjects, interactableObjects,
                                 hazardousObjects, quadTree);
                         updateUI(window, uiView, UIElements);
-                        updateMinimap(window, *minimap);
+                        updateMinimap(window, *minimap, playerView.getSize());
 
                         timeAccumulator -= FixedDeltaTime;
                         updateCount++;
@@ -971,6 +982,8 @@ int main()
                 {
                     window.setView(playerView);
                     drawGame(window, player, visualObjects, physicalObjects);
+                    window.setView(uiView);
+                    drawUI(window, UIElements);
 
                     uiView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
                     uiView.setSize({static_cast<float>(windowWidth), static_cast<float>(windowHeight)});

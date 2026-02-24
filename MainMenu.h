@@ -56,15 +56,6 @@ class MainMenu {
                     titleBounds.position.y + titleBounds.size.y / 2.f});
             m_title.setPosition({windowSize.x / 2.f, windowSize.y / 3.f});
 
-
-            // // in case of window resize
-            // m_title.setCharacterSize(windowSize.y / 5);
-            // sf::FloatRect titleBounds = m_title.getGlobalBounds();
-            // m_title.setPosition({((windowSize.x / 2.f) - (m_title.getLocalBounds().size.x)), 
-            // ((windowSize.y / 3.f) - (m_title.getCharacterSize() / 2.f))});
-
-
-
             m_startButtonText.setCharacterSize(windowSize.y / 10);
             m_startButtonBg.setSize({(windowSize.x * buttonWidth), (windowSize.y * buttonHeight)});
             m_startButtonBg.setPosition({(windowSize.x / 2.f) - (m_startButtonBg.getSize().x / 2.f), 
