@@ -24,11 +24,11 @@ class Spikey : public Entity, public Hazardous
 
         int m_damage;
     public:
-        Spikey();
-        Spikey(sf::Vector2f position);
+        Spikey(std::vector<std::unique_ptr<VisualObject>>* m_visualObjects);
+        Spikey(sf::Vector2f position, std::vector<std::unique_ptr<VisualObject>>* m_visualObjects);
         Spikey(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
                 float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, float drag,
-                int hp, int maxHP, int damage);
+                int hp, int maxHP, std::vector<std::unique_ptr<VisualObject>>* m_visualObjects, int damage);
         Spikey(const Spikey& other); // copy constructor
         Spikey(Spikey&& other) noexcept; // move constructor
 

@@ -8,6 +8,7 @@
 #include "Player.h"
 #include "Entity.h"
 #include "Hazardous.h"
+#include "VisualObject.h"
 #include "globals.h"
 #include <memory>
 
@@ -19,10 +20,11 @@ private:
 public:
     Enemy(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
             float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, float drag,
-            int hp, int maxHP, int damage, std::shared_ptr<Player> player)
+            int hp, int maxHP, std::vector<std::unique_ptr<VisualObject>>* visualObjects, 
+            int damage, std::shared_ptr<Player> player)
         : Entity(position, size, rotation, renderLayer, texture, 
                 mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, drag,
-                hp, maxHP)
+                hp, maxHP, visualObjects)
           , m_damage(damage)
           , m_player(player)
     {

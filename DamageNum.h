@@ -9,12 +9,13 @@ class DamageNum : public VisualObject
 {
 protected:
     sf::Text m_damageText;
-    sf::Color m_damageColor = sf::Color::Red;
+    sf::Color m_damageColor = sf::Color::Yellow;
+    float m_damageTextSize = 9;
 
-    float m_yVelocity = 1;
+    float m_yVelocity = -1;
     float m_gravity = 0.067; // ~ 1 / (ttl / 2) (half the time up/down)
-    float m_xVelocity = 1;
-    float m_xDecay = 0.01;
+    float m_xVelocity = 0.4;
+    float m_xDecay = 0.05;
 
     float m_ttl = 30; // time to live
 
@@ -31,6 +32,8 @@ public:
 
     void setYVelocity(float velocity);
     void setXVelocity(float velocity);
+
+    void decrementTTL();
 
     void updateYVelocity();
     void updateXVelocity();

@@ -1,7 +1,9 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
+#include "DamageNum.h"
 #include "PhysicalObject.h"
+#include "VisualObject.h"
 #include <string>
 
 class Entity : public PhysicalObject
@@ -10,17 +12,19 @@ protected:
 	int m_hp;
 	int m_maxHP;
     bool m_markedForDeath;
+    std::vector<std::unique_ptr<VisualObject>>* m_visualObjects;
 public:
 
-	Entity(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
+    Entity(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
             float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, float drag,
-            int hp, int maxHP)
-			: PhysicalObject(position, size, rotation, renderLayer, texture, 
-                    mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, drag)
-			  , m_hp(hp)
-			  , m_maxHP(maxHP)
-              , m_markedForDeath(false)
-	{
+            int hp, int maxHP, std::vector<std::unique_ptr<VisualObject>>* visualObjects)
+        : PhysicalObject(position, size, rotation, renderLayer, texture, 
+                mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, drag)
+          , m_hp(hp)
+          , m_maxHP(maxHP)
+          , m_markedForDeath(false)
+          , m_visualObjects(visualObjects)
+    {
 	}
 
 	int getHP() const
@@ -52,6 +56,9 @@ public:
 	void reduceHealth(int damage)
 	{
         std::string output = "Entity (" + std::to_string(getObjectID()) + ") damaged, (" + std::to_string(getHP()) + " -> ";
+
+        m_visualObjects->push_back(std::make_unique<DamageNum>(getPosition(), damage));
+
         setHP(getHP() - damage);
         if(getHP() <= 0)
         {

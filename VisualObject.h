@@ -6,6 +6,7 @@
 class VisualObject : public BasicObject
 {
     protected:
+        bool m_markedForDelete = false;
 
     public:
         VisualObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture)
@@ -20,6 +21,15 @@ class VisualObject : public BasicObject
             : BasicObject(std::move(other))
             {
             }
+
+        bool getMarkedForDelete()
+        {
+            return m_markedForDelete;
+        }
+        void markForDelete()
+        {
+            m_markedForDelete = true;
+        }
 
         virtual void visualUpdate(float deltaTime, sf::Vector2f relationalVelocity)
         {

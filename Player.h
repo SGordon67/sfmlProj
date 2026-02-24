@@ -9,6 +9,8 @@ class Player : public Entity
 {
     private:
         // defaults
+        static constexpr sf::Vector2f d_playerPosition = {900, 500}; // default sorta near the middle of the game
+        // static constexpr sf::Vector2f d_playerPosition = {35, 35}; // testing damage against spikeys in corners
         static constexpr sf::Vector2i d_playerSize = {24, 30};
         static constexpr int d_playerMass = 10;
         static constexpr float d_playerRadius = d_playerSize.x/2.f;
@@ -25,11 +27,12 @@ class Player : public Entity
         float m_angularAcceleration;
         std::array<bool, (size_t)Button::Count> m_buttons{false};
         std::array<std::unique_ptr<Weapon>, 4> m_weapons;
+
     public:
-        Player();
+        Player(std::vector<std::unique_ptr<VisualObject>>* m_visualObjects);
         Player(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
                 float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, float drag,
-                int hp, int maxHP, float angularAccleration);
+                int hp, int maxHP, std::vector<std::unique_ptr<VisualObject>>* m_visualObjects, float angularAccleration);
 
         float getAngularAcceleration();
         void setAngularAcceleration(float angularAcceleration);

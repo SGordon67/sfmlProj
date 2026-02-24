@@ -24,7 +24,6 @@
 #include "PhysicalObject.h"
 #include "Player.h"
 #include "SFML/Window/Mouse.hpp"
-#include "SFML/Window/WindowEnums.hpp"
 #include "SettingsScreen.h"
 #include "Spikey.h"
 #include "UIElement.h"
@@ -475,21 +474,28 @@ void updateGame(std::shared_ptr<Player> player,
         obj->visualUpdate(FixedDeltaTime, player->getVelocity());
     }
 
-    physicalObjects.erase( std::remove_if(physicalObjects.begin(), physicalObjects.end(), 
+    physicalObjects.erase(std::remove_if(physicalObjects.begin(), physicalObjects.end(), 
                 [&player](const auto &obj)
                 {
-                if (obj == player)
-                return false;
+                    if (obj == player)
+                        return false;
 
-                auto *entity = dynamic_cast<Entity *>(obj.get());
-                if (entity && entity->isMarkedForDeath())
-                {
-                killCount++;
-                std::cout << "Kill Count: " << killCount << std::endl;
-                }
-                return entity && entity->isMarkedForDeath();
+                    auto *entity = dynamic_cast<Entity *>(obj.get());
+                    if (entity && entity->isMarkedForDeath())
+                    {
+                        killCount++;
+                        std::cout << "Kill Count: " << killCount << std::endl;
+                    }
+                    return entity && entity->isMarkedForDeath();
                 }),
             physicalObjects.end());
+
+    visualObjects.erase(std::remove_if(visualObjects.begin(), visualObjects.end(), 
+                [&player](const auto &obj)
+                {
+                    return obj->getMarkedForDelete();
+                }),
+            visualObjects.end());
 }
 
 void updateUI(sf::RenderWindow &window, sf::View uiView, std::vector<std::unique_ptr<UIElement>> &UIElements)
@@ -612,11 +618,11 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>> &visualObjects,
     // distY(rng)))); physicalObjects.push_back(h0);
 
     // a spikey on the four courners
-    auto h1 = std::make_shared<Spikey>(Spikey({10, 10}));
-    auto h3 = std::make_shared<Spikey>(Spikey({worldWidth - 10, 10}));
-    auto h2 = std::make_shared<Spikey>(Spikey({10, worldHeight - 10}));
+    auto h1 = std::make_shared<Spikey>(Spikey({10, 10}, &visualObjects));
+    auto h3 = std::make_shared<Spikey>(Spikey({worldWidth - 10, 10}, &visualObjects));
+    auto h2 = std::make_shared<Spikey>(Spikey({10, worldHeight - 10}, &visualObjects));
     auto h4 =
-        std::make_shared<Spikey>(Spikey({worldWidth - 10, worldHeight - 10}));
+        std::make_shared<Spikey>(Spikey({worldWidth - 10, worldHeight - 10}, &visualObjects));
     physicalObjects.push_back(h1);
     physicalObjects.push_back(h2);
     physicalObjects.push_back(h3);
@@ -629,7 +635,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>> &visualObjects,
     for (int i = 0; i < numEnemies; i++)
     {
         auto eR = std::make_shared<Enemy1>(
-                Enemy1(sf::Vector2f(distX(rng), distY(rng)), player));
+                Enemy1(sf::Vector2f(distX(rng), distY(rng)), player, &visualObjects));
         physicalObjects.push_back(eR);
 
         // no longer needed for physical hazards, will be needed for visual hazards
@@ -664,18 +670,17 @@ int main()
     srand(static_cast<unsigned>(time(0)));
     initializeTextures();
 
-    // setup game objects
-    // player
-    std::shared_ptr<Player> player = std::make_shared<Player>(Player());
-    // add weapons for testing
-    player->addWeapon(std::make_unique<CircleWeapon>(), 0);
-
+    // setup game architecture
     std::vector<std::unique_ptr<VisualObject>> visualObjects;
     std::vector<std::shared_ptr<PhysicalObject>> physicalObjects;
     std::vector<std::shared_ptr<Interactable>> interactableObjects;
     std::vector<std::shared_ptr<Hazardous>> hazardousObjects;
+    // player
+    std::shared_ptr<Player> player = std::make_shared<Player>(Player(&visualObjects));
     physicalObjects.push_back(player);
     setupGame(visualObjects, physicalObjects, interactableObjects, hazardousObjects, player);
+    // add weapons for testing
+    player->addWeapon(std::make_unique<CircleWeapon>(), 0);
 
     // Resolution Manager
     ResolutionManager resolutionManager;
@@ -737,7 +742,7 @@ int main()
         hazardousObjects.clear();
         UIElements.clear();
 
-        player = std::make_shared<Player>();
+        player = std::make_shared<Player>(&visualObjects);
         player->addWeapon(std::make_unique<CircleWeapon>(), 0);
         physicalObjects.push_back(player);
 
@@ -820,7 +825,37 @@ int main()
             }
             if (event->is<sf::Event::Closed>() || player->isPressed(Button::Escape))
             {
-                window.close();
+                switch(currentState)
+                {
+                    case(GameState::MainMenu):
+                        {
+                            window.close();
+                            break;
+                        }
+                    case(GameState::Playing):
+                        {
+                            resetGame();
+                            currentState = GameState::MainMenu;
+                            break;
+                        }
+                    case(GameState::Settings):
+                        {
+                            resetGame();
+                            currentState = GameState::MainMenu;
+                            break;
+                        }
+                    case(GameState::GameOver):
+                        {
+                            resetGame();
+                            currentState = GameState::MainMenu;
+                            break;
+                        }
+                    case GameState::Paused:
+                        {
+                            break;
+                        }
+                }
+                // window.close();
             }
             else if(const auto *resized = event->getIf<sf::Event::Resized>())
             {

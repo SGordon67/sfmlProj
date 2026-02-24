@@ -23,11 +23,12 @@ class Enemy1 : public Enemy
         static constexpr int d_enemy1MaxHP = 100;
         static constexpr int d_enemy1Damage = 10;
     public:
-        Enemy1(std::shared_ptr<Player> player);
-        Enemy1(sf::Vector2f position, std::shared_ptr<Player> player);
+        Enemy1(std::shared_ptr<Player> player, std::vector<std::unique_ptr<VisualObject>>* visualObjects);
+        Enemy1(sf::Vector2f position, std::shared_ptr<Player> player, std::vector<std::unique_ptr<VisualObject>>* visualObjects);
         Enemy1(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
                 float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, float drag,
-                int hp, int maxHP, int damage, std::shared_ptr<Player> player);
+                int hp, int maxHP, std::vector<std::unique_ptr<VisualObject>>* visualObjects, 
+                int damage, std::shared_ptr<Player> player);
         Enemy1(const Enemy1& other); // copy constructor
         Enemy1(Enemy1&& other) noexcept; // move constructor
 

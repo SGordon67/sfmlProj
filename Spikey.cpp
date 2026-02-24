@@ -4,26 +4,26 @@
 #include "SFML/System/Vector2.hpp"
 #include "globals.h"
 
-Spikey::Spikey()
+Spikey::Spikey(std::vector<std::unique_ptr<VisualObject>>* visualObjects)
     : Entity(sf::Vector2f(0.1, 0.1), d_spikeySize, M_PI/2, RenderLayer::Main, &spikeyTexture,
             d_spikeyMass, d_spikeyRadius, d_spikeyVelocity, d_spikeyAcceleration, d_spikeyAngularVelocity, d_spikeyMaxVelocity, d_spikeyDrag,
-            d_spikeyHP, d_spikeyMaxHP)
+            d_spikeyHP, d_spikeyMaxHP, visualObjects)
       , m_damage(10)
 {
 }
-Spikey::Spikey(sf::Vector2f position)
+Spikey::Spikey(sf::Vector2f position, std::vector<std::unique_ptr<VisualObject>>* visualObjects)
     : Entity(position, d_spikeySize, M_PI/2, RenderLayer::Main, &spikeyTexture,
             d_spikeyMass, d_spikeyRadius, d_spikeyVelocity, d_spikeyAcceleration, d_spikeyAngularVelocity, d_spikeyMaxVelocity, d_spikeyDrag,
-            d_spikeyHP, d_spikeyMaxHP)
+            d_spikeyHP, d_spikeyMaxHP, visualObjects)
       , m_damage(10)
 {
 }
 Spikey::Spikey(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
 	       float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, float drag,
-	       int hp, int maxHP, int damage)
+	       int hp, int maxHP, std::vector<std::unique_ptr<VisualObject>>* visualObjects, int damage)
 	: Entity(position, size, rotation, renderLayer, texture, 
             mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, drag,
-            hp, maxHP)
+            hp, maxHP, visualObjects)
 	, m_damage(damage)
 {
 }
