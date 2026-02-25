@@ -84,7 +84,8 @@ class MainMenu {
             return m_settingsButtonBg.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos));
         }
 
-        void render(sf::RenderWindow &window) {
+        void render(sf::RenderWindow &window)
+        {
             window.draw(m_title);
             window.draw(m_startButtonBg);
             window.draw(m_startButtonText);
@@ -92,16 +93,21 @@ class MainMenu {
             window.draw(m_settingsButtonText);
         }
 
-        void handleHover(sf::Vector2i mousePos) {
-            if (isStartButtonHovered(mousePos)) {
+        void handleHover(sf::Vector2i mousePos)
+        {
+            if (isStartButtonHovered(mousePos))
+            {
                 m_startButtonBg.setFillColor(sf::Color(80, 80, 200));
-            } else {
+            } else
+            {
                 m_startButtonBg.setFillColor(sf::Color(50, 50, 150));
             }
 
-            if (isSettingsButtonHovered(mousePos)) {
+            if (isSettingsButtonHovered(mousePos))
+            {
                 m_settingsButtonBg.setFillColor(sf::Color(80, 80, 200));
-            } else {
+            } else
+            {
                 m_settingsButtonBg.setFillColor(sf::Color(50, 50, 150));
             }
         }
