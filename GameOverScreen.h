@@ -55,7 +55,7 @@ class GameOverScreen
         void updateLayout(sf::Vector2u windowSize)
         {
             sf::FloatRect textBounds = m_gameOverText.getLocalBounds();
-            m_gameOverText.setPosition({windowSize.x / 2.f - textBounds.size.x / 2.f, windowSize.y / 3.f});
+            m_gameOverText.setPosition({windowSize.x / 2.f - textBounds.size.x / 2.f, windowSize.y / 5.f});
 
             m_restartButton.setCharacterSize(windowSize.y / 10);
             m_restartBg.setSize({(windowSize.x * buttonWidth), (windowSize.y * buttonHeight)});

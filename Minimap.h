@@ -15,7 +15,7 @@ class Minimap : public UIElement
         sf::Color m_backgroundColor = sf::Color(128, 128, 128);
         sf::RectangleShape m_viewRect;
         sf::Color m_viewColor = sf::Color::White;
-        float m_viewThicknessFraction = 80;
+        float m_viewThicknessFraction = 98;
         sf::CircleShape m_playerShape;
         sf::Color m_playerColor = sf::Color::Red;
         float m_playerSizeFraction = 50;

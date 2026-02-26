@@ -631,7 +631,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>> &visualObjects,
     // (non-physical) hazardousObjects.push_back(h1);
 
     // int numEnemies = 600; // approx max without lag (pre weapon addition)
-    int numEnemies = 10;
+    int numEnemies = 00;
     for (int i = 0; i < numEnemies; i++)
     {
         auto eR = std::make_shared<Enemy1>(
