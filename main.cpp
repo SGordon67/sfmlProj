@@ -24,6 +24,7 @@
 #include "PhysicalObject.h"
 #include "Player.h"
 #include "SFML/Window/Mouse.hpp"
+#include "SaveManager.h"
 #include "SettingsScreen.h"
 #include "Spikey.h"
 #include "UIElement.h"
@@ -611,7 +612,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>> &visualObjects,
     }
 
     // crates
-    auto c1 = std::make_shared<HealthCrate>(HealthCrate(sf::Vector2f(400, 400)));
+    auto c1 = std::make_shared<HealthCrate>(HealthCrate(sf::Vector2f(700, 400)));
     physicalObjects.push_back(c1);
     interactableObjects.push_back(c1);
 
@@ -669,10 +670,34 @@ void updateViews(float width, float height, std::shared_ptr<Player> &player,
     uiView.setViewport(sf::FloatRect({0.f, 0.f}, {1.f, 1.f}));
 }
 
+void gameOver(SaveData& saveData, int& killCount, GameState& currentState)
+{
+    if(killCount > saveData.highScore)
+    {
+        saveData.highScore = killCount;
+        SaveManager::save(saveData);
+        std::cout << "New high score: " << saveData.highScore << std::endl;
+    }
+    killCount = 0;
+    currentState = GameState::GameOver;
+}
+
 int main()
 {
     srand(static_cast<unsigned>(time(0)));
     initializeTextures();
+
+    // load save data
+    SaveData saveData = SaveManager::load();
+    int highScore = saveData.highScore;
+    std::cout << "Loaded high score: " << highScore << std::endl;
+
+    // RESET THE HIGHSCORE
+    // comment out for saving to be enabled
+    // saveData.highScore = 0;
+    // SaveManager::save(saveData);
+    // highScore = saveData.highScore;
+    // std::cout << "Resetting high score: " << highScore << std::endl;
 
     // setup game architecture
     std::vector<std::unique_ptr<VisualObject>> visualObjects;
@@ -755,6 +780,14 @@ int main()
         setupUI(UIElements, player);
         minimap = std::make_unique<Minimap>(Minimap(player, minimapView));
 
+        if(killCount > highScore)
+        {
+            highScore = killCount;
+            SaveData newData;
+            newData.highScore = highScore;
+            SaveManager::save(newData);
+            std::cout << "New high score: " << highScore << std::endl;
+        }
         killCount = 0;
     };
 
@@ -888,7 +921,9 @@ int main()
             case(GameState::Playing):
                 {
                     if (player->getHP() == 0)
-                        currentState = GameState::GameOver;
+                    {
+                        gameOver(saveData, killCount, currentState);
+                    }
 
                     int maxUpdates = 3;
                     int updateCount = 0;
