@@ -11,12 +11,13 @@ class HealthCrate : public Crate
 
     protected:
         int m_health;
+
     public:
         HealthCrate();
         HealthCrate(sf::Vector2f position);
         HealthCrate(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
                 float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, float drag,
-                float interactRadius, bool used, int value);
+                float interactRadius, bool used, sf::Texture* usedTexture, int value);
         HealthCrate(const HealthCrate& other); // copy constructor
         HealthCrate(HealthCrate&& other) noexcept; // move constructor
 

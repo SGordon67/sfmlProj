@@ -20,6 +20,7 @@ sf::Texture farBackgroundTexture;
 sf::Texture closeBackgroundTexture;
 sf::Texture meteorTexture;
 sf::Texture crateTexture;
+sf::Texture crateUsedTexture;
 sf::Texture spikeyTexture;
 sf::Texture playerTexture;
 sf::Texture enemyTexture;

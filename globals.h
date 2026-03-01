@@ -46,6 +46,7 @@ extern sf::Texture farBackgroundTexture;
 extern sf::Texture closeBackgroundTexture;
 extern sf::Texture meteorTexture;
 extern sf::Texture crateTexture;
+extern sf::Texture crateUsedTexture;
 extern sf::Texture spikeyTexture;
 extern sf::Texture playerTexture;
 extern sf::Texture enemyTexture;

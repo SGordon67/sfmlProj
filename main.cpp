@@ -79,6 +79,9 @@ void initializeTextures()
     if (!crateTexture.loadFromFile("art/basicCrate.png")) {
         std::cout << "Sprite not loaded :(" << std::endl;
     }
+    if (!crateUsedTexture.loadFromFile("art/basicCrateUsed.png")) {
+        std::cout << "Sprite not loaded :(" << std::endl;
+    }
     if (!spikeyTexture.loadFromFile("art/basicSpikey.png")) {
         std::cout << "Sprite not loaded :(" << std::endl;
     }
@@ -608,7 +611,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>> &visualObjects,
     }
 
     // crates
-    auto c1 = std::make_shared<HealthCrate>(HealthCrate(sf::Vector2f(100, 100)));
+    auto c1 = std::make_shared<HealthCrate>(HealthCrate(sf::Vector2f(400, 400)));
     physicalObjects.push_back(c1);
     interactableObjects.push_back(c1);
 

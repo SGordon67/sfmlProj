@@ -13,23 +13,26 @@ HealthCrate::HealthCrate()
     : Crate(sf::Vector2f(0, 0), d_crateSize, M_PI/2, RenderLayer::Main, &crateTexture,
             d_crateMass, d_crateRadius, d_crateVelocity, d_crateAcceleration, d_crateAngularVelocity, d_crateMaxVelocity, d_crateDrag,
             d_crateInteractRadius, false)
-      , m_health(d_healthCrateHealth)
+    , m_health(d_healthCrateHealth)
 {
+    m_usedTexture = &crateUsedTexture;
 }
 HealthCrate::HealthCrate(sf::Vector2f position)
     : Crate(position, d_crateSize, M_PI/2, RenderLayer::Main, &crateTexture,
             d_crateMass, d_crateRadius, d_crateVelocity, d_crateAcceleration, d_crateAngularVelocity, d_crateMaxVelocity, d_crateDrag,
             d_crateInteractRadius, false)
-      , m_health(d_healthCrateHealth)
+    , m_health(d_healthCrateHealth)
 {
+    m_usedTexture = &crateUsedTexture;
 }
 HealthCrate::HealthCrate(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
         float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, float drag,
-        float interactRadius, bool used, int health)
+        float interactRadius, bool used, sf::Texture* usedTexture, int health)
     : Crate(position, size, rotation, renderLayer, texture, mass, radius, velocity, acceleration, rotationVelocity, maxVelocity, drag,
             interactRadius, used)
-      , m_health(health)
+    , m_health(health)
 {
+    m_usedTexture = usedTexture;
 }
 HealthCrate::HealthCrate(const HealthCrate& other) // copy constructor
 	: Crate(other)
@@ -37,8 +40,8 @@ HealthCrate::HealthCrate(const HealthCrate& other) // copy constructor
 {
 }
 HealthCrate::HealthCrate(HealthCrate&& other) noexcept // move constructor
-	: Crate(std::move(other))
-	, m_health(other.m_health)
+    : Crate(std::move(other))
+    , m_health(other.m_health)
 {
 }
 
@@ -76,6 +79,7 @@ void HealthCrate::interact(std::shared_ptr<Player> player)
     if(m_used) return;
     // std::cout << "INTERACTION (C) -- " << player.getObjectID() << " | " << getObjectID() << std::endl;
 
-	m_used = true;
     player->increaseHealth(m_health);
+	m_used = true;
+    m_sprite.setTexture(*m_usedTexture);
 }

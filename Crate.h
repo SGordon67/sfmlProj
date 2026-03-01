@@ -23,6 +23,8 @@ class Crate : public PhysicalObject, public Interactable
 
         float m_interactRadius;
         bool m_used;
+        sf::Texture* m_usedTexture;
+
     public:
         Crate(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
                 float mass, float radius, sf::Vector2f velocity, float acceleration, float rotationVelocity, float maxVelocity, float drag,
@@ -36,12 +38,14 @@ class Crate : public PhysicalObject, public Interactable
             : PhysicalObject(other)
               , m_interactRadius(other.m_interactRadius)
               , m_used(other.m_used)
+              , m_usedTexture(other.m_usedTexture)
     {
     }
         Crate(Crate&& other) noexcept // copy constructor
             : PhysicalObject(std::move(other))
             , m_interactRadius(other.m_interactRadius)
             , m_used(other.m_used)
+            , m_usedTexture(other.m_usedTexture)
             {
             }
 

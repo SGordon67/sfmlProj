@@ -42,6 +42,7 @@ public:
 			  , m_size(size)
 			  , m_rotation(rotation)
 			  , m_renderLayer(renderLayer)
+              , m_texture(texture)
 			  , m_spriteRect(sf::Vector2i{0, 0}, size)
 			  , m_sprite(*texture, m_spriteRect)
 			  {
