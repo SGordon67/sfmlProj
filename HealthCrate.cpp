@@ -80,6 +80,5 @@ void HealthCrate::interact(std::shared_ptr<Player> player)
     // std::cout << "INTERACTION (C) -- " << player.getObjectID() << " | " << getObjectID() << std::endl;
 
     player->increaseHealth(m_health);
-	m_used = true;
-    m_sprite.setTexture(*m_usedTexture);
+    setUsed(true);
 }

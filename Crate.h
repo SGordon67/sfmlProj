@@ -64,6 +64,7 @@ class Crate : public PhysicalObject, public Interactable
         void setUsed(bool used)
         {
             m_used = used;
+            m_sprite.setTexture(*m_usedTexture);
         }
 
 
