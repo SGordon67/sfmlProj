@@ -25,7 +25,7 @@ main.o: main.cpp globals.h enums.h SaveManager.h MainMenu.h SettingsScreen.h Gam
 globals.o: globals.cpp globals.h enums.h
 	$(CXX) $(CXXFLAGS) -c globals.cpp
 
-SaveManager.o: SaveManager.cpp SaveManager.h
+SaveManager.o: SaveManager.cpp SaveManager.h globals.h enums.h
 	$(CXX) $(CXXFLAGS) -c SaveManager.cpp
 
 Image.o: Image.cpp Image.h VisualObject.h globals.h enums.h

@@ -55,8 +55,6 @@ public:
 
 	void reduceHealth(int damage)
 	{
-        std::string output = "Entity (" + std::to_string(getObjectID()) + ") damaged, (" + std::to_string(getHP()) + " -> ";
-
         m_visualObjects->push_back(std::make_unique<DamageNum>(getPosition(), damage));
 
         setHP(getHP() - damage);
@@ -65,9 +63,10 @@ public:
             m_hp = 0;
             markForDeath();
         }
-        output += std::to_string(getHP()) + ")";
 
-        std::cout << output << std::endl;
+        // std::string output = "Entity (" + std::to_string(getObjectID()) + ") damaged, (" + std::to_string(getHP()) + " -> ";
+        // output += std::to_string(getHP()) + ")";
+        // std::cout << output << std::endl;
 	}
 
 	void increaseHealth(int heal)

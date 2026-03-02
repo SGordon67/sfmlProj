@@ -635,7 +635,7 @@ void setupGame(std::vector<std::unique_ptr<VisualObject>> &visualObjects,
     // (non-physical) hazardousObjects.push_back(h1);
 
     // int numEnemies = 600; // approx max without lag (pre weapon addition)
-    int numEnemies = 00;
+    int numEnemies = 10;
     for (int i = 0; i < numEnemies; i++)
     {
         auto eR = std::make_shared<Enemy1>(
@@ -808,7 +808,7 @@ int main()
                 if (mouseButton->button == sf::Mouse::Button::Left)
                 {
                     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-                    std::cout << "Mouse clicked: (" << mousePos.x << ", " << mousePos.y << ")" << std::endl;
+                    // std::cout << "Mouse clicked: (" << mousePos.x << ", " << mousePos.y << ")" << std::endl;
 
                     switch(currentState)
                     {
