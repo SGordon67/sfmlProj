@@ -1,4 +1,4 @@
-#include "CircleWeapon.h"
+#include "FireballWeapon.h"
 #include "Entity.h"
 #include "Player.h"
 
@@ -6,46 +6,46 @@ extern bool detectIntersection(const sf::Vector2f& pos1, float size1, const sf::
 
 // Weapon(int damage, float cooldown, float size, sf::Vector2f velocity, float duration, float kb , float timeSince, bool active)
 
-CircleWeapon::CircleWeapon()
+FireballWeapon::FireballWeapon()
     : Weapon(10, 0.25, 100, {0, 0}, 0.1, 0, 0, false)
     , m_visualTimer(0.f)
     , m_visualDuration(m_cooldown) // visual effect always on
 {
-    Weapon::setName("CircleWeapon");
+    Weapon::setName("FireballWeapon");
     m_visualEffect.setRadius(m_size);
     m_visualEffect.setFillColor(sf::Color(255, 100, 100, 80));
     m_visualEffect.setOutlineThickness(3);
     m_visualEffect.setOutlineColor(sf::Color::Red);
     m_visualEffect.setOrigin({m_size, m_size});
 }
-CircleWeapon::CircleWeapon(int damage, float cooldown, float size)
+FireballWeapon::FireballWeapon(int damage, float cooldown, float size)
     : Weapon(damage, cooldown, size, {0, 0}, 0.1, 0, 0, false)
     , m_visualTimer(0.f)
     , m_visualDuration(0.25f)
 {
-    Weapon::setName("CircleWeapon");
+    Weapon::setName("FireballWeapon");
     m_visualEffect.setRadius(size);
     m_visualEffect.setFillColor(sf::Color(255, 100, 100, 255));
     m_visualEffect.setOutlineThickness(3);
     m_visualEffect.setOutlineColor(sf::Color::Red);
     m_visualEffect.setOrigin({m_size, m_size});
 }
-CircleWeapon::CircleWeapon(const CircleWeapon& other) // copy constructor
+FireballWeapon::FireballWeapon(const FireballWeapon& other) // copy constructor
 	: Weapon(other)
     , m_visualTimer(other.m_visualTimer)
     , m_visualDuration(other.m_visualDuration)
 {
-    Weapon::setName("CircleWeapon");
+    Weapon::setName("FireballWeapon");
 }
-CircleWeapon::CircleWeapon(CircleWeapon&& other) noexcept // move constructor
+FireballWeapon::FireballWeapon(FireballWeapon&& other) noexcept // move constructor
     : Weapon(std::move(other))
     , m_visualTimer(other.m_visualTimer)
     , m_visualDuration(other.m_visualDuration)
 {
-    Weapon::setName("CircleWeapon");
+    Weapon::setName("FireballWeapon");
 }
 
-void CircleWeapon::activate(Player& player, QuadTree& quadTree)
+void FireballWeapon::activate(Player& player, QuadTree& quadTree)
 {
     // visuals
     m_visualTimer = m_visualDuration;
@@ -68,7 +68,7 @@ void CircleWeapon::activate(Player& player, QuadTree& quadTree)
     }
 }
 
-void CircleWeapon::update(float deltaTime, Player& player, QuadTree& quadTree)
+void FireballWeapon::update(float deltaTime, Player& player, QuadTree& quadTree)
 {
     Weapon::update(deltaTime, player, quadTree);
     m_visualEffect.setPosition(player.getPosition());
@@ -78,10 +78,11 @@ void CircleWeapon::update(float deltaTime, Player& player, QuadTree& quadTree)
     }
 }
 
-void CircleWeapon::render(sf::RenderWindow& window)
+void FireballWeapon::render(sf::RenderWindow& window)
 {
     // std::cout << "Rendering weapon, timer: " << m_visualTimer << std::endl;
     if(m_visualTimer > 0)
         window.draw(m_visualEffect);
 }
+
 

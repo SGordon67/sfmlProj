@@ -13,7 +13,7 @@ LIBS = -lsfml-graphics -lsfml-window -lsfml-system
 
 #Object files
 
-OBJS = main.o globals.o SaveManager.o Image.o DamageNum.o HealthCrate.o Ball.o Player.o Spikey.o Enemy1.o CircleWeapon.o Minimap.o UIHealth.o UIKillCount.o QuadTree.o
+OBJS = main.o globals.o SaveManager.o Image.o DamageNum.o HealthCrate.o Ball.o Player.o Spikey.o Enemy1.o CircleWeapon.o FireballWeapon.o Minimap.o UIHealth.o UIKillCount.o QuadTree.o
 all: main
 
 main: $(OBJS)
@@ -51,6 +51,9 @@ Enemy1.o: Enemy1.cpp Enemy1.h Enemy.h globals.h enums.h
 
 CircleWeapon.o: CircleWeapon.cpp CircleWeapon.h Weapon.h globals.h enums.h
 	$(CXX) $(CXXFLAGS) -c CircleWeapon.cpp
+
+FireballWeapon.o: FireballWeapon.cpp FireballWeapon.h Weapon.h globals.h enums.h
+	$(CXX) $(CXXFLAGS) -c FireballWeapon.cpp
 
 Minimap.o: Minimap.cpp Minimap.h UIElement.h globals.h enums.h
 	$(CXX) $(CXXFLAGS) -c Minimap.cpp

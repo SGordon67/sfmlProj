@@ -1,9 +1,9 @@
-#ifndef CIRCLEWEAPON_H
-#define CIRCLEWEAPON_H
+#ifndef FIREBALLWEAPON_H
+#define FIREBALLWEAPON_H
 
 #include "Weapon.h"
 
-class CircleWeapon : public Weapon
+class FireballWeapon : public Weapon
 {
     protected:
         // from weapon
@@ -21,10 +21,10 @@ class CircleWeapon : public Weapon
         float m_visualTimer = 0.f;
         float m_visualDuration = 0.1f;
     public:
-        CircleWeapon();
-        CircleWeapon(int damage, float cooldown, float radius);
-        CircleWeapon(const CircleWeapon& other); // copy constructor
-        CircleWeapon(CircleWeapon&& other) noexcept; // move constructor
+        FireballWeapon();
+        FireballWeapon(int damage, float cooldown, float radius);
+        FireballWeapon(const FireballWeapon& other); // copy constructor
+        FireballWeapon(FireballWeapon&& other) noexcept; // move constructor
 
         float getRadius();
         void setRadius(float radius);
@@ -35,3 +35,4 @@ class CircleWeapon : public Weapon
 };
 
 #endif
+
