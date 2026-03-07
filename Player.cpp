@@ -96,7 +96,7 @@ void Player::updateWeapons(float deltaTime, QuadTree& quadTree)
     {
         if(weapon)
         {
-            // std::cout << "Updating weapon" << std::endl;
+            std::cout << "Updating weapon: " << weapon->getName() << std::endl;
             weapon->update(deltaTime, *this, quadTree);
         }
     }

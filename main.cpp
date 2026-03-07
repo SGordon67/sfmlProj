@@ -1,4 +1,5 @@
 #include "CircleWeapon.h"
+#include "FireballWeapon.h"
 #include "Image.h"
 #include "MainMenu.h"
 #include "Minimap.h"
@@ -710,6 +711,7 @@ int main()
     setupGame(visualObjects, physicalObjects, interactableObjects, hazardousObjects, player);
     // add weapons for testing
     player->addWeapon(std::make_unique<CircleWeapon>(), 0);
+    player->addWeapon(std::make_unique<FireballWeapon>(), 1);
 
     // Resolution Manager
     ResolutionManager resolutionManager;
@@ -773,6 +775,7 @@ int main()
 
         player = std::make_shared<Player>(&visualObjects);
         player->addWeapon(std::make_unique<CircleWeapon>(), 0);
+        player->addWeapon(std::make_unique<FireballWeapon>(), 1);
         physicalObjects.push_back(player);
 
         setupGame(visualObjects, physicalObjects, interactableObjects,
