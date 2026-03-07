@@ -50,6 +50,7 @@ extern sf::Texture crateUsedTexture;
 extern sf::Texture spikeyTexture;
 extern sf::Texture playerTexture;
 extern sf::Texture enemyTexture;
+extern sf::Texture fireballTexture;
 
 // fonts
 extern sf::Font font;

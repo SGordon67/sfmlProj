@@ -1,88 +1,102 @@
 #include "FireballWeapon.h"
 #include "Entity.h"
 #include "Player.h"
+#include <algorithm>
+
+
+// code to face towards a particular direction
+        // // face toward the player
+        // sf::Vector2f pPosition = m_player->getPosition();
+        // sf::Vector2f delta = pPosition - m_position;
+        //
+        // // adjust for wrapping
+        // if(std::abs(delta.x) > worldWidth / 2.0f)
+        //     delta.x = delta.x > 0 ? delta.x - worldWidth : delta.x + worldWidth;
+        // if(std::abs(delta.y) > worldHeight / 2.0f)
+        //     delta.y = delta.y > 0 ? delta.y - worldHeight : delta.y + worldHeight;
+        // float angle = std::atan2(delta.y, delta.x);
+        //
+        // setRotation(angle + M_PI);
+        // m_sprite.setRotation(sf::radians(angle + M_PI/2));
+
+
 
 extern bool detectIntersection(const sf::Vector2f& pos1, float size1, const sf::Vector2f& pos2, float size2);
 
 // Weapon(int damage, float cooldown, float size, sf::Vector2f velocity, float duration, float kb , float timeSince, bool active)
 
 FireballWeapon::FireballWeapon()
-    : Weapon(10, 0.25, 100, {0, 0}, 0.1, 0, 0, false)
-    , m_visualTimer(0.f)
-    , m_visualDuration(m_cooldown) // visual effect always on
-{
-    Weapon::setName("FireballWeapon");
-    m_visualEffect.setRadius(m_size);
-    m_visualEffect.setFillColor(sf::Color(255, 100, 100, 80));
-    m_visualEffect.setOutlineThickness(3);
-    m_visualEffect.setOutlineColor(sf::Color::Red);
-    m_visualEffect.setOrigin({m_size, m_size});
-}
-FireballWeapon::FireballWeapon(int damage, float cooldown, float size)
-    : Weapon(damage, cooldown, size, {0, 0}, 0.1, 0, 0, false)
-    , m_visualTimer(0.f)
-    , m_visualDuration(0.25f)
-{
-    Weapon::setName("FireballWeapon");
-    m_visualEffect.setRadius(size);
-    m_visualEffect.setFillColor(sf::Color(255, 100, 100, 255));
-    m_visualEffect.setOutlineThickness(3);
-    m_visualEffect.setOutlineColor(sf::Color::Red);
-    m_visualEffect.setOrigin({m_size, m_size});
-}
-FireballWeapon::FireballWeapon(const FireballWeapon& other) // copy constructor
-	: Weapon(other)
-    , m_visualTimer(other.m_visualTimer)
-    , m_visualDuration(other.m_visualDuration)
+    : Weapon(20, 1, 20, {200, 0}, 2, 0, 0, false)
+    , m_range(300.f)
 {
     Weapon::setName("FireballWeapon");
 }
-FireballWeapon::FireballWeapon(FireballWeapon&& other) noexcept // move constructor
-    : Weapon(std::move(other))
-    , m_visualTimer(other.m_visualTimer)
-    , m_visualDuration(other.m_visualDuration)
+FireballWeapon::FireballWeapon(int damage, float cooldown, float speed, float radius)
+    : Weapon(damage, cooldown, radius, {speed, 0}, 2, 0, 0, false)
+    , m_range(300.f)
 {
     Weapon::setName("FireballWeapon");
 }
 
 void FireballWeapon::activate(Player& player, QuadTree& quadTree)
 {
-    // visuals
-    m_visualTimer = m_visualDuration;
-
-    // get nearby enemies to damage
-    std::vector<Entity*> nearbyEntities;
-    quadTree.retrieveEntities(nearbyEntities, player.getPosition(), m_size);
-
-    for(auto& entity : nearbyEntities)
+    Entity* nearestEntity = quadTree.getClosestEntity(player.getPosition(), m_range, &player);
+    if(nearestEntity)
     {
-        if(entity == &player) continue;
-
-        bool overlap = detectIntersection(entity->getPosition(), entity->getRadius(),
-                player.getPosition(), getSize());
-
-        if(overlap)
-        {
-            entity->reduceHealth(m_damage);
-        }
+        auto fireball = std::make_unique<Fireball>(player.getPosition(), nearestEntity->getPosition(),
+                m_damage, m_speed, m_range);
+        m_activeFireballs.push_back(std::move(fireball));
     }
 }
 
 void FireballWeapon::update(float deltaTime, Player& player, QuadTree& quadTree)
 {
+
     Weapon::update(deltaTime, player, quadTree);
-    m_visualEffect.setPosition(player.getPosition());
-    if(m_visualTimer > 0)
+
+    for(auto& fireball : m_activeFireballs)
     {
-        m_visualTimer -= deltaTime;
+        fireball->update();
+
+        std::vector<Entity*> nearbyEntities;
+        quadTree.retrieveEntities(nearbyEntities, fireball->getPosition(), fireball->getRadius() + 10);
+
+        for(auto* entity : nearbyEntities)
+        {
+            if(dynamic_cast<Player*>(entity))
+                continue;
+
+            if(fireball->hasHit())
+                continue;
+
+            bool overlap = detectIntersection(fireball->getPosition(), fireball->getRadius(),
+                    entity->getPosition(), entity->getRadius());
+
+            if(overlap)
+            {
+                fireball->dealDamage(entity);
+                fireball->markForDestruction();
+                break;
+            }
+        }
+
     }
+    m_activeFireballs.erase(
+        std::remove_if(m_activeFireballs.begin(), m_activeFireballs.end(), 
+            [](const auto& fireball)
+            {
+                return fireball->shouldBeDestroyed();
+            }),
+        m_activeFireballs.end());
 }
 
-void FireballWeapon::render(sf::RenderWindow& window)
-{
-    // std::cout << "Rendering weapon, timer: " << m_visualTimer << std::endl;
-    if(m_visualTimer > 0)
-        window.draw(m_visualEffect);
-}
+    void FireballWeapon::render(sf::RenderWindow& window)
+    {
+        // std::cout << "Rendering weapon, timer: " << m_visualTimer << std::endl;
+        for(auto& fireball : m_activeFireballs)
+        {
+            fireball->draw(window);
+        }
+    }
 
 

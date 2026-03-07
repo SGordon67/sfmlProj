@@ -24,5 +24,6 @@ sf::Texture crateUsedTexture;
 sf::Texture spikeyTexture;
 sf::Texture playerTexture;
 sf::Texture enemyTexture;
+sf::Texture fireballTexture;
 
 sf::Font font;

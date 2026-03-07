@@ -44,6 +44,10 @@ public:
 
     void retrieveEntities(std::vector<Entity*>& entities,
             const sf::Vector2f& pos, float radius);
+
+    // Entity* getClosestEntity(const sf::Vector2f& pos, float searchRadius);
+    Entity* getClosestEntity(const sf::Vector2f& pos, float searchRadius, Entity* exclude = nullptr);
+
 };
 
 #endif

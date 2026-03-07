@@ -13,13 +13,13 @@ LIBS = -lsfml-graphics -lsfml-window -lsfml-system
 
 #Object files
 
-OBJS = main.o globals.o SaveManager.o Image.o DamageNum.o HealthCrate.o Ball.o Player.o Spikey.o Enemy1.o CircleWeapon.o FireballWeapon.o Minimap.o UIHealth.o UIKillCount.o QuadTree.o
+OBJS = main.o globals.o SaveManager.o Image.o DamageNum.o HealthCrate.o Ball.o Player.o Spikey.o Enemy1.o CircleWeapon.o FireballWeapon.o Fireball.o Minimap.o UIHealth.o UIKillCount.o QuadTree.o
 all: main
 
 main: $(OBJS)
 	$(CXX) $(OBJS) -o main $(LDFLAGS) $(LIBS)
 
-main.o: main.cpp globals.h enums.h SaveManager.h MainMenu.h SettingsScreen.h GameOverScreen.h Resolution.h BasicObject.h VisualObject.h Image.h DamageNum.h PhysicalObject.h Ball.h HealthCrate.h Entity.h Player.h Spikey.h Enemy.h Enemy1.h CircleWeapon.h Minimap.h UIElement.h UIHealth.h UIKillCount.h QuadTree.h Interactable.h Hazardous.h
+main.o: main.cpp globals.h enums.h SaveManager.h MainMenu.h SettingsScreen.h GameOverScreen.h Resolution.h BasicObject.h VisualObject.h Image.h DamageNum.h PhysicalObject.h Ball.h HealthCrate.h Entity.h Player.h Spikey.h Enemy.h Enemy1.h Weapon.h CircleWeapon.h FireballWeapon.h Fireball.h Minimap.h UIElement.h UIHealth.h UIKillCount.h QuadTree.h Interactable.h Hazardous.h
 	$(CXX) $(CXXFLAGS) -c main.cpp
 
 globals.o: globals.cpp globals.h enums.h
@@ -52,8 +52,11 @@ Enemy1.o: Enemy1.cpp Enemy1.h Enemy.h globals.h enums.h
 CircleWeapon.o: CircleWeapon.cpp CircleWeapon.h Weapon.h globals.h enums.h
 	$(CXX) $(CXXFLAGS) -c CircleWeapon.cpp
 
-FireballWeapon.o: FireballWeapon.cpp FireballWeapon.h Weapon.h globals.h enums.h
+FireballWeapon.o: FireballWeapon.cpp FireballWeapon.h Weapon.h Fireball.h globals.h enums.h
 	$(CXX) $(CXXFLAGS) -c FireballWeapon.cpp
+
+Fireball.o: Fireball.cpp Fireball.h PhysicalObject.h globals.h enums.h
+	$(CXX) $(CXXFLAGS) -c Fireball.cpp
 
 Minimap.o: Minimap.cpp Minimap.h UIElement.h globals.h enums.h
 	$(CXX) $(CXXFLAGS) -c Minimap.cpp

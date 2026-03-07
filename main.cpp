@@ -93,6 +93,9 @@ void initializeTextures()
     if (!enemyTexture.loadFromFile("art/basicEnemy.png")) {
         std::cout << "Sprite not loaded :(" << std::endl;
     }
+    if (!fireballTexture.loadFromFile("art/basicFireball.png")) {
+        std::cout << "Sprite not loaded :(" << std::endl;
+    }
 
     if (!font.openFromFile("Fonts/Nasa21-l23X.ttf")) {
         std::cout << "Font not loaded :(" << std::endl;
@@ -710,7 +713,7 @@ int main()
     physicalObjects.push_back(player);
     setupGame(visualObjects, physicalObjects, interactableObjects, hazardousObjects, player);
     // add weapons for testing
-    player->addWeapon(std::make_unique<CircleWeapon>(), 0);
+    // player->addWeapon(std::make_unique<CircleWeapon>(), 0);
     player->addWeapon(std::make_unique<FireballWeapon>(), 1);
 
     // Resolution Manager
@@ -774,7 +777,7 @@ int main()
         UIElements.clear();
 
         player = std::make_shared<Player>(&visualObjects);
-        player->addWeapon(std::make_unique<CircleWeapon>(), 0);
+        // player->addWeapon(std::make_unique<CircleWeapon>(), 0);
         player->addWeapon(std::make_unique<FireballWeapon>(), 1);
         physicalObjects.push_back(player);
 

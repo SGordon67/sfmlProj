@@ -239,3 +239,31 @@ void QuadTree::retrieve(std::vector<std::shared_ptr<PhysicalObject>>& returnObje
         }
     }
 }
+
+Entity* QuadTree::getClosestEntity(const sf::Vector2f& pos, float searchRadius, Entity* exclude)
+{
+    std::vector<std::shared_ptr<PhysicalObject>> nearbyObjects;
+    retrieveToroidal(nearbyObjects, pos, searchRadius);
+
+    Entity* closestEntity = nullptr;
+    float closestDistance = std::numeric_limits<float>::max();
+
+    for(auto& obj : nearbyObjects)
+    {
+        auto entity = std::dynamic_pointer_cast<Entity>(obj);
+        if(!entity || entity.get() == exclude)
+            continue;
+
+        sf::Vector2f entityClosestPos = getClosestWrapPosition(pos, entity->getPosition());
+        sf::Vector2f delta = pos - entityClosestPos;
+        float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
+
+        if(distance < closestDistance)
+        {
+            closestDistance = distance;
+            closestEntity = entity.get();
+        }
+    }
+
+    return closestEntity;
+}

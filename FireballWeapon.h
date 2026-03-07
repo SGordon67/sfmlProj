@@ -1,6 +1,7 @@
 #ifndef FIREBALLWEAPON_H
 #define FIREBALLWEAPON_H
 
+#include "Fireball.h"
 #include "Weapon.h"
 
 class FireballWeapon : public Weapon
@@ -17,17 +18,12 @@ class FireballWeapon : public Weapon
         // float m_timeSinceLastFire = m_cooldown;
         // bool m_active = false;
 
-        sf::CircleShape m_visualEffect;
-        float m_visualTimer = 0.f;
-        float m_visualDuration = 0.1f;
+        std::vector<std::unique_ptr<Fireball>> m_activeFireballs;
+        float m_speed = 200;
+        float m_range = 300;
     public:
         FireballWeapon();
-        FireballWeapon(int damage, float cooldown, float radius);
-        FireballWeapon(const FireballWeapon& other); // copy constructor
-        FireballWeapon(FireballWeapon&& other) noexcept; // move constructor
-
-        float getRadius();
-        void setRadius(float radius);
+        FireballWeapon(int damage, float cooldown, float speed, float radius);
 
         void activate(Player& player, QuadTree& quadTree) override;
         void update(float deltaTime, Player& player, QuadTree& quadTree) override;

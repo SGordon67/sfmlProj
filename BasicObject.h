@@ -96,7 +96,7 @@ public:
 	{
 		m_position = position;
 		m_sprite.setPosition(position);
-        wrapPosition(m_position);   
+        wrapPosition(m_position);
 	}
 
 	sf::Vector2i getSize() const

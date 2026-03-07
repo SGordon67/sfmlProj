@@ -16,7 +16,7 @@ CircleWeapon::CircleWeapon()
     m_visualEffect.setFillColor(sf::Color(255, 100, 100, 80));
     m_visualEffect.setOutlineThickness(3);
     m_visualEffect.setOutlineColor(sf::Color::Red);
-    m_visualEffect.setOrigin({m_size, m_size});
+    m_visualEffect.setOrigin({static_cast<float>(m_size), static_cast<float>(m_size)});
 }
 CircleWeapon::CircleWeapon(int damage, float cooldown, float size)
     : Weapon(damage, cooldown, size, {0, 0}, 0.1, 0, 0, false)
@@ -28,7 +28,7 @@ CircleWeapon::CircleWeapon(int damage, float cooldown, float size)
     m_visualEffect.setFillColor(sf::Color(255, 100, 100, 255));
     m_visualEffect.setOutlineThickness(3);
     m_visualEffect.setOutlineColor(sf::Color::Red);
-    m_visualEffect.setOrigin({m_size, m_size});
+    m_visualEffect.setOrigin({static_cast<float>(m_size), static_cast<float>(m_size)});
 }
 CircleWeapon::CircleWeapon(const CircleWeapon& other) // copy constructor
 	: Weapon(other)

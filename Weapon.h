@@ -13,7 +13,7 @@ class Weapon
 
         int m_damage = 10;
         float m_cooldown = 3;
-        float m_size = 10;
+        int m_size = 10;
         sf::Vector2f m_velocity = {0, 0};
         float m_duration = 1;
         float m_kb = 0;
@@ -25,8 +25,7 @@ class Weapon
         Weapon()
         {
         }
-        Weapon(int damage, float cooldown, float size, sf::Vector2f velocity, float duration, float kb
-                , float timeSince, bool active)
+        Weapon(int damage, float cooldown, float size, sf::Vector2f velocity, float duration, float kb , float timeSince, bool active)
             : m_damage(damage)
               , m_cooldown(cooldown)
               , m_size(size)
