@@ -18,12 +18,32 @@ class FireballWeapon : public Weapon
         // float m_timeSinceLastFire = m_cooldown;
         // bool m_active = false;
 
+        static constexpr int d_damage = 10;
+        static constexpr float d_cooldown = 0.1;
+        static constexpr float d_size = 20;
+        static constexpr float d_duration = 2;
+        static constexpr float d_kb = 0;
+        static constexpr float d_range = 900;
+        static constexpr float d_fbRange = 500;
+
+        static constexpr sf::Vector2i d_fireballWeaponSize = {20, 20};
+        static constexpr int d_fireballWeaponMass = 0;
+        static constexpr float d_fireballWeaponRadius = 10;
+        static constexpr float d_fireballWeaponMaxVelocity = 200;
+
+        sf::Vector2f m_position = {0, 0};
         std::vector<std::unique_ptr<Fireball>> m_activeFireballs;
-        float m_speed = 200;
-        float m_range = 300;
+        float m_range; // if enemy within range, fire a fireball
+        float m_fbRange; // range fireball will travel
     public:
         FireballWeapon();
         FireballWeapon(int damage, float cooldown, float speed, float radius);
+
+        float getRange();
+        sf::Vector2f getPosition();
+
+        void setRange(float range);
+        void setPosition(sf::Vector2f pos);
 
         void activate(Player& player, QuadTree& quadTree) override;
         void update(float deltaTime, Player& player, QuadTree& quadTree) override;

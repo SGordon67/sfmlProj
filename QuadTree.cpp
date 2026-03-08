@@ -178,7 +178,6 @@ void QuadTree::insert(std::shared_ptr<PhysicalObject> obj) {
     }
 }
 
-// TODO inbetween four quads implemented, need to add wrapping
 void QuadTree::retrieve(std::vector<std::shared_ptr<PhysicalObject>>& returnObjects,
         const sf::Vector2f& pos, float radius)
 {
@@ -242,13 +241,14 @@ void QuadTree::retrieve(std::vector<std::shared_ptr<PhysicalObject>>& returnObje
 
 Entity* QuadTree::getClosestEntity(const sf::Vector2f& pos, float searchRadius, Entity* exclude)
 {
-    std::vector<std::shared_ptr<PhysicalObject>> nearbyObjects;
-    retrieveToroidal(nearbyObjects, pos, searchRadius);
+    std::vector<std::shared_ptr<PhysicalObject>> allObjects;
+    retrieve(allObjects, sf::Vector2f(worldWidth / 2.f, worldHeight / 2.f),
+            std::max(worldWidth, worldHeight) * 2.f);
 
     Entity* closestEntity = nullptr;
     float closestDistance = std::numeric_limits<float>::max();
 
-    for(auto& obj : nearbyObjects)
+    for(auto& obj : allObjects)
     {
         auto entity = std::dynamic_pointer_cast<Entity>(obj);
         if(!entity || entity.get() == exclude)
@@ -264,6 +264,29 @@ Entity* QuadTree::getClosestEntity(const sf::Vector2f& pos, float searchRadius, 
             closestEntity = entity.get();
         }
     }
-
     return closestEntity;
+
+    // std::vector<std::shared_ptr<PhysicalObject>> nearbyObjects;
+    // retrieveToroidal(nearbyObjects, pos, searchRadius);
+    //
+    // Entity* closestEntity = nullptr;
+    // float closestDistance = searchRadius;
+    //
+    // for(auto& obj : nearbyObjects)
+    // {
+    //     auto entity = std::dynamic_pointer_cast<Entity>(obj);
+    //     if(!entity || entity.get() == exclude)
+    //         continue;
+    //
+    //     sf::Vector2f entityClosestPos = getClosestWrapPosition(pos, entity->getPosition());
+    //     sf::Vector2f delta = pos - entityClosestPos;
+    //     float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
+    //
+    //     if(distance <= searchRadius && distance < closestDistance)
+    //     {
+    //         closestDistance = distance;
+    //         closestEntity = entity.get();
+    //     }
+    // }
+    // return closestEntity;
 }

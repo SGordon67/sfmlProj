@@ -18,6 +18,7 @@ static constexpr float friction = 0.5f;
 static constexpr float dragCoef = 4;
 static constexpr float angularDrag = 0.98f;
 static constexpr sf::Color hitboxColor = sf::Color(255, 0, 0, 150);
+static constexpr sf::Color rangeIndicatorColor = sf::Color(255, 0, 0, 150);
 
 
 // global variables
