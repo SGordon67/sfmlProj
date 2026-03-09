@@ -19,7 +19,7 @@ class FireballWeapon : public Weapon
         // bool m_active = false;
 
         static constexpr int d_damage = 10;
-        static constexpr float d_cooldown = 0.1;
+        static constexpr float d_cooldown = 1;
         static constexpr float d_size = 20;
         static constexpr float d_duration = 2;
         static constexpr float d_kb = 0;

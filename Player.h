@@ -21,7 +21,7 @@ class Player : public Entity
         static constexpr float d_playerDrag = 4;
 
         // current and max hp to play with default usually 100 each
-        static constexpr int d_playerHP = 100;
+        static constexpr int d_playerHP = 10000;
         static constexpr int d_playerMaxHP = 100;
 
         static constexpr float d_playerAngularAcceleration = (4.f * (M_PI / 180.f));

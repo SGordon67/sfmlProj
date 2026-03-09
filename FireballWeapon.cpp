@@ -79,56 +79,59 @@ void FireballWeapon::update(float deltaTime, Player& player, QuadTree& quadTree)
 
     for(auto& fireball : m_activeFireballs)
     {
-        fireball->update();
-
-        std::vector<Entity*> nearbyEntities;
-        quadTree.retrieveEntities(nearbyEntities, fireball->getPosition(), fireball->getRadius() + 10);
-
-        for(auto* entity : nearbyEntities)
+        if(!fireball->hasHit())
         {
-            if(dynamic_cast<Player*>(entity))
-                continue;
+            fireball->update();
 
-            if(fireball->hasHit())
-                continue;
+            std::vector<Entity*> nearbyEntities;
+            quadTree.retrieveEntities(nearbyEntities, fireball->getPosition(), fireball->getRadius() + 10);
 
-            bool overlap = detectIntersection(fireball->getPosition(), fireball->getRadius(),
-                    entity->getPosition(), entity->getRadius());
-
-            if(overlap)
+            for(auto* entity : nearbyEntities)
             {
-                fireball->dealDamage(entity);
-                fireball->markForDestruction();
-                break;
+                if(dynamic_cast<Player*>(entity))
+                    continue;
+
+                if(fireball->hasHit())
+                    continue;
+
+                bool overlap = detectIntersection(fireball->getPosition(), fireball->getRadius(),
+                        entity->getPosition(), entity->getRadius());
+
+                if(overlap)
+                {
+                    fireball->setVelocity({0, 0});
+                    fireball->dealDamage(quadTree, player);
+                    fireball->markForDestruction();
+                    break;
+                }
             }
         }
-
     }
     m_activeFireballs.erase(
-        std::remove_if(m_activeFireballs.begin(), m_activeFireballs.end(), 
-            [](const auto& fireball)
-            {
-                return fireball->shouldBeDestroyed();
-            }),
-        m_activeFireballs.end());
+            std::remove_if(m_activeFireballs.begin(), m_activeFireballs.end(), 
+                [](const auto& fireball)
+                {
+                    return fireball->shouldBeDestroyed();
+                }),
+            m_activeFireballs.end());
 }
 
-    void FireballWeapon::render(sf::RenderWindow& window)
+void FireballWeapon::render(sf::RenderWindow& window)
+{
+    for(auto& fireball : m_activeFireballs)
     {
-        // std::cout << "Rendering weapon, timer: " << m_visualTimer << std::endl;
-        for(auto& fireball : m_activeFireballs)
+        if(!fireball->hasHit())
         {
             fireball->draw(window);
         }
-        if(showHitboxes)
+        else
         {
-            sf::CircleShape circle(getRange());
-            circle.setOrigin(sf::Vector2f(getRange(), getRange()));
-            circle.setFillColor(sf::Color::Transparent);
-            circle.setOutlineColor(rangeIndicatorColor);
-            circle.setPosition(getPosition());
+            fireball->setExpVisualTime(fireball->getExpVisualTime() - FixedDeltaTime);
+            sf::CircleShape circle(fireball->getExpRadius());
+            circle.setOrigin(sf::Vector2f(fireball->getExpRadius(), fireball->getExpRadius()));
+            circle.setFillColor(sf::Color(255, 0, 0, 100));
+            circle.setPosition(getClosestWrapPosition(getPosition(), fireball->getPosition()));
             window.draw(circle);
         }
     }
-
-
+}

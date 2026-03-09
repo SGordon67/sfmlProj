@@ -1,6 +1,7 @@
 #include "Fireball.h"
 #include "Entity.h"
 #include "PhysicalObject.h"
+#include "QuadTree.h"
 #include "globals.h"
 #include <cmath>
 
@@ -21,6 +22,7 @@
 extern sf::Vector2f getClosestWrapPosition(const sf::Vector2f& myPos, const sf::Vector2f& otherPos);
 extern void wrapPosition(sf::Vector2f& position);
 extern std::vector<sf::Vector2f> getDupPositions(const sf::Vector2f& position, float radius);
+extern bool detectIntersection(const sf::Vector2f &pos1, float radius1, const sf::Vector2f &pos2, float radius2);
 
         // PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
         //         float mass, float radius, sf::Vector2f velocity, float acceleration, float angularVelocity, float maxVelocity, float drag)
@@ -83,17 +85,31 @@ void Fireball::draw(sf::RenderWindow& window)
     // }
 }
 
-void Fireball::dealDamage(Entity* entity)
+void Fireball::dealDamage(QuadTree& quadTree, Player& player)
 {
-    if (!m_hasHit && entity) {
-        entity->reduceHealth(m_damage);
+    if (!m_hasHit) {
         m_hasHit = true;
+
+        std::vector<Entity*> nearbyEntities;
+        quadTree.retrieveEntities(nearbyEntities, getPosition(), getSize().x + getExpRadius());
+
+        for(auto& entity : nearbyEntities)
+        {
+            if(entity == &player) continue;
+            bool overlap = detectIntersection(entity->getPosition(), entity->getRadius(), getPosition(), getExpRadius());
+
+            if(overlap)
+            {
+                entity->reduceHealth(m_damage);
+            }
+        }
     }
 }
 
 bool Fireball::shouldBeDestroyed() const
 {
-    return m_timeToLive <= 0 || m_hasHit;
+    return (getExpVisualTime() <= 0);
+    // return m_timeToLive <= 0 || m_hasHit;
 }
 
 void Fireball::markForDestruction()
