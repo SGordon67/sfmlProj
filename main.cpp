@@ -876,7 +876,7 @@ int main()
                 {
                     case(GameState::MainMenu):
                         {
-                            window.close();
+                            // window.close();
                             break;
                         }
                     case(GameState::Playing):

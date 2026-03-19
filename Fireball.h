@@ -10,13 +10,13 @@ class Fireball : public PhysicalObject {
 private:
     int m_damage = 20;
     float m_expRadius = 50;
-    float m_timeToLive = 1;
+    float m_timeToLive = 2;
     bool m_hasHit = false;
 
     float m_expVisualTime = 0.5;
 
 public:
-    Fireball(sf::Vector2f startPos, sf::Vector2f targetPos, int damage, float speed, float range);
+    Fireball(sf::Vector2f startPos, sf::Vector2f targetPos, int damage, float speed);
 
     int getDamage() const { return m_damage; }
     float getExpRadius() const { return m_expRadius; }
@@ -29,7 +29,7 @@ public:
     void draw(sf::RenderWindow& window) override;
 
     void dealDamage(QuadTree& quadTree, Player& player);
-    bool shouldBeDestroyed() const;
+    bool explosionExpired() const;
     void markForDestruction();
     bool hasHit() const { return m_hasHit; }
 };

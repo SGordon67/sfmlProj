@@ -27,7 +27,7 @@ extern bool detectIntersection(const sf::Vector2f &pos1, float radius1, const sf
         // PhysicalObject(sf::Vector2f position, sf::Vector2i size, float rotation, RenderLayer renderLayer, sf::Texture* texture, 
         //         float mass, float radius, sf::Vector2f velocity, float acceleration, float angularVelocity, float maxVelocity, float drag)
 
-Fireball::Fireball(sf::Vector2f startPos, sf::Vector2f targetPos, int damage, float speed, float range)
+Fireball::Fireball(sf::Vector2f startPos, sf::Vector2f targetPos, int damage, float speed)
     : PhysicalObject(startPos, {20, 20}, 0, RenderLayer::Main, &fireballTexture,
             100, 10, {speed, 0}, 0, 0, speed, 0)
     , m_damage(damage)
@@ -47,8 +47,9 @@ Fireball::Fireball(sf::Vector2f startPos, sf::Vector2f targetPos, int damage, fl
 
     setVelocity({static_cast<float>(speed * cos(angle)), static_cast<float>(speed * sin(angle))});
 
+    // wrong below, TTL is given default value and gets decremented by fixed delta
     // Calculate time to live based on range
-    m_timeToLive = range / speed;
+    // m_timeToLive = range / speed;
 
     // Setup sprite
     m_sprite.setTexture(fireballTexture);
@@ -106,10 +107,9 @@ void Fireball::dealDamage(QuadTree& quadTree, Player& player)
     }
 }
 
-bool Fireball::shouldBeDestroyed() const
+bool Fireball::explosionExpired() const
 {
     return (getExpVisualTime() <= 0);
-    // return m_timeToLive <= 0 || m_hasHit;
 }
 
 void Fireball::markForDestruction()

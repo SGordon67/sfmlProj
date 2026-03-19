@@ -23,14 +23,12 @@ extern bool detectIntersection(const sf::Vector2f& pos1, float size1, const sf::
 FireballWeapon::FireballWeapon()
     : Weapon(d_damage, d_cooldown, d_size, {0, 0}, d_duration, d_kb, 999999, false)
     , m_range(d_range)
-    , m_fbRange(d_fbRange)
 {
     Weapon::setName("FireballWeapon");
 }
 FireballWeapon::FireballWeapon(int damage, float cooldown, float speed, float radius)
     : Weapon(damage, cooldown, radius, {speed, 0}, 2, 0, 0, false)
     , m_range(d_range)
-    , m_fbRange(d_fbRange)
 {
     Weapon::setName("FireballWeapon");
 }
@@ -66,7 +64,7 @@ void FireballWeapon::activate(Player& player, QuadTree& quadTree)
         if(dist <= m_range)
         {
             auto fireball = std::make_unique<Fireball>(player.getPosition(), nearestEntity->getPosition(),
-                    m_damage, d_fireballWeaponMaxVelocity, m_fbRange);
+                    m_damage, d_fireballWeaponMaxVelocity);
             m_activeFireballs.push_back(std::move(fireball));
         }
     }
@@ -111,7 +109,9 @@ void FireballWeapon::update(float deltaTime, Player& player, QuadTree& quadTree)
             std::remove_if(m_activeFireballs.begin(), m_activeFireballs.end(), 
                 [](const auto& fireball)
                 {
-                    return fireball->shouldBeDestroyed();
+                    if(fireball->hasHit()) return fireball->explosionExpired();
+                    return (fireball->getTTL() <= 0);
+                    // return (fireball->explosionExpired() || fireball->getTTL() <= 0);
                 }),
             m_activeFireballs.end());
 }

@@ -29,12 +29,11 @@ class FireballWeapon : public Weapon
         static constexpr sf::Vector2i d_fireballWeaponSize = {20, 20};
         static constexpr int d_fireballWeaponMass = 0;
         static constexpr float d_fireballWeaponRadius = 10;
-        static constexpr float d_fireballWeaponMaxVelocity = 200;
+        static constexpr float d_fireballWeaponMaxVelocity = 500;
 
         sf::Vector2f m_position = {0, 0};
         std::vector<std::unique_ptr<Fireball>> m_activeFireballs;
         float m_range; // if enemy within range, fire a fireball
-        float m_fbRange; // range fireball will travel
     public:
         FireballWeapon();
         FireballWeapon(int damage, float cooldown, float speed, float radius);
